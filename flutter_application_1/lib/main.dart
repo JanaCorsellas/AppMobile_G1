@@ -6,33 +6,23 @@ import 'package:flutter_application_1/services/auth_service.dart';
 import 'package:flutter_application_1/services/socket_service.dart';
 import 'package:flutter_application_1/services/chat_service.dart';
 import 'package:flutter_application_1/services/http_service.dart';
-import 'package:flutter_application_1/services/notification_service.dart';
 
 void main() {
-  // Deshabilitar la comprobación de tipo del Provider (solución temporal)
-  Provider.debugCheckInvalidValueType = null;
-  
   runApp(
     MultiProvider(
       providers: [
-        // Proveedores base
+        // Servicio de autenticación
         ChangeNotifierProvider(create: (_) => AuthService()),
+        
+        // Servicio de Socket.IO - depende del servicio de autenticación
         ChangeNotifierProvider(create: (_) => SocketService()),
         
-        // Provider de HTTP
+        // Servicio HTTP - depende del servicio de autenticación
         Provider<HttpService>(
           create: (context) => HttpService(context.read<AuthService>()),
         ),
         
-        // Provider de NotificationService usando ChangeNotifierProvider
-        ChangeNotifierProvider<NotificationService>(
-          create: (context) => NotificationService(
-            context.read<HttpService>(), 
-            context.read<SocketService>()
-          ),
-        ),
-        
-        // Provider de chat
+        // Servicio de chat - depende de Socket.IO
         ChangeNotifierProxyProvider<SocketService, ChatService>(
           create: (context) => ChatService(context.read<SocketService>()),
           update: (context, socketService, previous) => 

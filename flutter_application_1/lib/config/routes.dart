@@ -5,7 +5,6 @@ import 'package:flutter_application_1/screens/user/user_home.dart';
 import 'package:flutter_application_1/screens/user/user_profile.dart';
 import 'package:flutter_application_1/screens/chat/chat_list.dart';
 import 'package:flutter_application_1/screens/chat/chat_room.dart';
-import 'package:flutter_application_1/screens/notifications/notification_screen.dart';
 
 
 class AppRoutes {
@@ -35,8 +34,6 @@ class AppRoutes {
         final args = settings.arguments as Map<String, dynamic>?;
         final roomId = args?['roomId'] as String? ?? '';
         return MaterialPageRoute(builder: (_) => ChatRoomScreen(roomId: roomId));
-      case notifications:
-        return MaterialPageRoute(builder: (_) => const NotificationScreen());
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(
