@@ -1,3 +1,5 @@
+// flutter_application_1/lib/services/chat_service.dart
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -48,6 +50,7 @@ class ChatService with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
+        print("Respuesta del servidor (salas): ${response.body}");
         final List<dynamic> data = json.decode(response.body);
         print("Salas recibidas del servidor: ${data.length}");
         
@@ -68,6 +71,9 @@ class ChatService with ChangeNotifier {
           print("Joining chat room: ${room.id}");
           _socketService.joinChatRoom(room.id);
         }
+      } else {
+        print("Error al obtener salas: ${response.statusCode}");
+        print("Respuesta: ${response.body}");
       }
     } catch (e) {
       print('Error loading chat rooms: $e');
@@ -97,6 +103,8 @@ class ChatService with ChangeNotifier {
         headers: {'Content-Type': 'application/json'},
       );
 
+      print("Respuesta del servidor (mensajes): ${response.statusCode}");
+      
       if (response.statusCode == 200) {
         try {
           final List<dynamic> data = json.decode(response.body);
@@ -142,6 +150,7 @@ class ChatService with ChangeNotifier {
         }
       } else {
         print("Error al cargar mensajes para sala $roomId: código ${response.statusCode}");
+        print("Respuesta: ${response.body}");
         // Intentar cargar desde almacenamiento local
         final localMessages = await _loadLocalMessages(roomId);
         if (localMessages.isNotEmpty) {
@@ -296,6 +305,7 @@ class ChatService with ChangeNotifier {
       
       if (response.statusCode != 201) {
         print("Error enviando mensaje por HTTP: código ${response.statusCode}");
+        print("Respuesta: ${response.body}");
       } else {
         print("Mensaje enviado y persistido exitosamente por HTTP");
       }
@@ -552,7 +562,7 @@ class ChatService with ChangeNotifier {
     try {
       print("Intentando eliminar sala: $roomId");
       final response = await http.delete(
-        Uri.parse(ApiConstants.chatRoom(roomId)),
+        Uri.parse(ApiConstants.deleteChatRoom(roomId)),
         headers: {'Content-Type': 'application/json'},
       );
 

@@ -139,6 +139,8 @@ class HttpService {
       headers.addAll(additionalHeaders);
     }
     
+    _log('Request headers: $headers');
+    
     return headers;
   }
   

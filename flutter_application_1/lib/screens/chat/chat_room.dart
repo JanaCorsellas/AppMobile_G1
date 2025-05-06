@@ -1,5 +1,7 @@
+// flutter_application_1/lib/screens/chat/chat_room.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/services/notification_services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/models/message.dart';
 import 'package:flutter_application_1/models/chat_room_model.dart';
@@ -28,12 +30,16 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> with WidgetsBindingObse
   Timer? _typingTimeout;
   ChatRoom? _currentRoom;
   bool _isLoadingMessages = false;
+  bool _showLoadingError = false;
+  String _errorMessage = '';
+  String _chatTitle = 'Chat';
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     _loadRoom();
+    WidgetsBinding.instance.addObserver(this);
+    _markChatNotificationsAsRead();
     
     _scrollController.addListener(() {
       setState(() {
@@ -52,22 +58,144 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> with WidgetsBindingObse
     super.dispose();
   }
 
+  void _markChatNotificationsAsRead() {
+    try {
+      final notificationService = Provider.of<NotificationService>(context, listen: false);
+      
+      // Marca como leídas todas las notificaciones de tipo chat_message para esta sala
+      for (var notification in notificationService.notifications) {
+        if (notification.type == 'chat_message' && 
+            notification.data != null && 
+            notification.data!['roomId'] == widget.roomId &&
+            !notification.read) {
+          notificationService.markAsRead(notification.id);
+        }
+      }
+    } catch (e) {
+      print('Error al marcar notificaciones como leídas: $e');
+    }
+  }
+
   Future<void> _loadRoom() async {
     final chatService = Provider.of<ChatService>(context, listen: false);
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final currentUserId = authService.currentUser?.id ?? '';
     
-    setState(() => _isLoadingMessages = true);
+    setState(() {
+      _isLoadingMessages = true;
+      _showLoadingError = false;
+      _errorMessage = '';
+    });
     
     try {
+      print("Intentando cargar mensajes para sala: ${widget.roomId}");
       await chatService.loadMessages(widget.roomId);
       
-      _currentRoom = chatService.chatRooms
-          .firstWhere((room) => room.id == widget.roomId);
-          
+      // Buscar la sala actual en la lista de salas
+      try {
+        _currentRoom = chatService.chatRooms
+            .firstWhere((room) => room.id == widget.roomId);
+        print("Sala cargada correctamente: ${_currentRoom?.name}");
+        
+        // Actualizar título de chat para salas 1:1
+        if (_currentRoom != null && !_currentRoom!.isGroup && _currentRoom!.participants.length == 2) {
+          String otherUserId = _currentRoom!.participants
+              .firstWhere((id) => id != currentUserId, orElse: () => '');
+              
+          if (otherUserId.isNotEmpty) {
+            // Intentar obtener nombre del otro usuario
+            final httpService = HttpService(authService);
+            final userService = UserService(httpService);
+            
+            try {
+              final otherUser = await userService.getUserById(otherUserId);
+              if (otherUser != null && mounted) {
+                setState(() {
+                  _chatTitle = otherUser.username;
+                });
+              } else {
+                setState(() {
+                  _chatTitle = _currentRoom!.name;
+                });
+              }
+            } catch (e) {
+              print("Error al obtener datos del otro usuario: $e");
+              setState(() {
+                _chatTitle = _currentRoom!.name;
+              });
+            }
+          } else {
+            setState(() {
+              _chatTitle = _currentRoom!.name;
+            });
+          }
+        } else {
+          setState(() {
+            _chatTitle = _currentRoom?.name ?? 'Chat';
+          });
+        }
+      } catch (e) {
+        print("No se encontró la sala en la lista: $e");
+        // Si no encontramos la sala, intentamos cargar todas las salas
+        if (authService.currentUser != null) {
+          await chatService.loadChatRooms(authService.currentUser!.id);
+          // Intentamos encontrar la sala de nuevo
+          try {
+            _currentRoom = chatService.chatRooms
+                .firstWhere((room) => room.id == widget.roomId);
+                
+            // Actualizar título de chat para salas 1:1
+            if (_currentRoom != null && !_currentRoom!.isGroup && _currentRoom!.participants.length == 2) {
+              String otherUserId = _currentRoom!.participants
+                  .firstWhere((id) => id != currentUserId, orElse: () => '');
+                  
+              if (otherUserId.isNotEmpty) {
+                // Intentar obtener nombre del otro usuario
+                final httpService = HttpService(authService);
+                final userService = UserService(httpService);
+                
+                try {
+                  final otherUser = await userService.getUserById(otherUserId);
+                  if (otherUser != null && mounted) {
+                    setState(() {
+                      _chatTitle = otherUser.username;
+                    });
+                  } else {
+                    setState(() {
+                      _chatTitle = _currentRoom!.name;
+                    });
+                  }
+                } catch (e) {
+                  print("Error al obtener datos del otro usuario: $e");
+                  setState(() {
+                    _chatTitle = _currentRoom!.name;
+                  });
+                }
+              } else {
+                setState(() {
+                  _chatTitle = _currentRoom!.name;
+                });
+              }
+            } else {
+              setState(() {
+                _chatTitle = _currentRoom?.name ?? 'Chat';
+              });
+            }
+          } catch (e) {
+            print("Todavía no se encontró la sala después de recargar: $e");
+          }
+        }
+      }
+      
       if (_isAtBottom) {
         _scrollToBottom();
       }
     } catch (e) {
-      print('Error loading room: $e');
+      print('Error cargando sala de chat: $e');
+      setState(() {
+        _showLoadingError = true;
+        _errorMessage = 'Error al cargar los mensajes: $e';
+      });
     } finally {
       if (mounted) {
         setState(() => _isLoadingMessages = false);
@@ -77,11 +205,17 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> with WidgetsBindingObse
 
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        try {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        } catch (e) {
+          print('Error al desplazarse al fondo: $e');
+        }
+      });
     }
   }
 
@@ -89,85 +223,177 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> with WidgetsBindingObse
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
-    final chatService = Provider.of<ChatService>(context, listen: false);
-    chatService.sendMessage(widget.roomId, text);
-    
-    _messageController.clear();
-    setState(() => _isAtBottom = true);
-    _scrollToBottom();
+    try {
+      final chatService = Provider.of<ChatService>(context, listen: false);
+      print('Enviando mensaje a sala ${widget.roomId}: $text');
+      chatService.sendMessage(widget.roomId, text);
+      
+      _messageController.clear();
+      setState(() => _isAtBottom = true);
+      _scrollToBottom();
+    } catch (e) {
+      print('Error al enviar mensaje: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al enviar el mensaje: $e')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Verificar el estado de la conexión del socket
+    final socketService = Provider.of<SocketService>(context);
+    final isConnected = socketService.socketStatus == SocketStatus.connected;
+    
     return Scaffold(
       appBar: AppBar(
-        title: Text(_currentRoom?.name ?? 'Chat'),
+        title: Text(_chatTitle),
         actions: [
+          // Se quitó el indicador de conexión (icono WiFi)
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadRoom,
+            tooltip: 'Recargar mensajes',
           ),
         ],
       ),
       body: Column(
         children: [
+          // Mensajes o indicador de carga
           Expanded(
-            child: _isLoadingMessages
-                ? const Center(child: CircularProgressIndicator())
-                : Consumer<ChatService>(
-                    builder: (context, chatService, child) {
-                      final messages = chatService.getMessages(widget.roomId);
-                      
-                      if (messages.isEmpty) {
-                        return const Center(
-                          child: Text('No hay mensajes'),
-                        );
-                      }
-
-                      return ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.all(8),
-                        itemCount: messages.length,
-                        itemBuilder: (context, index) {
-                          final message = messages[index];
-                          final isMyMessage = message.senderId ==
-                              Provider.of<AuthService>(context, listen: false)
-                                  .currentUser
-                                  ?.id;
-
-                          return MessageBubble(
-                            message: message,
-                            isMyMessage: isMyMessage,
-                          );
-                        },
-                      );
-                    },
-                  ),
+            child: _buildMessageArea(),
           ),
+          // Área de entrada de mensajes
           _buildMessageInput(),
         ],
       ),
     );
   }
 
+  Widget _buildMessageArea() {
+    if (_isLoadingMessages) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    
+    if (_showLoadingError) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.red),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _loadRoom,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Reintentar'),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    return Consumer<ChatService>(
+      builder: (context, chatService, child) {
+        final messages = chatService.getMessages(widget.roomId);
+        
+        if (messages.isEmpty) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.chat_bubble_outline,
+                  size: 48,
+                  color: Colors.grey,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'No hay mensajes en esta conversación',
+                  style: TextStyle(color: Colors.grey),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Sé el primero en enviar un mensaje',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          controller: _scrollController,
+          padding: const EdgeInsets.all(8),
+          itemCount: messages.length,
+          itemBuilder: (context, index) {
+            final message = messages[index];
+            final isMyMessage = message.senderId ==
+                Provider.of<AuthService>(context, listen: false)
+                    .currentUser
+                    ?.id;
+
+            return MessageBubble(
+              message: message,
+              isMyMessage: isMyMessage,
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildMessageInput() {
+    // Verificar si el socket está conectado
+    final socketService = Provider.of<SocketService>(context);
+    final isConnected = socketService.socketStatus == SocketStatus.connected;
+    
     return Container(
       padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.3),
+            blurRadius: 4,
+            offset: const Offset(0, -1),
+          ),
+        ],
+      ),
       child: Row(
         children: [
           Expanded(
             child: TextField(
               controller: _messageController,
-              decoration: const InputDecoration(
-                hintText: 'Escribe un mensaje...',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                hintText: isConnected 
+                    ? 'Escribe un mensaje...' 
+                    : 'Conectando...',
+                border: const OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.grey[100],
+                enabled: isConnected,
               ),
-              onSubmitted: (_) => _sendMessage(),
+              keyboardType: TextInputType.multiline,
+              textCapitalization: TextCapitalization.sentences,
+              maxLines: null,
+              onSubmitted: isConnected ? (_) => _sendMessage() : null,
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.send),
-            onPressed: _sendMessage,
+          const SizedBox(width: 8),
+          FloatingActionButton(
+            onPressed: isConnected ? _sendMessage : null,
+            mini: true,
+            child: Icon(
+              Icons.send,
+              color: isConnected ? Colors.white : Colors.grey[400],
+            ),
+            backgroundColor: isConnected ? Colors.blue : Colors.grey[300],
           ),
         ],
       ),
@@ -233,6 +459,7 @@ class MessageBubble extends StatelessWidget {
   }
 
   String _formatTime(DateTime time) {
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+    final localTime = time.toLocal();
+    return '${localTime.hour.toString().padLeft(2, '0')}:${localTime.minute.toString().padLeft(2, '0')}';
   }
 }

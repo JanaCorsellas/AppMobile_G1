@@ -1,3 +1,4 @@
+// flutter_application_1/lib/services/socket_service.dart
 import 'package:flutter/material.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:flutter_application_1/models/user.dart';
@@ -17,6 +18,8 @@ class SocketService with ChangeNotifier {
   
   // Add a debounce timer for typing events
   DateTime? _lastTypingEvent;
+  int _reconnectAttempts = 0;
+  static const int MAX_RECONNECT_ATTEMPTS = 5;
 
   // Getters
   SocketStatus get socketStatus => _socketStatus;
@@ -49,17 +52,20 @@ class SocketService with ChangeNotifier {
       _socket = IO.io(
         socketUrl,
         IO.OptionBuilder()
-            .setTransports(['websocket']) // Usar solo websocket, más estable
+            .setTransports(['websocket', 'polling']) // Usar ambos transportes para mayor compatibilidad
             .disableAutoConnect()
             .enableForceNew()
             .enableForceNewConnection() // Forzar nueva conexión
             .enableReconnection() // Habilitar reconexión automática
-            .setTimeout(10000) // Aumentar timeout a 10 segundos
+            .setTimeout(15000) // Aumentar timeout a 15 segundos
             .build(),
       );
 
       // Configurar listeners de forma explícita
       _setupSocketListeners();
+      
+      // Intentar conectar
+      _socket.connect();
     } catch (e) {
       print('Error inicializando Socket.IO: $e');
       _socketStatus = SocketStatus.disconnected;
@@ -70,8 +76,9 @@ class SocketService with ChangeNotifier {
   // Configurar listeners de Socket.IO
   void _setupSocketListeners() {
     _socket.onConnect((_) {
-      print('Connected to Socket.IO');
+      print('Connected to Socket.IO - Socket ID: ${_socket.id}');
       _socketStatus = SocketStatus.connected;
+      _reconnectAttempts = 0;
       notifyListeners();
     });
 
@@ -80,6 +87,19 @@ class SocketService with ChangeNotifier {
       _socketStatus = SocketStatus.disconnected;
       _userTyping = null;
       notifyListeners();
+      
+      // Intentar reconectar automáticamente si tenemos auth data
+      if (_socket.auth != null && _reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+        _reconnectAttempts++;
+        print('Intentando reconexión automática (intento $_reconnectAttempts de $MAX_RECONNECT_ATTEMPTS)...');
+        Future.delayed(Duration(seconds: 2 * _reconnectAttempts), () {
+          if (_socketStatus == SocketStatus.disconnected) {
+            _socket.connect();
+            _socketStatus = SocketStatus.connecting;
+            notifyListeners();
+          }
+        });
+      }
     });
 
     _socket.onConnectError((data) {
@@ -88,12 +108,17 @@ class SocketService with ChangeNotifier {
       notifyListeners();
       
       // Intento de reconexión automática después de un error
-      Future.delayed(Duration(seconds: 3), () {
-        if (_socketStatus == SocketStatus.disconnected) {
-          print('Intentando reconexión automática...');
-          _socket.connect();
-        }
-      });
+      if (_reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+        _reconnectAttempts++;
+        print('Intentando reconexión después de error (intento $_reconnectAttempts de $MAX_RECONNECT_ATTEMPTS)...');
+        Future.delayed(Duration(seconds: 2 * _reconnectAttempts), () {
+          if (_socketStatus == SocketStatus.disconnected) {
+            _socket.connect();
+            _socketStatus = SocketStatus.connecting;
+            notifyListeners();
+          }
+        });
+      }
     });
 
     _socket.onConnectTimeout((_) {
@@ -165,6 +190,15 @@ class SocketService with ChangeNotifier {
     _socket.on('reconnect_failed', (_) {
       print('Socket.IO reconnect failed');
     });
+
+    // Eventos específicos para salas de chat
+    _socket.on('new_message', (data) {
+      print('Nuevo mensaje recibido: $data');
+    });
+
+    _socket.on('user_joined', (data) {
+      print('Usuario unido a sala: $data');
+    });
   }
 
   // Actualiza la función connect para incluir más información
@@ -213,10 +247,14 @@ class SocketService with ChangeNotifier {
           _socketStatus = SocketStatus.disconnected;
           
           // Intento adicional de reconexión después del timeout
-          print('Intentando reconexión después de timeout...');
-          _socket.connect();
-          
-          notifyListeners();
+          if (_reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+            _reconnectAttempts++;
+            print('Intentando reconexión después de timeout...');
+            _socket.connect();
+            notifyListeners();
+          } else {
+            notifyListeners();
+          }
         }
       });
     } catch (e) {
@@ -245,6 +283,11 @@ class SocketService with ChangeNotifier {
 
   // Unirse a una sala de chat
   void joinChatRoom(String roomId) {
+    if (roomId.isEmpty) {
+      print('ID de sala vacío, no se puede unir');
+      return;
+    }
+    
     if (_socketStatus != SocketStatus.connected) {
       print('Cannot join room: not connected (current status: $_socketStatus)');
       
@@ -280,6 +323,11 @@ class SocketService with ChangeNotifier {
 
   // Enviar mensaje con mejor manejo de errores
   void sendMessage(String roomId, String content, [String? messageId]) {
+    if (roomId.isEmpty || content.isEmpty) {
+      print('RoomID o contenido vacío, no se puede enviar mensaje');
+      return;
+    }
+    
     if (_socketStatus != SocketStatus.connected) {
       print('No se puede enviar mensaje: no conectado (estado: $_socketStatus)');
       
@@ -295,8 +343,18 @@ class SocketService with ChangeNotifier {
       // Generar un ID único para el mensaje si no se proporciona
       final id = messageId ?? 'msg_${DateTime.now().millisecondsSinceEpoch}_${_socket.id ?? 'nodeid'}';
       
+      if (_socket.auth == null) {
+        print('Error: Socket auth es null, no se puede identificar el remitente');
+        return;
+      }
+      
       final userId = _socket.auth['userId'] as String? ?? '';
       final username = _socket.auth['username'] as String? ?? 'Usuario';
+      
+      if (userId.isEmpty) {
+        print('Error: userId es vacío, no se puede identificar el remitente');
+        return;
+      }
       
       // Crear objeto de mensaje completo
       final message = {

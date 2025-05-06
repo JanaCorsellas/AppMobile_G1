@@ -23,6 +23,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
   bool _isInitialized = false;
   bool _isCreatingChat = false;
   bool _showCreateForm = false;
+  
+  // Map para almacenar nombres de usuarios para chats personales
+  Map<String, String> _userNamesCache = {};
 
   @override
   void initState() {
@@ -90,24 +93,50 @@ class _ChatListScreenState extends State<ChatListScreen> {
     
     if (authService.currentUser != null) {
       await chatService.loadChatRooms(authService.currentUser!.id);
+      
+      // Pre-cargar nombres de usuarios para chats personales
+      await _loadUserNamesForChats(chatService.chatRooms, authService.currentUser!.id);
     }
     
     setState(() {
       _isLoading = false;
     });
   }
+  
+  // Cargar nombres de usuarios para chats personales
+  Future<void> _loadUserNamesForChats(List<ChatRoom> rooms, String currentUserId) async {
+    for (var room in rooms) {
+      if (!room.isGroup && room.participants.length == 2) {
+        try {
+          // Encontrar el ID del otro usuario
+          final otherUserId = room.participants.firstWhere(
+            (id) => id != currentUserId,
+            orElse: () => '',
+          );
+          
+          if (otherUserId.isNotEmpty && !_userNamesCache.containsKey(otherUserId)) {
+            final user = await _userService.getUserById(otherUserId);
+            if (user != null) {
+              setState(() {
+                _userNamesCache[otherUserId] = user.username;
+              });
+            }
+          }
+        } catch (e) {
+          print('Error cargando nombre de usuario: $e');
+        }
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final chatService = Provider.of<ChatService>(context);
-    final socketService = Provider.of<SocketService>(context);
     
     return Scaffold(
       appBar: AppBar(
         title: const Text('Chats'),
         actions: [
-          // Estado de conexión
-          _buildConnectionStatus(socketService),
           // Botón de actualizar
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -131,40 +160,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
   }
 
-  // Widget de estado de conexión
-  Widget _buildConnectionStatus(SocketService socketService) {
-    Color statusColor;
-    IconData statusIcon;
-    
-    switch (socketService.socketStatus) {
-      case SocketStatus.connected:
-        statusColor = Colors.green;
-        statusIcon = Icons.check_circle;
-        break;
-      case SocketStatus.connecting:
-        statusColor = Colors.amber;
-        statusIcon = Icons.pending;
-        break;
-      case SocketStatus.disconnected:
-        statusColor = Colors.red;
-        statusIcon = Icons.error;
-        break;
-    }
-    
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: Icon(statusIcon, color: statusColor),
-    );
-  }
-
-  // Formulario para crear chat (placeholder, se puede implementar posteriormente)
-  Widget _buildCreateChatForm() {
-    return const Center(
-      child: Text('Formulario de creación de chat'),
-    );
-  }
-
-  // Estado cuando no hay chats
+  // Widget de estado cuando no hay chats
   Widget _buildEmptyState() {
     return Center(
       child: Column(
@@ -197,20 +193,36 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   // Lista de salas de chat
   Widget _buildChatRoomsList(List<ChatRoom> chatRooms) {
+    final currentUserId = Provider.of<AuthService>(context, listen: false).currentUser?.id ?? '';
+    
     return RefreshIndicator(
       onRefresh: _loadChatRooms,
       child: ListView.builder(
         itemCount: chatRooms.length,
         itemBuilder: (context, index) {
           final room = chatRooms[index];
-          return _buildChatRoomItem(room);
+          
+          // Para chats 1:1, mostrar el nombre del otro usuario
+          String displayName = room.name;
+          if (!room.isGroup && room.participants.length == 2) {
+            final otherUserId = room.participants.firstWhere(
+              (id) => id != currentUserId,
+              orElse: () => '',
+            );
+            
+            if (otherUserId.isNotEmpty && _userNamesCache.containsKey(otherUserId)) {
+              displayName = _userNamesCache[otherUserId]!;
+            }
+          }
+          
+          return _buildChatRoomItem(room, displayName);
         },
       ),
     );
   }
 
   // Item de sala de chat
-  Widget _buildChatRoomItem(ChatRoom room) {
+  Widget _buildChatRoomItem(ChatRoom room, String displayName) {
     // Icono según tipo de chat
     IconData chatIcon = room.isGroup ? Icons.group : Icons.person;
     Color chatColor = room.isGroup ? Colors.blue : Colors.deepPurple;
@@ -274,7 +286,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           children: [
             Expanded(
               child: Text(
-                room.name.isNotEmpty ? room.name : 'Chat',
+                displayName.isNotEmpty ? displayName : 'Chat',
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                 ),
@@ -536,6 +548,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         orElse: () => {'username': 'Chat'},
                       );
                       chatName = otherUser['username'];
+                      
+                      // Guardar en caché
+                      _userNamesCache[selectedUserIds[0]] = otherUser['username'];
                     }
                     
                     // Crear sala de chat
@@ -575,6 +590,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
           );
         },
       ),
+    );
+  }
+  
+  // Placeholder para el formulario de creación
+  Widget _buildCreateChatForm() {
+    return const Center(
+      child: Text('Formulario de creación de chat'),
     );
   }
 }

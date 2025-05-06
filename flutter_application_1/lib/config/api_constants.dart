@@ -34,4 +34,11 @@ class ApiConstants {
   static const String sendMessage = '$baseUrl$apiPath/chat/messages';
   static const String markMessagesRead = '$baseUrl$apiPath/chat/messages/read';
   static String deleteChatRoom(String roomId) => '$baseUrl$apiPath/chat/rooms/$roomId';
+// Notification endpoints
+static String notifications(String userId) => '$baseUrl$apiPath/notifications/user/$userId';
+static String markNotificationRead(String id) => '$baseUrl$apiPath/notifications/$id/read';
+static String markAllNotificationsRead(String userId) => '$baseUrl$apiPath/notifications/user/$userId/read-all';
+static String deleteNotification(String id) => '$baseUrl$apiPath/notifications/$id';
+static const String createNotification = '$baseUrl$apiPath/notifications';
+static const String bulkNotifications = '$baseUrl$apiPath/notifications/bulk';
 }

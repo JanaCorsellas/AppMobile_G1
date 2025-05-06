@@ -1,84 +1,105 @@
-// lib/main.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/config/routes.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_application_1/config/routes.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
 import 'package:flutter_application_1/services/socket_service.dart';
 import 'package:flutter_application_1/services/chat_service.dart';
 import 'package:flutter_application_1/services/http_service.dart';
+import 'package:flutter_application_1/services/notification_services.dart';
+import 'package:flutter_application_1/services/location_service.dart';
+import 'package:flutter_application_1/services/activity_tracking_service.dart';
+import 'package:flutter_application_1/providers/activity_provider_tracking.dart';
 
 void main() {
-  runApp(
-    MultiProvider(
-      providers: [
-        // Servicio de autenticación
-        ChangeNotifierProvider(create: (_) => AuthService()),
-        
-        // Servicio de Socket.IO - depende del servicio de autenticación
-        ChangeNotifierProvider(create: (_) => SocketService()),
-        
-        // Servicio HTTP - depende del servicio de autenticación
-        Provider<HttpService>(
-          create: (context) => HttpService(context.read<AuthService>()),
-        ),
-        
-        // Servicio de chat - depende de Socket.IO
-        ChangeNotifierProxyProvider<SocketService, ChatService>(
-          create: (context) => ChatService(context.read<SocketService>()),
-          update: (context, socketService, previous) => 
-            previous ?? ChatService(socketService),
-        ),
-      ],
-      child: const MyApp(),
-    ),
-  );
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  runApp(const MyApp());
 }
 
 class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
 
   @override
-  _MyAppState createState() => _MyAppState();
+  State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-  
+  final _navigatorKey = GlobalKey<NavigatorState>();
+  late final AuthService _authService;
+  late final SocketService _socketService;
+  late final LocationService _locationService;
+  late final HttpService _httpService;
+  late final ActivityTrackingService _activityTrackingService;
+  late final ActivityTrackingProvider _activityTrackingProvider;
+  late final ChatService _chatService;
+  bool _initialized = false;
+
   @override
   void initState() {
     super.initState();
     _initializeServices();
   }
-  
+
   Future<void> _initializeServices() async {
-    // Inicializar servicios
-    final authService = Provider.of<AuthService>(context, listen: false);
-    await authService.initialize();
-    
-    // Si el usuario está autenticado, conectar Socket.IO
-    if (authService.isLoggedIn && authService.currentUser != null) {
-      final socketService = Provider.of<SocketService>(context, listen: false);
-      socketService.connect(authService.currentUser);
-    }
+    _authService = AuthService();
+    _socketService = SocketService();
+    _locationService = LocationService();
+    _httpService = HttpService(_authService);
+    _activityTrackingService = ActivityTrackingService(_httpService);
+    _activityTrackingProvider = ActivityTrackingProvider(
+      _activityTrackingService,
+      _locationService,
+      _authService,
+    );
+    _chatService = ChatService(_socketService);
+
+    await _authService.initialize();
+    setState(() {
+      _initialized = true;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Sport Activity App',
-      navigatorKey: navigatorKey,
-      theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
-        scaffoldBackgroundColor: Colors.grey[100],
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.deepPurple,
-          foregroundColor: Colors.white,
-          elevation: 0,
+    if (!_initialized) {
+      return const MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
         ),
+      );
+    }
+
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: _authService),
+        ChangeNotifierProvider.value(value: _socketService),
+        ChangeNotifierProvider.value(value: _locationService),
+        Provider.value(value: _httpService),
+        Provider.value(value: _activityTrackingService),
+        ChangeNotifierProvider.value(value: _activityTrackingProvider),
+        ChangeNotifierProvider.value(value: _chatService),
+      ],
+      child: MaterialApp(
+        navigatorKey: _navigatorKey,
+        title: 'Sport Activity App',
+        theme: ThemeData(
+          primarySwatch: Colors.deepPurple,
+          scaffoldBackgroundColor: Colors.grey[100],
+        ),
+        initialRoute: AppRoutes.login,
+        onGenerateRoute: AppRoutes.generateRoute,
       ),
-      debugShowCheckedModeBanner: false,
-      initialRoute: AppRoutes.login,
-      onGenerateRoute: AppRoutes.generateRoute,
     );
+  }
+
+  @override
+  void dispose() {
+    _socketService.dispose();
+    _locationService.dispose();
+    _activityTrackingProvider.dispose();
+    _chatService.dispose();
+    super.dispose();
   }
 }

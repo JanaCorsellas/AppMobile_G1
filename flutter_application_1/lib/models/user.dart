@@ -58,12 +58,12 @@ class User {
       email: json['email'] ?? '',
       profilePicture: json['profilePicture'],
       bio: json['bio'],
-      level: json['level'] != null ? int.parse(json['level'].toString()) : 1,
+      level: json['level'] != null ? int.tryParse(json['level'].toString()) ?? 1 : 1,
       totalDistance: json['totalDistance'] != null 
-          ? double.parse(json['totalDistance'].toString()) 
+          ? double.tryParse(json['totalDistance'].toString()) ?? 0.0 
           : 0.0,
       totalTime: json['totalTime'] != null 
-          ? int.parse(json['totalTime'].toString()) 
+          ? (double.tryParse(json['totalTime'].toString()) ?? 0).round() 
           : 0,
       activities: json['activities'] != null 
           ? List<String>.from(json['activities'].map((e) => e.toString())) 
