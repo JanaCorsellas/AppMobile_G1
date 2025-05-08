@@ -2,6 +2,15 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+<!-- Añadir dentro del diccionario principal (entre <dict> y </dict>) -->
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>Esta app necesita acceso a tu ubicación para seguir tu actividad deportiva mientras está en uso.</string>
+<key>NSLocationAlwaysUsageDescription</key>
+<string>Esta app necesita acceso a tu ubicación para seguir tu actividad deportiva incluso cuando está en segundo plano.</string>
+<key>UIBackgroundModes</key>
+<array>
+    <string>location</string>
+</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
