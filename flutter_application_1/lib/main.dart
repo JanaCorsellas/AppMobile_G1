@@ -32,6 +32,7 @@ class _MyAppState extends State<MyApp> {
   late final ActivityTrackingService _activityTrackingService;
   late final ActivityTrackingProvider _activityTrackingProvider;
   late final ChatService _chatService;
+  late final NotificationService _notificationService;
   bool _initialized = false;
 
   @override
@@ -41,8 +42,12 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _initializeServices() async {
+    // Creamos los servicios en el orden correcto
     _authService = AuthService();
+    
+    // Crear SocketService pasando AuthService
     _socketService = SocketService();
+    
     _locationService = LocationService();
     _httpService = HttpService(_authService);
     _activityTrackingService = ActivityTrackingService(_httpService);
@@ -52,8 +57,27 @@ class _MyAppState extends State<MyApp> {
       _authService,
     );
     _chatService = ChatService(_socketService);
+    _notificationService = NotificationService(_httpService, _socketService);
 
+    // Establecer referencias cruzadas para gestión del token
+    _socketService.setAuthService(_authService);
+
+    // Inicializar servicios
     await _authService.initialize();
+    
+    // Si hay un usuario autenticado, conectar el socket con el token JWT
+    if (_authService.isLoggedIn && _authService.currentUser != null) {
+      _socketService.connect(
+        _authService.currentUser, 
+        accessToken: _authService.accessToken
+      );
+      
+      // Inicializar notificaciones para el usuario actual
+      if (_authService.currentUser != null) {
+        await _notificationService.initialize(_authService.currentUser!.id);
+      }
+    }
+    
     setState(() {
       _initialized = true;
     });
@@ -80,6 +104,7 @@ class _MyAppState extends State<MyApp> {
         Provider.value(value: _activityTrackingService),
         ChangeNotifierProvider.value(value: _activityTrackingProvider),
         ChangeNotifierProvider.value(value: _chatService),
+        ChangeNotifierProvider.value(value: _notificationService),
       ],
       child: MaterialApp(
         navigatorKey: _navigatorKey,
@@ -88,7 +113,7 @@ class _MyAppState extends State<MyApp> {
           primarySwatch: Colors.deepPurple,
           scaffoldBackgroundColor: Colors.grey[100],
         ),
-        initialRoute: AppRoutes.login,
+        initialRoute: _authService.isLoggedIn ? AppRoutes.userHome : AppRoutes.login,
         onGenerateRoute: AppRoutes.generateRoute,
       ),
     );
@@ -100,6 +125,7 @@ class _MyAppState extends State<MyApp> {
     _locationService.dispose();
     _activityTrackingProvider.dispose();
     _chatService.dispose();
+    _notificationService.dispose();
     super.dispose();
   }
 }

@@ -173,10 +173,10 @@ class AuthService with ChangeNotifier {
           await prefs.setString('refresh_token', _refreshToken!);
           await prefs.setString('user', json.encode(userData));
           
-          // Connect to socket
+          // Connect to socket with JWT token
           socketService.disconnect();
           await Future.delayed(Duration(milliseconds: 500));
-          socketService.connect(user);
+          socketService.connect(user, accessToken: _accessToken);
           
           _isLoading = false;
           notifyListeners();
@@ -232,6 +232,15 @@ class AuthService with ChangeNotifier {
         final data = json.decode(response.body);
         if (data['token'] != null) {
           _accessToken = data['token'];
+          
+          // Si también devuelve un nuevo refresh token, actualizarlo
+          if (data['refreshToken'] != null) {
+            _refreshToken = data['refreshToken'];
+            
+            // Actualizar en SharedPreferences
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('refresh_token', _refreshToken!);
+          }
           
           // Actualizar en SharedPreferences
           final prefs = await SharedPreferences.getInstance();
@@ -355,7 +364,7 @@ class AuthService with ChangeNotifier {
       _refreshToken = null;
       _isLoggedIn = false;
       
-      // Limpiar tokens almacenados
+        // Limpiar tokens almacenados
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('access_token');
       await prefs.remove('refresh_token');

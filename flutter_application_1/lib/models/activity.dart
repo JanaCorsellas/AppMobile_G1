@@ -120,17 +120,27 @@ class Activity {
     };
   }
 
-  // Helper for formatting duration
   String formatDuration() {
-    final hours = duration ~/ 60;
-    final minutes = duration % 60;
-    
-    if (hours > 0) {
-      return '${hours}h ${minutes}min';
-    } else {
-      return '${minutes}min';
-    }
+  // Duración en minutos (como parece estar almacenada)
+  int durationInMinutes = duration;
+  
+  // Convertir a segundos para cálculos
+  int totalSeconds = (durationInMinutes * 60).round();
+  int hours = totalSeconds ~/ 3600;
+  int minutes = (totalSeconds % 3600) ~/ 60;
+  int seconds = totalSeconds % 60;
+  
+  if (hours > 0) {
+    // Si hay horas: mostrar en formato "h:mm h"
+    return '$hours:${minutes.toString().padLeft(2, '0')} h';
+  } else if (minutes > 0) {
+    // Si hay minutos pero no horas: mostrar en formato "m:ss min"
+    return '$minutes:${seconds.toString().padLeft(2, '0')} min';
+  } else {
+    // Si solo hay segundos (menos de 1 minuto): mostrar en formato "s s"
+    return '$seconds s';
   }
+}
 
   // Helper for distance in km
   String formatDistance() {

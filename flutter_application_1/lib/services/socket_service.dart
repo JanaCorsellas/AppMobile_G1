@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:flutter_application_1/models/user.dart';
 import 'package:flutter_application_1/config/api_constants.dart';
+import 'package:flutter_application_1/services/auth_service.dart';
 
 enum SocketStatus { connecting, connected, disconnected }
 
@@ -20,6 +21,10 @@ class SocketService with ChangeNotifier {
   DateTime? _lastTypingEvent;
   int _reconnectAttempts = 0;
   static const int MAX_RECONNECT_ATTEMPTS = 5;
+  
+  // Almacenamiento del token actual
+  String? _currentToken;
+  AuthService? _authService;
 
   // Getters
   SocketStatus get socketStatus => _socketStatus;
@@ -31,8 +36,14 @@ class SocketService with ChangeNotifier {
   String? get userTyping => _userTyping;
 
   // Constructor
-  SocketService() {
+  SocketService({AuthService? authService}) {
+    _authService = authService;
     _initSocket();
+  }
+
+  // Set auth service después de la inicialización
+  void setAuthService(AuthService authService) {
+    _authService = authService;
   }
 
   // Inicializar Socket.IO
@@ -86,6 +97,12 @@ class SocketService with ChangeNotifier {
       print('Disconnected from Socket.IO');
       _socketStatus = SocketStatus.disconnected;
       _userTyping = null;
+      
+      // Si se desconecta y teníamos un token, puede ser que expiró
+      if (_currentToken != null) {
+        _handlePossibleTokenExpiration();
+      }
+      
       notifyListeners();
       
       // Intentar reconectar automáticamente si tenemos auth data
@@ -199,10 +216,54 @@ class SocketService with ChangeNotifier {
     _socket.on('user_joined', (data) {
       print('Usuario unido a sala: $data');
     });
+    
+    // Evento para cuando el token es inválido
+    _socket.on('token_expired', (_) {
+      print('Token JWT expirado. Intentando renovar...');
+      _handlePossibleTokenExpiration();
+    });
   }
 
-  // Actualiza la función connect para incluir más información
-  void connect(User? user) {
+  // Manejo de posible expiración de token
+  Future<void> _handlePossibleTokenExpiration() async {
+    // Verificar si la desconexión fue por token expirado (podría haber otros motivos)
+    if (_socket.auth != null && _currentToken != null && _authService != null) {
+      try {
+        print('Intentando renovar token para Socket.IO');
+        final tokenRefreshed = await _authService!.refreshAuthToken();
+        
+        if (tokenRefreshed) {
+          // Si se refrescó el token, actualizamos el token almacenado
+          _currentToken = _authService!.accessToken;
+          
+          if (_currentToken != null) {
+            print('Token renovado exitosamente. Reconectando Socket.IO');
+            
+            // Actualizar el token en la configuración de auth
+            _socket.auth = {
+              ..._socket.auth as Map<String, dynamic>,
+              'token': _currentToken,
+              'timestamp': DateTime.now().toIso8601String(),
+            };
+            
+            // Intentar reconectar con el nuevo token
+            if (_socketStatus == SocketStatus.disconnected) {
+              _socket.connect();
+              _socketStatus = SocketStatus.connecting;
+              notifyListeners();
+            }
+          }
+        } else {
+          print('No se pudo renovar el token para Socket.IO');
+        }
+      } catch (e) {
+        print('Error refrescando token para Socket.IO: $e');
+      }
+    }
+  }
+
+  // Actualiza la función connect para incluir el token JWT
+  void connect(User? user, {String? accessToken}) {
     if (user == null || user.id.isEmpty) {
       print('No se puede conectar sin ID de usuario');
       return;
@@ -214,29 +275,33 @@ class SocketService with ChangeNotifier {
       _socket.disconnect();
       // Esperar un momento para la desconexión
       Future.delayed(Duration(milliseconds: 500), () {
-        _connectWithUser(user);
+        _connectWithUser(user, accessToken);
       });
     } else {
-      _connectWithUser(user);
+      _connectWithUser(user, accessToken);
     }
   }
 
-  // Nueva función auxiliar para separar la lógica
-  void _connectWithUser(User user) {
+  // Nueva función auxiliar que incluye el token JWT
+  void _connectWithUser(User user, String? accessToken) {
     print('Conectando con ID de usuario: ${user.id}, username: ${user.username}');
     
-    // Configurar datos de autenticación con más detalles
+    // Guardar el token actual
+    _currentToken = accessToken;
+    
+    // Configurar datos de autenticación con el token JWT
     _socket.auth = {
       'userId': user.id,
       'username': user.username,
       'role': user.role,
       'timestamp': DateTime.now().toIso8601String(),
+      'token': accessToken,  // Incluir el token JWT
     };
 
     try {
       // Intentar conectar
       _socket.connect();
-      print('Conexión Socket.IO iniciada...');
+      print('Conexión Socket.IO iniciada con token JWT: ${accessToken != null ? "${accessToken.substring(0, 15)}..." : "no token"}');
       _socketStatus = SocketStatus.connecting;
       notifyListeners();
       
@@ -264,6 +329,29 @@ class SocketService with ChangeNotifier {
     }
   }
 
+  // Actualizar el token JWT en la conexión socket existente
+  void updateToken(String token) {
+    _currentToken = token;
+    
+    if (_socket.connected && _socket.auth != null) {
+      print('Actualizando token JWT en conexión Socket.IO existente');
+      
+      // Actualizar el token en la configuración de auth
+      _socket.auth = {
+        ..._socket.auth as Map<String, dynamic>,
+        'token': token,
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+      
+      // Emitir un evento de actualización de token al servidor
+      try {
+        _socket.emit('token_updated', { 'token': token });
+      } catch (e) {
+        print('Error emitiendo evento de actualización de token: $e');
+      }
+    }
+  }
+
   // Desconectar del servidor
   void disconnect() {
     try {
@@ -272,6 +360,7 @@ class SocketService with ChangeNotifier {
         _socket.disconnect();
         _socketStatus = SocketStatus.disconnected;
         _userTyping = null;
+        _currentToken = null;
         notifyListeners();
       }
     } catch (e) {

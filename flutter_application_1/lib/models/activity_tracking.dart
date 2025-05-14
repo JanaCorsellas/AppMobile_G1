@@ -164,17 +164,23 @@ class ActivityTracking {
     return '${(currentDistance / 1000).toStringAsFixed(2)} km';
   }
 
-  // Formatea la duración en formato HH:MM:SS
-  String get formattedDuration {
-    final hours = currentDuration ~/ 3600;
-    final minutes = (currentDuration % 3600) ~/ 60;
-    final seconds = currentDuration % 60;
-    
-    if (hours > 0) {
-      return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-    }
-    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+ // Formatea la duración según las reglas especificadas
+String get formattedDuration {
+  final hours = currentDuration ~/ 3600;
+  final minutes = (currentDuration % 3600) ~/ 60;
+  final seconds = currentDuration % 60;
+  
+  if (hours > 0) {
+    // Si hay horas, mostrar en formato "h:mm h"
+    return '${hours}:${minutes.toString().padLeft(2, '0')} h';
+  } else if (minutes > 0) {
+    // Si hay minutos pero no horas, mostrar en formato "m:ss min"
+    return '${minutes}:${seconds.toString().padLeft(2, '0')} min';
+  } else {
+    // Si solo hay segundos, mostrar en formato "s s"
+    return '$seconds s';
   }
+}
 
   // Formatea la velocidad para mostrarla en km/h
   String get formattedSpeed {
