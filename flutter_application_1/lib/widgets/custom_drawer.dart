@@ -154,16 +154,10 @@ class CustomDrawer extends StatelessWidget {
                   ),
                   _buildMenuItem(
                     context,
-                    icon: Icons.map_outlined,
+                    icon: Icons.directions_run,
                     title: 'Mis actividades',
-                    route: 'activities',
+                    route: AppRoutes.activities,
                     currentRoute: currentRoute,
-                    onTap: () {
-                      Navigator.pop(context); // Cerrar drawer
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Pantalla de actividades en desarrollo'))
-                      );
-                    },
                   ),
                   _buildMenuItem(
                     context,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/screens/achievements/achievements_screen.dart';
 import 'package:flutter_application_1/screens/activity/activity_detail_screen.dart';
+import 'package:flutter_application_1/screens/activity/activity_list_screen.dart';
 import 'package:flutter_application_1/screens/auth/login_screen.dart';
 import 'package:flutter_application_1/screens/auth/register_screen.dart';
 import 'package:flutter_application_1/screens/user/user_home.dart';
@@ -23,7 +24,7 @@ class AppRoutes {
   static const String activitySelection = '/activity-selection';
   static const String tracking = '/tracking';
   //static const String achievements = '/achievements';
-  //static const String activities = '/activities';
+  static const String activities = '/activities';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     try {
@@ -60,12 +61,8 @@ class AppRoutes {
           );
         /*case achievements:
           return MaterialPageRoute(builder: (_) => const AchievementsScreen());*/
-        /*case activities:
-          final args = settings.arguments as Map<String, dynamic>?;
-          final activityId = args?['activityId'] as String? ?? '';
-          return MaterialPageRoute(
-            builder: (_) => ActivityDetailScreen(activity: activityId),
-          );*/
+        case activities:
+          return MaterialPageRoute(builder: (_) => const ActivitiesListScreen());
 
         default:
           return _errorRoute(settings.name);
