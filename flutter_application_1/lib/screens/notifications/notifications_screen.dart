@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/screens/notifications/notification_detail_screen.dart';
 import 'package:flutter_application_1/screens/chat/chat_room.dart'; // Import ChatRoomScreen
+import 'package:flutter_application_1/widgets/custom_drawer.dart';
 import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:flutter_application_1/models/notification_models.dart';
@@ -159,6 +160,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const CustomDrawer(currentRoute: AppRoutes.notifications),
       appBar: AppBar(
         title: const Text('Notificaciones'),
          bottom: _isRefreshing 

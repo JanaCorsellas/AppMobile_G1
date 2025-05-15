@@ -10,6 +10,7 @@ import 'package:flutter_application_1/services/activity_service.dart';
 import 'package:flutter_application_1/services/http_service.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_application_1/screens/activity/activity_detail_screen.dart';
+import 'package:flutter_application_1/widgets/custom_drawer.dart';
 
 class UserHomeScreen extends StatefulWidget {
   const UserHomeScreen({Key? key}) : super(key: key);
@@ -115,6 +116,7 @@ Future<void> _loadUserActivities() async {
     final authService = Provider.of<AuthService>(context);
     final socketService = Provider.of<SocketService>(context);
     final user = authService.currentUser;
+    
 
     // Mostrar estado de la conexión de Socket.IO
     Widget connectionIndicator() {
@@ -167,6 +169,7 @@ Future<void> _loadUserActivities() async {
     }
 
     return Scaffold(
+      drawer: const CustomDrawer(currentRoute: AppRoutes.userHome),
       appBar: AppBar(
         title: const Text('EA Grup 1'),
         actions: [
@@ -174,25 +177,13 @@ Future<void> _loadUserActivities() async {
           
           // Botón de chat
           IconButton(
-            icon: const Icon(Icons.chat),
+            icon: const Icon(Icons.notifications),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ChatListScreen()),
-              );
+              Navigator.pushNamed(context, AppRoutes.notifications);
             },
-            tooltip: 'Chat',
+            tooltip: 'Notificacions',
           ),
           
-          // Botón de cerrar sesión
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await authService.logout(socketService);
-              Navigator.pushReplacementNamed(context, AppRoutes.login);
-            },
-            tooltip: 'Cerrar sesión',
-          ),
         ],
       ),
       body: RefreshIndicator(

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/config/routes.dart';
 import 'package:flutter_application_1/models/activity.dart';
+import 'package:flutter_application_1/widgets/custom_drawer.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';

@@ -81,10 +81,14 @@ class ActivityService {
       
       if (data is List) {
         return data.map((item) => Activity.fromJson(item)).toList();
-      } else {
-        print('Unexpected response format: $data');
-        return [];
-      }
+      } else if (data is Map && data['activities'] is List) {
+      return (data['activities'] as List)
+          .map((item) => Activity.fromJson(item))
+          .toList();
+    } else {
+      print('Unexpected response format: $data');
+      return [];
+    }
     } catch (e) {
       print('Error getting user activities: $e');
       throw Exception('Failed to load user activities');

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/config/routes.dart';
+import 'package:flutter_application_1/widgets/custom_drawer.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/screens/tracking/tracking_screen.dart';
 import 'package:flutter_application_1/utils/permission_handler.dart';
@@ -56,6 +58,7 @@ class _ActivitySelectionScreenState extends State<ActivitySelectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const CustomDrawer(currentRoute: AppRoutes.activitySelection),
       appBar: AppBar(
         title: const Text('Iniciar Actividad'),
       ),

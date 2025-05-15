@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/config/routes.dart';
+import 'package:flutter_application_1/widgets/custom_drawer.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/models/chat_room_model.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
@@ -134,6 +136,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     final chatService = Provider.of<ChatService>(context);
     
     return Scaffold(
+      drawer: const CustomDrawer(currentRoute: AppRoutes.chatList),
       appBar: AppBar(
         title: const Text('Chats'),
         actions: [
