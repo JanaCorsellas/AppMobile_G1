@@ -142,10 +142,25 @@ class Activity {
   }
 }
 
-  // Helper for distance in km
+  
+  // Formatea la distancia para mostrarla en kilómetros o metros
   String formatDistance() {
-    return '${(distance / 1000).toStringAsFixed(2)} km';
+  if (distance < 1000) {
+    // Si es menor a 1000 metros, mostrar en metros
+    return '${distance.toStringAsFixed(0)} m';
+  } else {
+    // Si es 1000 metros o más, mostrar en kilómetros
+    final kilometers = distance / 1000;
+    
+    // Si es un número entero (como 1.0, 2.0, etc.), mostrar sin decimales
+    if (kilometers == kilometers.roundToDouble()) {
+      return '${kilometers.toInt()} km';
+    }
+    
+    // Para distancias con decimales, mostrar con 2 decimales
+    return '${kilometers.toStringAsFixed(2)} km';
   }
+}
 
   Activity copyWith({
     String? id,
