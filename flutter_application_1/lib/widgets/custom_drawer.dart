@@ -154,7 +154,7 @@ class CustomDrawer extends StatelessWidget {
                   ),
                   _buildMenuItem(
                     context,
-                    icon: Icons.directions_run,
+                    icon: Icons.history,
                     title: 'Mis actividades',
                     route: AppRoutes.activities,
                     currentRoute: currentRoute,
@@ -165,6 +165,19 @@ class CustomDrawer extends StatelessWidget {
                     title: 'Iniciar actividad',
                     route: AppRoutes.activitySelection,
                     currentRoute: currentRoute,
+                  ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.music_note_outlined,
+                    title: 'Mis canciones',
+                    route: 'songs',
+                    currentRoute: currentRoute,
+                    onTap: () {
+                      Navigator.pop(context); // Cerrar drawer
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Pantalla de playlist en desarrollo'))
+                      );
+                    },
                   ),
                   _buildMenuItem(
                     context,
@@ -191,6 +204,13 @@ class CustomDrawer extends StatelessWidget {
                     icon: Icons.notifications_none_outlined,
                     title: 'Notificaciones',
                     route: AppRoutes.notifications,
+                    currentRoute: currentRoute,
+                  ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.settings,
+                    title: 'Configuración',
+                    route: AppRoutes.settingsRoute,
                     currentRoute: currentRoute,
                   ),
                   const Divider(),

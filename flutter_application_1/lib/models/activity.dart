@@ -69,6 +69,13 @@ class Activity {
       if (routeData is List) {
         return routeData.map((item) {
           if (item is String) return item;
+          if (item is Map) {
+          // If it's an object ID or location object, convert to string
+          if (item['_id'] != null) return item['_id'].toString();
+          if (item['latitude'] != null && item['longitude'] != null) {
+            return "${item['latitude']},${item['longitude']}";
+          }
+        }
           // If route item is a map or other type, convert to string
           return item.toString();
         }).toList();
@@ -95,16 +102,16 @@ class Activity {
       endTime: json['endTime'] != null 
           ? DateTime.parse(json['endTime']) 
           : DateTime.now(),
-      duration: json['duration'] ?? 0,
+      duration: json['duration'] is int 
+          ? json['duration'] 
+          : (json['duration'] is double ? json['duration'].round() : 0),
       distance: (json['distance'] ?? 0).toDouble(),
       elevationGain: (json['elevationGain'] ?? 0).toDouble(),
       averageSpeed: (json['averageSpeed'] ?? 0).toDouble(),
       caloriesBurned: json['caloriesBurned'] != null 
           ? (json['caloriesBurned']).toDouble() 
           : null,
-      route: json['route'] != null 
-          ? List<String>.from(json['route'])
-          : [],
+      route: safeRouteList(json['route']),
       musicPlaylist: json['musicPlaylist'] != null 
           ? List<String>.from(json['musicPlaylist'])
           : null,

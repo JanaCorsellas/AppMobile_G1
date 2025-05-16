@@ -9,10 +9,12 @@ import 'package:flutter_application_1/services/notification_services.dart';
 import 'package:flutter_application_1/services/location_service.dart';
 import 'package:flutter_application_1/services/activity_tracking_service.dart';
 import 'package:flutter_application_1/providers/activity_provider_tracking.dart';
+import 'package:flutter_application_1/providers/theme_provider.dart';
+import 'package:flutter_application_1/providers/language_provider.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  
   runApp(const MyApp());
 }
 
@@ -33,6 +35,8 @@ class _MyAppState extends State<MyApp> {
   late final ActivityTrackingProvider _activityTrackingProvider;
   late final ChatService _chatService;
   late final NotificationService _notificationService;
+  late final ThemeProvider _themeProvider;
+  late final LanguageProvider _languageProvider;
   bool _initialized = false;
 
   @override
@@ -43,6 +47,8 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> _initializeServices() async {
     // Creamos los servicios en el orden correcto
+    _themeProvider = ThemeProvider();
+    _languageProvider = LanguageProvider();
     _authService = AuthService();
     
     // Crear SocketService pasando AuthService
@@ -105,16 +111,30 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider.value(value: _activityTrackingProvider),
         ChangeNotifierProvider.value(value: _chatService),
         ChangeNotifierProvider.value(value: _notificationService),
+        ChangeNotifierProvider.value(value: _themeProvider),
+        ChangeNotifierProvider.value(value: _languageProvider),
       ],
-      child: MaterialApp(
-        navigatorKey: _navigatorKey,
-        title: 'Sport Activity App',
-        theme: ThemeData(
-          primarySwatch: Colors.deepPurple,
-          scaffoldBackgroundColor: Colors.grey[100],
-        ),
-        initialRoute: _authService.isLoggedIn ? AppRoutes.userHome : AppRoutes.login,
-        onGenerateRoute: AppRoutes.generateRoute,
+      child: Consumer2<ThemeProvider, LanguageProvider>(
+        builder: (context, themeProvider, languageProvider, _) {
+          return MaterialApp(
+            navigatorKey: _navigatorKey,
+            title: 'Sport Activity App',
+            theme: themeProvider.theme,
+            locale: languageProvider.locale,
+            initialRoute: _authService.isLoggedIn ? AppRoutes.userHome : AppRoutes.login,
+            onGenerateRoute: AppRoutes.generateRoute,
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en', 'US'),
+              Locale('es', 'ES'),
+              Locale('ca', 'ES'),
+            ],
+          );
+        },
       ),
     );
   }

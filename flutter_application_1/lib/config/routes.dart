@@ -11,6 +11,7 @@ import 'package:flutter_application_1/screens/chat/chat_room.dart';
 import 'package:flutter_application_1/screens/tracking/activity_selection_screen.dart';
 import 'package:flutter_application_1/screens/tracking/tracking_screen.dart';
 import 'package:flutter_application_1/screens/notifications/notifications_screen.dart';
+import 'package:flutter_application_1/screens/settings/settings_screen.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -25,6 +26,7 @@ class AppRoutes {
   static const String tracking = '/tracking';
   //static const String achievements = '/achievements';
   static const String activities = '/activities';
+  static const String settingsRoute = '/settings';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     try {
@@ -63,7 +65,8 @@ class AppRoutes {
           return MaterialPageRoute(builder: (_) => const AchievementsScreen());*/
         case activities:
           return MaterialPageRoute(builder: (_) => const ActivitiesListScreen());
-
+        case settingsRoute:
+          return MaterialPageRoute(builder: (_) => const SettingsScreen());
         default:
           return _errorRoute(settings.name);
       }
