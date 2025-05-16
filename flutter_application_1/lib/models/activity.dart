@@ -35,23 +35,45 @@ class Activity {
 
   factory Activity.fromJson(Map<String, dynamic> json) {
     // Parse the type string to enum
-    ActivityType parseType(String typeStr) {
-      switch (typeStr.toLowerCase()) {
-        case 'running': return ActivityType.running;
-        case 'cycling': return ActivityType.cycling;
-        case 'hiking': return ActivityType.hiking;
-        case 'walking': return ActivityType.walking;
-        default: return ActivityType.running;
+    ActivityType parseType(dynamic typeData) {
+      if (typeData is String) {
+        switch (typeData.toLowerCase()) {
+          case 'running': return ActivityType.running;
+          case 'cycling': return ActivityType.cycling;
+          case 'hiking': return ActivityType.hiking;
+          case 'walking': return ActivityType.walking;
+          default: return ActivityType.running;
+        }
       }
+      return ActivityType.running; // Default case
     }
 
     // Handle if author is either a string ID or a nested object with _id
     String getAuthorId(dynamic author) {
+      if (author == null) return '';
       if (author is String) return author;
-      if (author is Map<String, dynamic> && author.containsKey('_id')) {
-        return author['_id'] as String;
+      if (author is Map<String, dynamic>) {
+        if (author.containsKey('_id')) {
+          final id = author['_id'];
+          if (id is String) return id;
+          // If id is not a string, convert it to string
+          return id.toString();
+        }
+        return '';
       }
       return '';
+    }
+
+    List<String> safeRouteList(dynamic routeData) {
+      if (routeData == null) return [];
+      if (routeData is List) {
+        return routeData.map((item) {
+          if (item is String) return item;
+          // If route item is a map or other type, convert to string
+          return item.toString();
+        }).toList();
+      }
+      return [];
     }
 
     // Extract author name from object if available

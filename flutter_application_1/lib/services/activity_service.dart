@@ -25,7 +25,12 @@ class ActivityService {
       if (data is List) {
         // If response is a direct list of activities
         for (var item in data) {
-          activities.add(Activity.fromJson(item));
+          try {
+            activities.add(Activity.fromJson(item));
+          } catch (e) {
+            print('Error parsing activity in getActivities: $e');
+            // Continue with next item
+          }
         }
         
         return {
@@ -38,7 +43,12 @@ class ActivityService {
       } else if (data['activities'] != null) {
         // If response is an object with activities field
         for (var item in data['activities']) {
-          activities.add(Activity.fromJson(item));
+          try {
+            activities.add(Activity.fromJson(item));
+          } catch (e) {
+            print('Error parsing activity in getActivities: $e');
+            // Continue with next item
+          }
         }
         
         return {
@@ -64,6 +74,7 @@ class ActivityService {
   // Get activity by ID
   Future<Activity> getActivityById(String id) async {
     try {
+      print('Fetching activity by ID: $id');
       final response = await _httpService.get(ApiConstants.activity(id));
       final data = await _httpService.parseJsonResponse(response);
       return Activity.fromJson(data);
@@ -73,24 +84,69 @@ class ActivityService {
     }
   }
 
-  // Get activities by user ID
+  // Get activities by user ID - with enhanced debugging
   Future<List<Activity>> getActivitiesByUserId(String userId) async {
     try {
+      print('Fetching activities for user: $userId');
       final response = await _httpService.get(ApiConstants.userActivities(userId));
+      
+      // Print the raw response for debugging
+      print('Raw response status code: ${response.statusCode}');
+      print('Raw response body type: ${response.body.runtimeType}');
+      print('Raw response length: ${response.body.length}');
+      // Print a snippet of the response to avoid flooding the console
+      print('Raw response snippet: ${response.body.substring(0, min(200, response.body.length))}...');
+      
       final data = await _httpService.parseJsonResponse(response);
+      print('Parsed data type: ${data.runtimeType}');
+      
+      List<Activity> activities = [];
       
       if (data is List) {
-        return data.map((item) => Activity.fromJson(item)).toList();
-      } else if (data is Map && data['activities'] is List) {
-      return (data['activities'] as List)
-          .map((item) => Activity.fromJson(item))
-          .toList();
-    } else {
+        print('Processing list data with ${data.length} items');
+        for (var item in data) {
+          print('Processing item type: ${item.runtimeType}');
+          try {
+            activities.add(Activity.fromJson(item));
+          } catch (e) {
+            print('Error parsing activity item: $e');
+            // Continue with next item
+          }
+        }
+        return activities;
+      } else if (data is Map) {
+        if (data['activities'] is List) {
+          print('Processing map with activities list');
+          final activitiesList = data['activities'] as List;
+          print('Activities list length: ${activitiesList.length}');
+          
+          for (var item in activitiesList) {
+            print('Processing item type: ${item.runtimeType}');
+            try {
+              activities.add(Activity.fromJson(item));
+            } catch (e) {
+              print('Error parsing activity item: $e');
+              // Continue with next item
+            }
+          }
+          return activities;
+        } else {
+          // Try to parse as a single activity
+          print('Attempting to parse data as a single activity');
+          try {
+            activities.add(Activity.fromJson(Map<String, dynamic>.from(data)));
+            return activities;
+          } catch (e) {
+            print('Error parsing as single activity: $e');
+          }
+        }
+      }
+      
       print('Unexpected response format: $data');
       return [];
-    }
     } catch (e) {
-      print('Error getting user activities: $e');
+      print('Error getting user activities with details: $e');
+      print('Stack trace: ${StackTrace.current}');
       throw Exception('Failed to load user activities');
     }
   }
@@ -137,4 +193,9 @@ class ActivityService {
       return false;
     }
   }
+}
+
+// Helper function to avoid importing dart:math
+int min(int a, int b) {
+  return a < b ? a : b;
 }
