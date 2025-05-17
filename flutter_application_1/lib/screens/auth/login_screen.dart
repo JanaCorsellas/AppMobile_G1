@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_application_1/config/routes.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
 import 'package:flutter_application_1/services/socket_service.dart';
+import 'package:flutter_application_1/extensions/string_extensions.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -55,12 +56,12 @@ class _LoginScreenState extends State<LoginScreen> {
           setState(() {
             _errorMessage = authService.error.isNotEmpty 
                 ? authService.error 
-                : 'Login failed. Please check your credentials.';
+                : 'login_failed'.tr(context);
           });
         }
       } catch (e) {
         setState(() {
-          _errorMessage = 'An error occurred during login';
+          _errorMessage = 'login_error'.tr(context);
         });
         print('Login error: $e');
       } finally {
@@ -118,9 +119,9 @@ Widget build(BuildContext context) {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(
-                        'Iniciar Sesión',
-                        style: TextStyle(
+                      Text(
+                        'login'.tr(context),
+                        style: const TextStyle(
                           fontSize: 24.0,
                           fontWeight: FontWeight.bold,
                           color: Colors.deepPurple,
@@ -129,15 +130,15 @@ Widget build(BuildContext context) {
                       const SizedBox(height: 24.0),
                       TextFormField(
                         controller: _usernameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Email',
-                          prefixIcon: Icon(Icons.email),
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: 'email'.tr(context),
+                          prefixIcon: const Icon(Icons.email),
+                          border: const OutlineInputBorder(),
                         ),
                         keyboardType: TextInputType.emailAddress,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Por favor ingresa tu email';
+                            return 'email_required'.tr(context);
                           }
                           return null;
                         },
@@ -145,15 +146,15 @@ Widget build(BuildContext context) {
                       const SizedBox(height: 16.0),
                       TextFormField(
                         controller: _passwordController,
-                        decoration: const InputDecoration(
-                          labelText: 'Contraseña',
-                          prefixIcon: Icon(Icons.lock),
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: 'password'.tr(context),
+                          prefixIcon: const Icon(Icons.lock),
+                          border: const OutlineInputBorder(),
                         ),
                         obscureText: true,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Por favor ingresa tu contraseña';
+                            return 'password_required'.tr(context);
                           }
                           return null;
                         },
@@ -184,9 +185,9 @@ Widget build(BuildContext context) {
                               ? const CircularProgressIndicator(
                                   color: Colors.white,
                                 )
-                              : const Text(
-                                  'Iniciar Sesión',
-                                  style: TextStyle(fontSize: 16.0),
+                              : Text(
+                                  'login_button'.tr(context),
+                                  style: const TextStyle(fontSize: 16.0),
                                 ),
                         ),
                       ),
@@ -195,9 +196,9 @@ Widget build(BuildContext context) {
                         onPressed: () {
                           Navigator.pushNamed(context, AppRoutes.register);
                         },
-                        child: const Text(
-                          '¿No tienes una cuenta? Regístrate',
-                          style: TextStyle(color: Colors.deepPurple),
+                        child: Text(
+                          'no_account'.tr(context),
+                          style: const TextStyle(color: Colors.deepPurple),
                         ),
                       ),
                     ],
@@ -212,4 +213,3 @@ Widget build(BuildContext context) {
   );
 }
 }
-

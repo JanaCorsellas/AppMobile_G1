@@ -1,7 +1,7 @@
-// flutter_application_1/lib/screens/notifications/notifications_screen.dart
+// lib/screens/notifications/notifications_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/screens/notifications/notification_detail_screen.dart';
-import 'package:flutter_application_1/screens/chat/chat_room.dart'; // Import ChatRoomScreen
+import 'package:flutter_application_1/screens/chat/chat_room.dart';
 import 'package:flutter_application_1/widgets/custom_drawer.dart';
 import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -9,6 +9,7 @@ import 'package:flutter_application_1/models/notification_models.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
 import 'package:flutter_application_1/services/notification_services.dart';
 import 'package:flutter_application_1/config/routes.dart';
+import 'package:flutter_application_1/extensions/string_extensions.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({Key? key}) : super(key: key);
@@ -75,7 +76,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Error al cargar las notificaciones: $e';
+        _errorMessage = 'load_notifications_error'.tr(context);
       });
     } finally {
       setState(() {
@@ -147,12 +148,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Todas las notificaciones marcadas como leídas'))
+          SnackBar(content: Text('all_notifications_read'.tr(context)))
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'))
+        SnackBar(content: Text('error'.tr(context) + ': $e'))
       );
     }
   }
@@ -162,7 +163,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return Scaffold(
       drawer: const CustomDrawer(currentRoute: AppRoutes.notifications),
       appBar: AppBar(
-        title: const Text('Notificaciones'),
+        title: Text('notifications_title'.tr(context)),
          bottom: _isRefreshing 
         ? const PreferredSize(
             preferredSize: Size.fromHeight(2.0),
@@ -176,7 +177,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               if (notificationService.unreadCount > 0) {
                 return IconButton(
                   icon: const Icon(Icons.done_all),
-                  tooltip: 'Marcar todas como leídas',
+                  tooltip: 'mark_all_read'.tr(context),
                   onPressed: _markAllAsRead,
                 );
               }
@@ -208,7 +209,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: _loadNotifications,
-                      child: const Text('Reintentar'),
+                      child: Text('retry'.tr(context)),
                     ),
                   ],
                 ),
@@ -229,7 +230,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'No tienes notificaciones',
+                      'no_notifications'.tr(context),
                       style: TextStyle(
                         fontSize: 18,
                         color: Colors.grey[600],
@@ -286,16 +287,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: const Text('¿Eliminar notificación?'),
-              content: const Text('¿Estás seguro de que deseas eliminar esta notificación?'),
+              title: Text('delete_notification'.tr(context)),
+              content: Text('delete_notification_confirm'.tr(context)),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('Cancelar'),
+                  child: Text('cancel'.tr(context)),
                 ),
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(true),
-                  child: const Text('Eliminar'),
+                  child: Text('delete'.tr(context)),
                 ),
               ],
             );
@@ -365,37 +366,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   void _navigateToNotificationDetail(NotificationModel notification) {
     _markAsRead(notification);
     // Navigate based on notification type and data
-    if (notification.type == 'achievement_unlocked' && notification.data != null) {
-      final achievementId = notification.data?['achievementId'];
-      if (achievementId != null) {
-        // Navigate to achievement detail
-        // Navigator.pushNamed(context, AppRoutes.achievementDetail, arguments: {'id': achievementId});
-        return;
-      }
-    } else if (notification.type == 'challenge_completed' && notification.data != null) {
-      final challengeId = notification.data?['challengeId'];
-      if (challengeId != null) {
-        // Navigate to challenge detail
-        // Navigator.pushNamed(context, AppRoutes.challengeDetail, arguments: {'id': challengeId});
-        return;
-      }
-    } else if (notification.type == 'friend_request' && notification.data != null) {
-      final userId = notification.data?['userId'];
-      if (userId != null) {
-        // Navigate to user profile
-        // Navigator.pushNamed(context, AppRoutes.userProfile, arguments: {'id': userId});
-        return;
-      }
-    }
-    
-    // Default: Show notification detail
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => NotificationDetailScreen(notificationId: notification.id),
-      ),
-    );
-    // Navigate based on notification type and data
     if (notification.type == 'chat_message' && notification.data != null) {
       final roomId = notification.data?['roomId'];
       if (roomId != null) {
@@ -439,7 +409,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ),
     );
   }
-  
 
   Future<void> _deleteNotification(String notificationId) async {
     final notificationService = Provider.of<NotificationService>(context, listen: false);
@@ -449,13 +418,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       
       if (!success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al eliminar la notificación'))
+          SnackBar(content: Text('delete_notification_error'.tr(context)))
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'))
+          SnackBar(content: Text('error'.tr(context) + ': $e'))
         );
       }
     }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/config/routes.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
+import 'package:flutter_application_1/extensions/string_extensions.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -47,7 +48,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         if (success) {
           setState(() {
-            _successMessage = 'Registration successful! You can now login.';
+            _successMessage = 'register_success'.tr(context);
           });
           
           // Clear the form
@@ -65,12 +66,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
           setState(() {
             _errorMessage = authService.error.isNotEmpty 
                 ? authService.error 
-                : 'Registration failed. Please try again.';
+                : 'register_failed'.tr(context);
           });
         }
       } catch (e) {
         setState(() {
-          _errorMessage = 'An error occurred during registration';
+          _errorMessage = 'register_error'.tr(context);
         });
         print('Registration error: $e');
       } finally {
@@ -87,7 +88,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Register'),
+        title: Text('register'.tr(context)),
         elevation: 0,
       ),
       body: Center(
@@ -105,9 +106,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      'Create Account',
-                      style: TextStyle(
+                    Text(
+                      'create_account'.tr(context),
+                      style: const TextStyle(
                         fontSize: 24.0,
                         fontWeight: FontWeight.bold,
                         color: Colors.deepPurple,
@@ -116,14 +117,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 24.0),
                     TextFormField(
                       controller: _usernameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Username',
-                        prefixIcon: Icon(Icons.person),
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: 'username'.tr(context),
+                        prefixIcon: const Icon(Icons.person),
+                        border: const OutlineInputBorder(),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter a username';
+                          return 'username_required'.tr(context);
                         }
                         return null;
                       },
@@ -131,19 +132,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 16.0),
                     TextFormField(
                       controller: _emailController,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: Icon(Icons.email),
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: 'email'.tr(context),
+                        prefixIcon: const Icon(Icons.email),
+                        border: const OutlineInputBorder(),
                       ),
                       keyboardType: TextInputType.emailAddress,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter an email';
+                          return 'email_required'.tr(context);
                         }
                         if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
                             .hasMatch(value)) {
-                          return 'Please enter a valid email';
+                          return 'valid_email_required'.tr(context);
                         }
                         return null;
                       },
@@ -151,18 +152,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 16.0),
                     TextFormField(
                       controller: _passwordController,
-                      decoration: const InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: Icon(Icons.lock),
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: 'password'.tr(context),
+                        prefixIcon: const Icon(Icons.lock),
+                        border: const OutlineInputBorder(),
                       ),
                       obscureText: true,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter a password';
+                          return 'password_required'.tr(context);
                         }
                         if (value.length < 6) {
-                          return 'Password must be at least 6 characters';
+                          return 'password_length'.tr(context);
                         }
                         return null;
                       },
@@ -204,9 +205,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ? const CircularProgressIndicator(
                                 color: Colors.white,
                               )
-                            : const Text(
-                                'Register',
-                                style: TextStyle(fontSize: 16.0),
+                            : Text(
+                                'register_button'.tr(context),
+                                style: const TextStyle(fontSize: 16.0),
                               ),
                       ),
                     ),
@@ -215,9 +216,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       onPressed: () {
                         Navigator.pushReplacementNamed(context, AppRoutes.login);
                       },
-                      child: const Text(
-                        'Already have an account? Sign In',
-                        style: TextStyle(color: Colors.deepPurple),
+                      child: Text(
+                        'have_account'.tr(context),
+                        style: const TextStyle(color: Colors.deepPurple),
                       ),
                     ),
                   ],

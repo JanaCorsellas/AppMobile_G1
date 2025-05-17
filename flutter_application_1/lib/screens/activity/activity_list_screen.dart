@@ -1,3 +1,4 @@
+// lib/screens/activity/activity_list_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/models/activity.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_application_1/services/activity_service.dart';
 import 'package:flutter_application_1/widgets/custom_drawer.dart';
 import 'package:flutter_application_1/config/routes.dart';
 import 'package:flutter_application_1/screens/activity/activity_detail_screen.dart';
+import 'package:flutter_application_1/extensions/string_extensions.dart';
 
 class ActivitiesListScreen extends StatefulWidget {
   const ActivitiesListScreen({Key? key}) : super(key: key);
@@ -49,14 +51,14 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen> {
         });
       } else {
         setState(() {
-          _errorMessage = 'No hay usuario autenticado';
+          _errorMessage = 'no_auth_user'.tr(context);
           _isLoading = false;
         });
       }
     } catch (e) {
       print('Error cargando actividades: $e');
       setState(() {
-        _errorMessage = 'Error al cargar actividades';
+        _errorMessage = 'load_activities_error'.tr(context);
         _isLoading = false;
       });
     }
@@ -65,16 +67,16 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: const CustomDrawer(currentRoute: AppRoutes.activities), // Usaremos una nueva ruta
+      drawer: const CustomDrawer(currentRoute: AppRoutes.activities),
       appBar: AppBar(
-        title: const Text('Mis Actividades'),
+        title: Text('my_activities'.tr(context)),
         backgroundColor: const Color.fromARGB(255, 21, 95, 51),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadActivities,
-            tooltip: 'Actualizar',
+            tooltip: 'refresh'.tr(context),
           ),
         ],
       ),
@@ -91,7 +93,7 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen> {
         },
         backgroundColor: const Color.fromARGB(255, 21, 95, 51),
         child: const Icon(Icons.add),
-        tooltip: 'Iniciar nueva actividad',
+        tooltip: 'start_activity'.tr(context),
       ),
     );
   }
@@ -108,7 +110,7 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen> {
           ),
           const SizedBox(height: 20),
           Text(
-            'No hay actividades',
+            'no_activities'.tr(context),
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -117,7 +119,7 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen> {
           ),
           const SizedBox(height: 10),
           Text(
-            'Inicia tu primera actividad con el botón +',
+            'start_new_activity'.tr(context),
             style: TextStyle(
               color: Colors.grey[500],
             ),
@@ -128,7 +130,7 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen> {
               Navigator.pushNamed(context, AppRoutes.activitySelection);
             },
             icon: const Icon(Icons.add),
-            label: const Text('Nueva actividad'),
+            label: Text('new_activity'.tr(context)),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color.fromARGB(255, 21, 95, 51),
               foregroundColor: Colors.white,
@@ -152,7 +154,7 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen> {
           ),
           const SizedBox(height: 20),
           Text(
-            'Error al cargar actividades',
+            'load_activities_error_title'.tr(context),
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -170,7 +172,7 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen> {
           ElevatedButton.icon(
             onPressed: _loadActivities,
             icon: const Icon(Icons.refresh),
-            label: const Text('Reintentar'),
+            label: Text('retry'.tr(context)),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             ),

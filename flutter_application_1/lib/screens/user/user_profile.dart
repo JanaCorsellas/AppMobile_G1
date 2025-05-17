@@ -1,3 +1,4 @@
+// lib/screens/user/user_profile.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/services/http_service.dart';
 import 'package:flutter_application_1/widgets/custom_drawer.dart';
@@ -6,7 +7,7 @@ import 'package:flutter_application_1/config/routes.dart';
 import 'package:flutter_application_1/models/user.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
 import 'package:flutter_application_1/services/user_service.dart';
-import 'package:flutter_application_1/widgets/translated_text.dart';
+import 'package:flutter_application_1/extensions/string_extensions.dart';
 
 import '../../services/socket_service.dart';
 
@@ -106,12 +107,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         });
       } else {
         setState(() {
-          _errorMessage = 'No se pudieron cargar los datos del usuario';
+          _errorMessage = 'user_data_not_found'.tr(context);
         });
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Error al cargar datos del usuario: $e';
+        _errorMessage = 'user_data_load_error'.tr(context) + ': $e';
       });
       print('Error al cargar datos del usuario: $e');
     } finally {
@@ -142,7 +143,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         // Update local user data
         setState(() {
           _user = updatedUser;
-          _successMessage = 'Perfil actualizado con éxito';
+          _successMessage = 'profile_updated'.tr(context);
           _isEditing = false;
         });
         
@@ -155,7 +156,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         
       } catch (e) {
         setState(() {
-          _errorMessage = 'Error al actualizar perfil: $e';
+          _errorMessage = 'profile_update_error'.tr(context) + ': $e';
         });
         print('Error al actualizar perfil: $e');
       } finally {
@@ -171,7 +172,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     return Scaffold(
       drawer: const CustomDrawer(currentRoute: AppRoutes.userProfile),
       appBar: AppBar(
-        title: const Text('Mi Perfil'),
+        title: Text('my_profile'.tr(context)),
         leading: null,
         automaticallyImplyLeading: true,
         actions: [
@@ -183,7 +184,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               await authService.logout(socketService);
               Navigator.pushReplacementNamed(context, AppRoutes.login);
             },
-            tooltip: 'Cerrar sesión',
+            tooltip: 'logout'.tr(context),
           ),
         ],
       ),
@@ -194,18 +195,18 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const TranslatedText('No se encontraron datos de usuario'),
+                      Text('no_user_data'.tr(context)),
                       if (_errorMessage.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.all(16.0),
-                          child: TranslatedText(
+                          child: Text(
                             _errorMessage,
                             style: const TextStyle(color: Colors.red),
                           ),
                         ),
                       ElevatedButton(
                         onPressed: _loadUserData,
-                        child: const TranslatedText('Reintentar'),
+                        child: Text('retry'.tr(context)),
                       ),
                     ],
                   ),
@@ -228,7 +229,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               Icon(Icons.error, color: Colors.red.shade800),
                               const SizedBox(width: 8.0),
                               Expanded(
-                                child: TranslatedText(
+                                child: Text(
                                   _errorMessage,
                                   style: TextStyle(color: Colors.red.shade800),
                                 ),
@@ -249,7 +250,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               Icon(Icons.check_circle, color: Colors.green.shade800),
                               const SizedBox(width: 8.0),
                               Expanded(
-                                child: TranslatedText(
+                                child: Text(
                                   _successMessage,
                                   style: TextStyle(color: Colors.green.shade800),
                                 ),
@@ -288,14 +289,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        TranslatedText(
+                                        Text(
                                           _user!.username,
                                           style: const TextStyle(
                                             fontSize: 24.0,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                        TranslatedText(
+                                        Text(
                                           _user!.email,
                                           style: const TextStyle(
                                             fontSize: 16.0,
@@ -303,8 +304,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                           ),
                                         ),
                                         const SizedBox(height: 8.0),
-                                       TranslatedText(
-                                          'Nivel: ${_user!.level}',
+                                       Text(
+                                          'user_level'.tr(context).replaceFirst('{level}', _user!.level.toString()),
                                           style: const TextStyle(
                                             fontSize: 16.0,
                                             fontWeight: FontWeight.bold,
@@ -330,49 +331,49 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                 const Divider(),
                                 ListTile(
                                   leading: const Icon(Icons.info_outline),
-                                  title: const TranslatedText('Biografía'),
-                                  subtitle: TranslatedText(
-                                    _user!.bio ?? 'No hay biografía disponible',
+                                  title: Text('biography'.tr(context)),
+                                  subtitle: Text(
+                                    _user!.bio ?? 'no_biography'.tr(context),
                                     style: const TextStyle(fontSize: 14.0),
                                   ),
                                 ),
                                 ListTile(
                                   leading: const Icon(Icons.directions_run),
-                                  title: const TranslatedText('Distancia Total'),
-                                  subtitle: TranslatedText(
+                                  title: Text('total_distance'.tr(context)),
+                                  subtitle: Text(
                                     '${(_user!.totalDistance / 1000).toStringAsFixed(2)} km',
                                     style: const TextStyle(fontSize: 14.0),
                                   ),
                                 ),
                                 ListTile(
                                   leading: const Icon(Icons.timer),
-                                  title: const TranslatedText('Tiempo Total'),
-                                  subtitle: TranslatedText(
-                                    '${_user!.totalTime} minutos',
+                                  title: Text('total_time'.tr(context)),
+                                  subtitle: Text(
+                                    '${_user!.totalTime} ' + 'minutes'.tr(context),
                                     style: const TextStyle(fontSize: 14.0),
                                   ),
                                 ),
                                 ListTile(
                                   leading: const Icon(Icons.event_note),
-                                  title: const TranslatedText('Actividades'),
-                                  subtitle: TranslatedText(
-                                    '${_user!.activities?.length ?? 0} actividades',
+                                  title: Text('activities'.tr(context)),
+                                  subtitle: Text(
+                                    '${_user!.activities?.length ?? 0} ' + 'activities'.tr(context),
                                     style: const TextStyle(fontSize: 14.0),
                                   ),
                                 ),
                                 ListTile(
                                   leading: const Icon(Icons.emoji_events),
-                                  title: const TranslatedText('Logros'),
-                                  subtitle: TranslatedText(
-                                    '${_user!.achievements?.length ?? 0} logros',
+                                  title: Text('achievements'.tr(context)),
+                                  subtitle: Text(
+                                    '${_user!.achievements?.length ?? 0} ' + 'achievements'.tr(context),
                                     style: const TextStyle(fontSize: 14.0),
                                   ),
                                 ),
                                 ListTile(
                                   leading: const Icon(Icons.flag),
-                                  title: const TranslatedText('Retos Completados'),
-                                  subtitle: TranslatedText(
-                                    '${_user!.challengesCompleted?.length ?? 0} retos',
+                                  title: Text('completed_challenges'.tr(context)),
+                                  subtitle: Text(
+                                    '${_user!.challengesCompleted?.length ?? 0} ' + 'challenges'.tr(context),
                                     style: const TextStyle(fontSize: 14.0),
                                   ),
                                 ),
@@ -384,16 +385,16 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                     children: [
                                       TextFormField(
                                         controller: _usernameController,
-                                        decoration: const InputDecoration(
-                                          labelText: 'Nombre de usuario',
-                                          border: OutlineInputBorder(),
+                                        decoration: InputDecoration(
+                                          labelText: 'username'.tr(context),
+                                          border: const OutlineInputBorder(),
                                         ),
                                         validator: (value) {
                                           if (value == null || value.isEmpty) {
-                                            return 'El nombre de usuario es obligatorio';
+                                            return 'username_required'.tr(context);
                                           }
                                           if (value.length < 4) {
-                                            return 'El nombre debe tener al menos 4 caracteres';
+                                            return 'username_too_short'.tr(context);
                                           }
                                           return null;
                                         },
@@ -401,17 +402,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                       const SizedBox(height: 16.0),
                                       TextFormField(
                                         controller: _emailController,
-                                        decoration: const InputDecoration(
-                                          labelText: 'Email',
-                                          border: OutlineInputBorder(),
+                                        decoration: InputDecoration(
+                                          labelText: 'email'.tr(context),
+                                          border: const OutlineInputBorder(),
                                         ),
                                         validator: (value) {
                                           if (value == null || value.isEmpty) {
-                                            return 'El email es obligatorio';
+                                            return 'email_required'.tr(context);
                                           }
                                           if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
                                               .hasMatch(value)) {
-                                            return 'Por favor, introduce un email válido';
+                                            return 'valid_email_required'.tr(context);
                                           }
                                           return null;
                                         },
@@ -419,17 +420,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                       const SizedBox(height: 16.0),
                                       TextFormField(
                                         controller: _profilePictureController,
-                                        decoration: const InputDecoration(
-                                          labelText: 'URL de imagen de perfil',
-                                          border: OutlineInputBorder(),
+                                        decoration: InputDecoration(
+                                          labelText: 'profile_picture_url'.tr(context),
+                                          border: const OutlineInputBorder(),
                                         ),
                                       ),
                                       const SizedBox(height: 16.0),
                                       TextFormField(
                                         controller: _bioController,
-                                        decoration: const InputDecoration(
-                                          labelText: 'Biografía',
-                                          border: OutlineInputBorder(),
+                                        decoration: InputDecoration(
+                                          labelText: 'biography'.tr(context),
+                                          border: const OutlineInputBorder(),
                                         ),
                                         maxLines: 3,
                                       ),
@@ -449,7 +450,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                                 _profilePictureController.text = _user!.profilePicture ?? '';
                                               });
                                             },
-                                            child: const Text('Cancelar'),
+                                            child: Text('cancel'.tr(context)),
                                           ),
                                           const SizedBox(width: 16.0),
                                           ElevatedButton(
@@ -463,7 +464,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                                       color: Colors.white,
                                                     ),
                                                   )
-                                                : const TranslatedText('Guardar Cambios'),
+                                                : Text('save_changes'.tr(context)),
                                           ),
                                         ],
                                       ),

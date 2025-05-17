@@ -1,3 +1,4 @@
+// lib/screens/tracking/activity_selection_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/config/routes.dart';
 import 'package:flutter_application_1/widgets/custom_drawer.dart';
@@ -5,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_application_1/screens/tracking/tracking_screen.dart';
 import 'package:flutter_application_1/utils/permission_handler.dart';
 import 'package:flutter_application_1/providers/activity_provider_tracking.dart';
+import 'package:flutter_application_1/extensions/string_extensions.dart';
 
 class ActivitySelectionScreen extends StatefulWidget {
   const ActivitySelectionScreen({Key? key}) : super(key: key);
@@ -60,7 +62,7 @@ class _ActivitySelectionScreenState extends State<ActivitySelectionScreen> {
     return Scaffold(
       drawer: const CustomDrawer(currentRoute: AppRoutes.activitySelection),
       appBar: AppBar(
-        title: const Text('Iniciar Actividad'),
+        title: Text('start_activity'.tr(context)),
       ),
       body: _isChecking
           ? const Center(child: CircularProgressIndicator())
@@ -75,9 +77,9 @@ class _ActivitySelectionScreenState extends State<ActivitySelectionScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Selecciona el tipo de actividad',
-                        style: TextStyle(
+                      Text(
+                        'select_activity_type'.tr(context),
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -92,28 +94,28 @@ class _ActivitySelectionScreenState extends State<ActivitySelectionScreen> {
                             _buildActivityCard(
                               context,
                               'running',
-                              'Correr',
+                              'running'.tr(context),
                               Icons.directions_run,
                               Colors.orange,
                             ),
                             _buildActivityCard(
                               context,
                               'cycling',
-                              'Ciclismo',
+                              'cycling'.tr(context),
                               Icons.directions_bike,
                               Colors.blue,
                             ),
                             _buildActivityCard(
                               context,
                               'hiking',
-                              'Senderismo',
+                              'hiking'.tr(context),
                               Icons.terrain,
                               Colors.green,
                             ),
                             _buildActivityCard(
                               context,
                               'walking',
-                              'Caminar',
+                              'walking'.tr(context),
                               Icons.directions_walk,
                               Colors.purple,
                             ),

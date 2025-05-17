@@ -1,3 +1,4 @@
+// lib/screens/chat/chat_list.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/config/routes.dart';
 import 'package:flutter_application_1/widgets/custom_drawer.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_application_1/services/user_service.dart';
 import 'package:flutter_application_1/screens/chat/chat_room.dart';
 import 'package:flutter_application_1/services/socket_service.dart';
 import 'package:flutter_application_1/services/http_service.dart';
+import 'package:flutter_application_1/extensions/string_extensions.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({Key? key}) : super(key: key);
@@ -138,13 +140,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
     return Scaffold(
       drawer: const CustomDrawer(currentRoute: AppRoutes.chatList),
       appBar: AppBar(
-        title: const Text('Chats'),
+        title: Text('chat'.tr(context)),
         actions: [
           // Botón de actualizar
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _isLoading ? null : _loadChatRooms,
-            tooltip: 'Actualizar',
+            tooltip: 'refresh'.tr(context),
           ),
         ],
       ),
@@ -158,7 +160,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: _isLoading ? null : () => _showNewChatDialog(context),
         child: const Icon(Icons.add),
-        tooltip: 'Nuevo chat',
+        tooltip: 'new_chat'.tr(context),
       ),
     );
   }
@@ -176,7 +178,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'No tienes conversaciones',
+            'no_conversations'.tr(context),
             style: TextStyle(
               fontSize: 18,
               color: Colors.grey[600],
@@ -184,7 +186,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Inicia un nuevo chat con el botón +',
+            'start_new_chat'.tr(context),
             style: TextStyle(
               color: Colors.grey[500],
             ),
@@ -247,16 +249,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: const Text("Confirmar eliminación"),
-              content: const Text("¿Estás seguro de que quieres eliminar este chat? Esta acción no se puede deshacer y se perderán todos los mensajes."),
+              title: Text('confirm_delete'.tr(context)),
+              content: Text('confirm_delete_chat'.tr(context)),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text("Cancelar"),
+                  child: Text('cancel'.tr(context)),
                 ),
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(true),
-                  child: const Text("Eliminar", style: TextStyle(color: Colors.red)),
+                  child: Text('delete'.tr(context), style: const TextStyle(color: Colors.red)),
                 ),
               ],
             );
@@ -269,9 +271,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(success ? 'Chat eliminado' : 'Error al eliminar el chat'),
+            content: Text(success ? 'chat_deleted'.tr(context) : 'chat_delete_error'.tr(context)),
             action: success ? null : SnackBarAction(
-              label: 'Reintentar',
+              label: 'retry'.tr(context),
               onPressed: () => chatService.deleteChatRoom(room.id),
             ),
           ),
@@ -289,7 +291,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           children: [
             Expanded(
               child: Text(
-                displayName.isNotEmpty ? displayName : 'Chat',
+                displayName.isNotEmpty ? displayName : 'chat'.tr(context),
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                 ),
@@ -320,9 +322,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               )
-            : const Text(
-                'No hay mensajes aún',
-                style: TextStyle(fontStyle: FontStyle.italic),
+            : Text(
+                'no_messages_yet'.tr(context),
+                style: const TextStyle(fontStyle: FontStyle.italic),
               ),
         trailing: room.lastMessageTime != null
             ? Column(
@@ -387,7 +389,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     if (messageDate == today) {
       return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
     } else if (messageDate == yesterday) {
-      return 'Ayer';
+      return 'yesterday'.tr(context);
     } else {
       return '${time.day}/${time.month}';
     }
@@ -405,7 +407,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
-            title: Text(isGroupChat ? 'Nuevo chat grupal' : 'Nuevo chat'),
+            title: Text(isGroupChat ? 'new_group_chat'.tr(context) : 'new_chat'.tr(context)),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -413,7 +415,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 children: [
                   // Selector de tipo de chat
                   SwitchListTile(
-                    title: const Text('Chat grupal'),
+                    title: Text('group_chat'.tr(context)),
                     value: isGroupChat,
                     onChanged: (value) {
                       setState(() {
@@ -432,14 +434,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   if (isGroupChat)
                     TextField(
                       controller: nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nombre del grupo',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: 'group_name'.tr(context),
+                        border: const OutlineInputBorder(),
                       ),
                     ),
                   
                   const SizedBox(height: 16),
-                  const Text('Selecciona usuarios:'),
+                  Text('select_users'.tr(context) + ':'),
                   const SizedBox(height: 8),
                   
                   // Usuarios seleccionados como chips
@@ -453,7 +455,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                           children: selectedUserIds.map((userId) {
                             final user = _users.firstWhere(
                               (u) => u['id'] == userId,
-                              orElse: () => {'id': userId, 'username': 'Usuario'},
+                              orElse: () => {'id': userId, 'username': 'user'.tr(context)},
                             );
                             return Chip(
                               label: Text(user['username']),
@@ -472,9 +474,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   _isLoadingUsers
                       ? const Center(child: CircularProgressIndicator())
                       : _users.isEmpty
-                        ? const Text('No hay usuarios disponibles')
+                        ? Text('no_users_available'.tr(context))
                         : DropdownButton<String>(
-                            hint: const Text('Seleccionar usuario'),
+                            hint: Text('select_user'.tr(context)),
                             value: selectedUserId,
                             isExpanded: true,
                             items: _users
@@ -506,20 +508,20 @@ class _ChatListScreenState extends State<ChatListScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancelar'),
+                child: Text('cancel'.tr(context)),
               ),
               TextButton(
                 onPressed: () async {
                   if (selectedUserIds.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Selecciona al menos un usuario')),
+                      SnackBar(content: Text('select_at_least_one_user'.tr(context))),
                     );
                     return;
                   }
                   
                   if (isGroupChat && nameController.text.trim().isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Ingresa un nombre para el grupo')),
+                      SnackBar(content: Text('enter_group_name'.tr(context))),
                     );
                     return;
                   }
@@ -534,7 +536,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     final currentUserId = authService.currentUser?.id ?? '';
                     
                     if (currentUserId.isEmpty) {
-                      throw Exception('No se pudo identificar al usuario actual');
+                      throw Exception('current_user_not_identified'.tr(context));
                     }
                     
                     // Incluir al usuario actual en los participantes
@@ -548,7 +550,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       // Para chat individual, usar nombre del otro usuario
                       final otherUser = _users.firstWhere(
                         (u) => u['id'] == selectedUserIds[0],
-                        orElse: () => {'username': 'Chat'},
+                        orElse: () => {'username': 'chat'.tr(context)},
                       );
                       chatName = otherUser['username'];
                       
@@ -560,7 +562,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     final room = await chatService.createChatRoom(
                       chatName,
                       allParticipants,
-                      isGroupChat ? 'Chat grupal' : null,
+                      isGroupChat ? 'group_chat'.tr(context) : null,
                     );
                     
                     if (room != null) {
@@ -579,7 +581,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   } catch (e) {
                     print('Error creando chat: $e');
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: $e')),
+                      SnackBar(content: Text('error'.tr(context) + ': $e')),
                     );
                   } finally {
                     if (mounted) {
@@ -587,7 +589,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     }
                   }
                 },
-                child: const Text('Crear'),
+                child: Text('create'.tr(context)),
               ),
             ],
           );
@@ -598,8 +600,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
   
   // Placeholder para el formulario de creación
   Widget _buildCreateChatForm() {
-    return const Center(
-      child: Text('Formulario de creación de chat'),
+    return Center(
+      child: Text('create_chat_form'.tr(context)),
     );
   }
 }
