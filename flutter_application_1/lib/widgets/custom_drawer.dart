@@ -132,17 +132,6 @@ class CustomDrawer extends StatelessWidget {
               ),
             ),
           ),
-          ListTile(
-  leading: const Icon(Icons.emoji_events),
-  title: const Text('Mis Logros'),
-  selected: currentRoute == AppRoutes.achievements,
-  onTap: () {
-    Navigator.pop(context);
-    if (currentRoute != AppRoutes.achievements) {
-      Navigator.pushReplacementNamed(context, AppRoutes.achievements);
-    }
-  },
-),
           // Elementos del menú (con Achievements en lugar de Rutas de Montaña)
           Expanded(
             child: Container(
@@ -195,14 +184,8 @@ class CustomDrawer extends StatelessWidget {
                     context,
                     icon: Icons.emoji_events_outlined,
                     title: 'achievements'.tr(context),
-                    route: 'achievements',
+                    route: AppRoutes.achievements,
                     currentRoute: currentRoute,
-                    onTap: () {
-                      Navigator.pop(context); // Cerrar drawer
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Pantalla de Logros en desarrollo'))
-                      );
-                    },
                   ),
                   _buildMenuItem(
                     context,

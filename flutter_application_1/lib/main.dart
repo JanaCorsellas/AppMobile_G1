@@ -54,20 +54,22 @@ class _MyAppState extends State<MyApp> {
     _themeProvider = ThemeProvider();
     _languageProvider = LanguageProvider();
     _authService = AuthService();
-    
-    // Crear SocketService pasando AuthService
     _socketService = SocketService();
-    _achievementService = AchievementService(_httpService);
-   
-    
     _locationService = LocationService();
+    
+    // Create HTTP service before other services that depend on it
     _httpService = HttpService(_authService);
+    
+    // Now we can create services that depend on HttpService
+    _achievementService = AchievementService(_httpService);
     _activityTrackingService = ActivityTrackingService(_httpService);
+    
     _activityTrackingProvider = ActivityTrackingProvider(
       _activityTrackingService,
       _locationService,
       _authService,
     );
+    
     _chatService = ChatService(_socketService);
     _notificationService = NotificationService(_httpService, _socketService);
 
@@ -109,7 +111,6 @@ class _MyAppState extends State<MyApp> {
 
     return MultiProvider(
       providers: [
-       
         ChangeNotifierProvider.value(value: _authService),
         ChangeNotifierProvider.value(value: _socketService),
         ChangeNotifierProvider.value(value: _locationService),
@@ -120,6 +121,7 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider.value(value: _notificationService),
         ChangeNotifierProvider.value(value: _themeProvider),
         ChangeNotifierProvider.value(value: _languageProvider),
+        Provider.value(value: _achievementService),
       ],
       child: Consumer2<ThemeProvider, LanguageProvider>(
         builder: (context, themeProvider, languageProvider, _) {
