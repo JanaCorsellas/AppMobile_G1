@@ -6,6 +6,7 @@ import 'package:flutter_application_1/config/routes.dart';
 import 'package:flutter_application_1/models/user.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
 import 'package:flutter_application_1/services/user_service.dart';
+import 'package:flutter_application_1/widgets/translated_text.dart';
 
 import '../../services/socket_service.dart';
 
@@ -193,18 +194,18 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text('No se encontraron datos de usuario'),
+                      const TranslatedText('No se encontraron datos de usuario'),
                       if (_errorMessage.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.all(16.0),
-                          child: Text(
+                          child: TranslatedText(
                             _errorMessage,
                             style: const TextStyle(color: Colors.red),
                           ),
                         ),
                       ElevatedButton(
                         onPressed: _loadUserData,
-                        child: const Text('Reintentar'),
+                        child: const TranslatedText('Reintentar'),
                       ),
                     ],
                   ),
@@ -227,7 +228,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               Icon(Icons.error, color: Colors.red.shade800),
                               const SizedBox(width: 8.0),
                               Expanded(
-                                child: Text(
+                                child: TranslatedText(
                                   _errorMessage,
                                   style: TextStyle(color: Colors.red.shade800),
                                 ),
@@ -248,7 +249,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               Icon(Icons.check_circle, color: Colors.green.shade800),
                               const SizedBox(width: 8.0),
                               Expanded(
-                                child: Text(
+                                child: TranslatedText(
                                   _successMessage,
                                   style: TextStyle(color: Colors.green.shade800),
                                 ),
@@ -287,14 +288,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(
+                                        TranslatedText(
                                           _user!.username,
                                           style: const TextStyle(
                                             fontSize: 24.0,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                        Text(
+                                        TranslatedText(
                                           _user!.email,
                                           style: const TextStyle(
                                             fontSize: 16.0,
@@ -302,7 +303,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                           ),
                                         ),
                                         const SizedBox(height: 8.0),
-                                        Text(
+                                       TranslatedText(
                                           'Nivel: ${_user!.level}',
                                           style: const TextStyle(
                                             fontSize: 16.0,
@@ -329,48 +330,48 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                 const Divider(),
                                 ListTile(
                                   leading: const Icon(Icons.info_outline),
-                                  title: const Text('Biografía'),
-                                  subtitle: Text(
+                                  title: const TranslatedText('Biografía'),
+                                  subtitle: TranslatedText(
                                     _user!.bio ?? 'No hay biografía disponible',
                                     style: const TextStyle(fontSize: 14.0),
                                   ),
                                 ),
                                 ListTile(
                                   leading: const Icon(Icons.directions_run),
-                                  title: const Text('Distancia Total'),
-                                  subtitle: Text(
+                                  title: const TranslatedText('Distancia Total'),
+                                  subtitle: TranslatedText(
                                     '${(_user!.totalDistance / 1000).toStringAsFixed(2)} km',
                                     style: const TextStyle(fontSize: 14.0),
                                   ),
                                 ),
                                 ListTile(
                                   leading: const Icon(Icons.timer),
-                                  title: const Text('Tiempo Total'),
-                                  subtitle: Text(
+                                  title: const TranslatedText('Tiempo Total'),
+                                  subtitle: TranslatedText(
                                     '${_user!.totalTime} minutos',
                                     style: const TextStyle(fontSize: 14.0),
                                   ),
                                 ),
                                 ListTile(
                                   leading: const Icon(Icons.event_note),
-                                  title: const Text('Actividades'),
-                                  subtitle: Text(
+                                  title: const TranslatedText('Actividades'),
+                                  subtitle: TranslatedText(
                                     '${_user!.activities?.length ?? 0} actividades',
                                     style: const TextStyle(fontSize: 14.0),
                                   ),
                                 ),
                                 ListTile(
                                   leading: const Icon(Icons.emoji_events),
-                                  title: const Text('Logros'),
-                                  subtitle: Text(
+                                  title: const TranslatedText('Logros'),
+                                  subtitle: TranslatedText(
                                     '${_user!.achievements?.length ?? 0} logros',
                                     style: const TextStyle(fontSize: 14.0),
                                   ),
                                 ),
                                 ListTile(
                                   leading: const Icon(Icons.flag),
-                                  title: const Text('Retos Completados'),
-                                  subtitle: Text(
+                                  title: const TranslatedText('Retos Completados'),
+                                  subtitle: TranslatedText(
                                     '${_user!.challengesCompleted?.length ?? 0} retos',
                                     style: const TextStyle(fontSize: 14.0),
                                   ),
@@ -462,7 +463,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                                       color: Colors.white,
                                                     ),
                                                   )
-                                                : const Text('Guardar Cambios'),
+                                                : const TranslatedText('Guardar Cambios'),
                                           ),
                                         ],
                                       ),

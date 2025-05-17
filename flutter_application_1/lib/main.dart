@@ -11,6 +11,7 @@ import 'package:flutter_application_1/services/activity_tracking_service.dart';
 import 'package:flutter_application_1/providers/activity_provider_tracking.dart';
 import 'package:flutter_application_1/providers/theme_provider.dart';
 import 'package:flutter_application_1/providers/language_provider.dart';
+import 'package:flutter_application_1/extensions/string_extensions.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
@@ -118,7 +119,7 @@ class _MyAppState extends State<MyApp> {
         builder: (context, themeProvider, languageProvider, _) {
           return MaterialApp(
             navigatorKey: _navigatorKey,
-            title: 'Sport Activity App',
+            title: 'app_title'.tr(context),
             theme: themeProvider.theme,
             locale: languageProvider.locale,
             initialRoute: _authService.isLoggedIn ? AppRoutes.userHome : AppRoutes.login,

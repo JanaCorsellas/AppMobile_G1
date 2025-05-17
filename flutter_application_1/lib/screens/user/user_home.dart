@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:flutter_application_1/config/routes.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
 import 'package:flutter_application_1/services/socket_service.dart';
-import 'package:flutter_application_1/screens/chat/chat_list.dart';
 import 'package:flutter_application_1/providers/activity_provider_tracking.dart';
 import 'package:flutter_application_1/models/activity.dart';
 import 'package:flutter_application_1/services/activity_service.dart';
@@ -11,6 +10,7 @@ import 'package:flutter_application_1/services/http_service.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_application_1/screens/activity/activity_detail_screen.dart';
 import 'package:flutter_application_1/widgets/custom_drawer.dart';
+import 'package:flutter_application_1/extensions/string_extensions.dart';
 
 class UserHomeScreen extends StatefulWidget {
   const UserHomeScreen({Key? key}) : super(key: key);
@@ -74,42 +74,42 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
   }
 
   // Load user activities
-Future<void> _loadUserActivities() async {
-  final authService = Provider.of<AuthService>(context, listen: false);
-  if (authService.currentUser == null) return;
+  Future<void> _loadUserActivities() async {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    if (authService.currentUser == null) return;
 
-  setState(() {
-    _isLoadingActivities = true;
-  });
+    setState(() {
+      _isLoadingActivities = true;
+    });
 
-  try {
-    // Create activity service
-    final httpService = HttpService(authService);
-    final activityService = ActivityService(httpService);
-    
-    // Get user activities
-    final activities = await activityService.getActivitiesByUserId(
-      authService.currentUser!.id
-    );
-    
-    // Sort by date - most recent first
-    activities.sort((a, b) => b.startTime.compareTo(a.startTime));
-    
-    if (mounted) {
-      setState(() {
-        _userActivities = activities;
-        _isLoadingActivities = false;
-      });
-    }
-  } catch (e) {
-    print('Error loading user activities: $e');
-    if (mounted) {
-      setState(() {
-        _isLoadingActivities = false;
-      });
+    try {
+      // Create activity service
+      final httpService = HttpService(authService);
+      final activityService = ActivityService(httpService);
+      
+      // Get user activities
+      final activities = await activityService.getActivitiesByUserId(
+        authService.currentUser!.id
+      );
+      
+      // Sort by date - most recent first
+      activities.sort((a, b) => b.startTime.compareTo(a.startTime));
+      
+      if (mounted) {
+        setState(() {
+          _userActivities = activities;
+          _isLoadingActivities = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading user activities: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingActivities = false;
+        });
+      }
     }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -126,15 +126,15 @@ Future<void> _loadUserActivities() async {
       switch (socketService.socketStatus) {
         case SocketStatus.connected:
           color = Colors.green;
-          status = 'Conectado';
+          status = 'connected'.tr(context);
           break;
         case SocketStatus.connecting:
           color = Colors.amber;
-          status = 'Conectando...';
+          status = 'connecting'.tr(context);
           break;
         case SocketStatus.disconnected:
           color = Colors.red;
-          status = 'Desconectado';
+          status = 'disconnected'.tr(context);
           break;
       }
       
@@ -181,7 +181,7 @@ Future<void> _loadUserActivities() async {
             onPressed: () {
               Navigator.pushNamed(context, AppRoutes.notifications);
             },
-            tooltip: 'Notificacions',
+            tooltip: 'notifications'.tr(context),
           ),
           
         ],
@@ -220,7 +220,7 @@ Future<void> _loadUserActivities() async {
                     child: Column(
                       children: [
                         Text(
-                          'Bienvenido, ${user?.username ?? "Usuario"}',
+                          'welcome_user'.trParams(context, {'username': user?.username ?? 'Usuario'}),
                           style: const TextStyle(
                             fontSize: 24.0,
                             fontWeight: FontWeight.bold,
@@ -228,10 +228,10 @@ Future<void> _loadUserActivities() async {
                           ),
                         ),
                         const SizedBox(height: 16.0),
-                        const Text(
-                          'Aquí puedes gestionar tus actividades deportivas y seguir tu progreso.',
+                        Text(
+                          'activity_management'.tr(context),
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 16.0,
                             color: Colors.black54,
                           ),
@@ -242,7 +242,7 @@ Future<void> _loadUserActivities() async {
                             Navigator.pushNamed(context, AppRoutes.userProfile);
                           },
                           icon: const Icon(Icons.person),
-                          label: const Text('Ver Perfil'),
+                          label: Text('view_profile'.tr(context)),
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 24.0,
@@ -267,16 +267,16 @@ Future<void> _loadUserActivities() async {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Usuarios conectados',
-                      style: TextStyle(
+                    Text(
+                      'users_online'.tr(context),
+                      style: const TextStyle(
                         fontSize: 20.0,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 8.0),
                     Text(
-                      'Total: ${socketService.onlineUsers.length} usuarios en línea',
+                      '${('total_online').tr(context)} ${socketService.onlineUsers.length} ${('users').tr(context)}',
                       style: TextStyle(
                         color: Colors.grey[600],
                       ),
@@ -286,7 +286,7 @@ Future<void> _loadUserActivities() async {
                     // IMPROVED: Display usernames instead of IDs
                     socketService.onlineUsers.isEmpty
                         ? Text(
-                            'No hay usuarios conectados',
+                            'no_users_online'.tr(context),
                             style: TextStyle(
                               color: Colors.grey[500],
                               fontStyle: FontStyle.italic,
@@ -323,7 +323,7 @@ Future<void> _loadUserActivities() async {
           Navigator.pushNamed(context, AppRoutes.activitySelection);
         },
         icon: const Icon(Icons.add),
-        label: const Text('Iniciar Actividad'),
+        label: Text('start_activity'.tr(context)),
         backgroundColor: const Color.fromARGB(255, 180, 153, 225),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
@@ -334,9 +334,9 @@ Future<void> _loadUserActivities() async {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Estadísticas rápidas',
-          style: TextStyle(
+        Text(
+          'quick_stats'.tr(context),
+          style: const TextStyle(
             fontSize: 20.0,
             fontWeight: FontWeight.bold,
           ),
@@ -347,7 +347,7 @@ Future<void> _loadUserActivities() async {
             Expanded(
               child: _buildStatCard(
                 context,
-                'Nivel',
+                'level'.tr(context),
                 '${user?.level ?? 1}',
                 Icons.star,
                 Colors.amber,
@@ -357,7 +357,7 @@ Future<void> _loadUserActivities() async {
             Expanded(
               child: _buildStatCard(
                 context,
-                'Distancia',
+                'distance'.tr(context),
                 '${((user?.totalDistance ?? 0) / 1000).toStringAsFixed(2)} km',
                 Icons.directions_run,
                 Colors.green,
@@ -367,7 +367,7 @@ Future<void> _loadUserActivities() async {
             Expanded(
               child: _buildStatCard(
                 context,
-                'Tiempo',
+                'time'.tr(context),
                 '${user?.totalTime ?? 0} min',
                 Icons.timer,
                 Colors.blue,
@@ -435,9 +435,9 @@ Future<void> _loadUserActivities() async {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Actividades recientes',
-              style: TextStyle(
+            Text(
+              'recent_activities'.tr(context),
+              style: const TextStyle(
                 fontSize: 20.0,
                 fontWeight: FontWeight.bold,
               ),
@@ -448,7 +448,9 @@ Future<void> _loadUserActivities() async {
                   _showAllActivities = !_showAllActivities;
                 });
               },
-              child: Text(_showAllActivities ? 'Ver menos' : 'Ver todas'),
+              child: Text(_showAllActivities 
+                ? 'view_less'.tr(context) 
+                : 'view_all'.tr(context)),
             ),
           ],
         ),
@@ -467,7 +469,7 @@ Future<void> _loadUserActivities() async {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'No tienes actividades registradas',
+                          'no_activities'.tr(context),
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 16,
@@ -475,7 +477,7 @@ Future<void> _loadUserActivities() async {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Comienza una nueva actividad con el botón "Iniciar Actividad"',
+                          'start_new_activity'.tr(context),
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.grey[500],
@@ -500,7 +502,7 @@ Future<void> _loadUserActivities() async {
                             },
                             icon: const Icon(Icons.expand_more),
                             label: Text(
-                              'Ver todas (${_userActivities.length})',
+                              '${('view_all').tr(context)} (${_userActivities.length})',
                               style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),

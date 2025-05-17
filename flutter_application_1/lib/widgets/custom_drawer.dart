@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:flutter_application_1/config/routes.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
 import 'package:flutter_application_1/services/socket_service.dart';
+import 'package:flutter_application_1/providers/language_provider.dart';
+import 'package:flutter_application_1/extensions/string_extensions.dart';
 
 class CustomDrawer extends StatelessWidget {
   final String currentRoute;
@@ -75,7 +77,7 @@ class CustomDrawer extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            user?.username ?? 'Usuario',
+                            user?.username ?? 'user'.tr(context),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
@@ -97,7 +99,7 @@ class CustomDrawer extends StatelessWidget {
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
-                              'Nivel ${user?.level ?? 1}',
+                              '${('level').tr(context)} ${user?.level ?? 1}',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 12,
@@ -141,35 +143,35 @@ class CustomDrawer extends StatelessWidget {
                   _buildMenuItem(
                     context,
                     icon: Icons.home_outlined,
-                    title: 'Inicio',
+                    title: 'home'.tr(context),
                     route: AppRoutes.userHome,
                     currentRoute: currentRoute,
                   ),
                   _buildMenuItem(
                     context,
                     icon: Icons.person_outline,
-                    title: 'Perfil',
+                    title: 'profile'.tr(context),
                     route: AppRoutes.userProfile,
                     currentRoute: currentRoute,
                   ),
                   _buildMenuItem(
                     context,
                     icon: Icons.history,
-                    title: 'Mis actividades',
+                    title: 'my_activities'.tr(context),
                     route: AppRoutes.activities,
                     currentRoute: currentRoute,
                   ),
                   _buildMenuItem(
                     context,
                     icon: Icons.directions_run,
-                    title: 'Iniciar actividad',
+                    title: 'start_activity'.tr(context),
                     route: AppRoutes.activitySelection,
                     currentRoute: currentRoute,
                   ),
                   _buildMenuItem(
                     context,
                     icon: Icons.music_note_outlined,
-                    title: 'Mis canciones',
+                    title: 'my_songs'.tr(context),
                     route: 'songs',
                     currentRoute: currentRoute,
                     onTap: () {
@@ -182,7 +184,7 @@ class CustomDrawer extends StatelessWidget {
                   _buildMenuItem(
                     context,
                     icon: Icons.emoji_events_outlined,
-                    title: 'Logros',
+                    title: 'achievements'.tr(context),
                     route: 'achievements',
                     currentRoute: currentRoute,
                     onTap: () {
@@ -195,21 +197,21 @@ class CustomDrawer extends StatelessWidget {
                   _buildMenuItem(
                     context,
                     icon: Icons.chat_bubble_outline,
-                    title: 'Chat',
+                    title: 'chat'.tr(context),
                     route: AppRoutes.chatList,
                     currentRoute: currentRoute,
                   ),
                   _buildMenuItem(
                     context,
                     icon: Icons.notifications_none_outlined,
-                    title: 'Notificaciones',
+                    title: 'notifications'.tr(context),
                     route: AppRoutes.notifications,
                     currentRoute: currentRoute,
                   ),
                   _buildMenuItem(
                     context,
                     icon: Icons.settings,
-                    title: 'Configuración',
+                    title: 'settings'.tr(context),
                     route: AppRoutes.settingsRoute,
                     currentRoute: currentRoute,
                   ),
@@ -217,21 +219,21 @@ class CustomDrawer extends StatelessWidget {
                   _buildMenuItem(
                     context,
                     icon: Icons.logout,
-                    title: 'Cerrar sesión',
+                    title: 'logout'.tr(context),
                     onTap: () async {
                       final confirm = await showDialog<bool>(
                         context: context,
                         builder: (context) => AlertDialog(
-                          title: const Text('Cerrar sesión'),
-                          content: const Text('¿Estás seguro de que quieres cerrar sesión?'),
+                          title: Text('logout'.tr(context)),
+                          content: Text('logout_confirm'.tr(context)),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Cancelar'),
+                              child: Text('cancel'.tr(context)),
                             ),
                             TextButton(
                               onPressed: () => Navigator.pop(context, true),
-                              child: const Text('Cerrar sesión'),
+                              child: Text('logout'.tr(context)),
                             ),
                           ],
                         ),

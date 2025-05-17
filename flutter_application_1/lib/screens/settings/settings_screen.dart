@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_application_1/providers/theme_provider.dart';
 import 'package:flutter_application_1/providers/language_provider.dart';
+import 'package:flutter_application_1/extensions/string_extensions.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -44,7 +45,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       drawer: const CustomDrawer(currentRoute: AppRoutes.settingsRoute),
       appBar: AppBar(
-        title: const Text('Configuración'),
+        title: Text('settings'.tr(context)),
         backgroundColor: const Color.fromARGB(255, 21, 95, 51),
         foregroundColor: Colors.white,
       ),
@@ -55,9 +56,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Apariencia',
-                    style: TextStyle(
+                  Text(
+                    'appearance'.tr(context),
+                    style: const TextStyle(
                       fontSize: 20.0,
                       fontWeight: FontWeight.bold,
                     ),
@@ -65,8 +66,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 16.0),
                   Card(
                     child: SwitchListTile(
-                      title: const Text('Modo oscuro'),
-                      subtitle: const Text('Cambiar entre tema claro y oscuro'),
+                      title: Text('dark_mode'.tr(context)),
+                      subtitle: Text('switch_theme'.tr(context)),
                       value: _darkMode,
                       onChanged: (value) {
                         setState(() {
@@ -74,7 +75,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         });
                         _saveSettings();
                         // If you have a ThemeProvider
-                        // Provider.of<ThemeProvider>(context, listen: false).toggleTheme();
+                        Provider.of<ThemeProvider>(context, listen: false).toggleTheme();
                       },
                       secondary: Icon(
                         _darkMode ? Icons.dark_mode : Icons.light_mode,
@@ -85,9 +86,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   
                   const SizedBox(height: 24.0),
                   
-                  const Text(
-                    'Idioma',
-                    style: TextStyle(
+                  Text(
+                    'language'.tr(context),
+                    style: const TextStyle(
                       fontSize: 20.0,
                       fontWeight: FontWeight.bold,
                     ),
@@ -105,8 +106,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               _selectedLanguage = value!;
                             });
                             _saveSettings();
-                            // If you have a LanguageProvider
-                            // Provider.of<LanguageProvider>(context, listen: false).setLanguage(value!);
+                            // Actualizar el idioma en el provider
+                            Provider.of<LanguageProvider>(context, listen: false).setLanguage(value!);
                           },
                         ),
                         RadioListTile<String>(
@@ -118,8 +119,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               _selectedLanguage = value!;
                             });
                             _saveSettings();
-                            // If you have a LanguageProvider
-                            // Provider.of<LanguageProvider>(context, listen: false).setLanguage(value!);
+                            // Actualizar el idioma en el provider
+                            Provider.of<LanguageProvider>(context, listen: false).setLanguage(value!);
                           },
                         ),
                         RadioListTile<String>(
@@ -131,8 +132,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               _selectedLanguage = value!;
                             });
                             _saveSettings();
-                            // If you have a LanguageProvider
-                            // Provider.of<LanguageProvider>(context, listen: false).setLanguage(value!);
+                            // Actualizar el idioma en el provider
+                            Provider.of<LanguageProvider>(context, listen: false).setLanguage(value!);
                           },
                         ),
                       ],
@@ -141,9 +142,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   
                   const SizedBox(height: 24.0),
                   
-                  const Text(
-                    'Notificaciones',
-                    style: TextStyle(
+                  Text(
+                    'notifications'.tr(context),
+                    style: const TextStyle(
                       fontSize: 20.0,
                       fontWeight: FontWeight.bold,
                     ),
@@ -153,8 +154,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: Column(
                       children: [
                         SwitchListTile(
-                          title: const Text('Notificaciones push'),
-                          subtitle: const Text('Recibir notificaciones en tiempo real'),
+                          title: Text('push_notifications'.tr(context)),
+                          subtitle: Text('receive_notifications'.tr(context)),
                           value: true, // Replace with your state variable
                           onChanged: (value) {
                             // Implement notification toggle
@@ -162,8 +163,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           secondary: const Icon(Icons.notifications),
                         ),
                         SwitchListTile(
-                          title: const Text('Notificaciones de actividad'),
-                          subtitle: const Text('Recordatorios para hacer ejercicio'),
+                          title: Text('activity_notifications'.tr(context)),
+                          subtitle: Text('exercise_reminders'.tr(context)),
                           value: false, // Replace with your state variable
                           onChanged: (value) {
                             // Implement activity notifications toggle
@@ -176,9 +177,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   
                   const SizedBox(height: 24.0),
                   
-                  const Text(
-                    'Privacidad',
-                    style: TextStyle(
+                  Text(
+                    'privacy'.tr(context),
+                    style: const TextStyle(
                       fontSize: 20.0,
                       fontWeight: FontWeight.bold,
                     ),
@@ -188,8 +189,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: Column(
                       children: [
                         SwitchListTile(
-                          title: const Text('Perfil público'),
-                          subtitle: const Text('Mostrar mi perfil a otros usuarios'),
+                          title: Text('public_profile'.tr(context)),
+                          subtitle: Text('show_profile'.tr(context)),
                           value: true, // Replace with your state variable
                           onChanged: (value) {
                             // Implement privacy toggle
@@ -197,8 +198,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           secondary: const Icon(Icons.visibility),
                         ),
                         SwitchListTile(
-                          title: const Text('Compartir actividades'),
-                          subtitle: const Text('Permitir que otros vean mis actividades'),
+                          title: Text('share_activities'.tr(context)),
+                          subtitle: Text('allow_viewing'.tr(context)),
                           value: true, // Replace with your state variable
                           onChanged: (value) {
                             // Implement activity sharing toggle
@@ -213,7 +214,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   
                   Center(
                     child: Text(
-                      'Versión 1.0.0',
+                      '${('version').tr(context)} 1.0.0',
                       style: TextStyle(
                         color: Colors.grey[600],
                         fontSize: 14.0,

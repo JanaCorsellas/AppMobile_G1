@@ -6,6 +6,7 @@ import 'package:flutter_application_1/models/notification_models.dart';
 import 'package:flutter_application_1/services/notification_services.dart';
 import 'package:flutter_application_1/screens/chat/chat_room.dart';
 import 'package:flutter_application_1/config/routes.dart';
+import 'package:flutter_application_1/widgets/translated_text.dart';
 
 class NotificationDetailScreen extends StatelessWidget {
   final String notificationId;
@@ -24,14 +25,14 @@ class NotificationDetailScreen extends StatelessWidget {
       return Scaffold(
         appBar: AppBar(title: const Text('Notificación')),
         body: const Center(
-          child: Text('Notificación no encontrada'),
+          child: TranslatedText('Notificación no encontrada'),
         ),
       );
     }
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Detalles de la notificación'),
+        title: const TranslatedText('Detalles de la notificación'),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete),
@@ -64,7 +65,7 @@ class NotificationDetailScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      TranslatedText(
                         notification.title,
                         style: const TextStyle(
                           fontSize: 20,
@@ -72,7 +73,7 @@ class NotificationDetailScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
+                      TranslatedText(
                         timeago.format(notification.createdAt, locale: 'es'),
                         style: TextStyle(
                           color: Colors.grey[600],
@@ -88,7 +89,7 @@ class NotificationDetailScreen extends StatelessWidget {
             const SizedBox(height: 24),
             
             // Message
-            const Text(
+            const TranslatedText(
               'Mensaje',
               style: TextStyle(
                 fontSize: 16,
