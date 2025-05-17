@@ -13,6 +13,7 @@ import 'package:flutter_application_1/providers/theme_provider.dart';
 import 'package:flutter_application_1/providers/language_provider.dart';
 import 'package:flutter_application_1/extensions/string_extensions.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_application_1/services/achievementService.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,6 +39,8 @@ class _MyAppState extends State<MyApp> {
   late final NotificationService _notificationService;
   late final ThemeProvider _themeProvider;
   late final LanguageProvider _languageProvider;
+  late final AchievementService _achievementService;
+  
   bool _initialized = false;
 
   @override
@@ -54,6 +57,8 @@ class _MyAppState extends State<MyApp> {
     
     // Crear SocketService pasando AuthService
     _socketService = SocketService();
+    _achievementService = AchievementService(_httpService);
+   
     
     _locationService = LocationService();
     _httpService = HttpService(_authService);
@@ -104,6 +109,7 @@ class _MyAppState extends State<MyApp> {
 
     return MultiProvider(
       providers: [
+       
         ChangeNotifierProvider.value(value: _authService),
         ChangeNotifierProvider.value(value: _socketService),
         ChangeNotifierProvider.value(value: _locationService),

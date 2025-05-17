@@ -114,8 +114,8 @@ class CustomDrawer extends StatelessWidget {
                   const SizedBox(height: 15),
                   
                   // Logo y nombre de la app
-                  Row(
-                    children: const [
+                  const Row(
+                    children: [
                       Icon(Icons.terrain, color: Colors.white, size: 18),
                       SizedBox(width: 8),
                       Text(
@@ -132,7 +132,17 @@ class CustomDrawer extends StatelessWidget {
               ),
             ),
           ),
-          
+          ListTile(
+  leading: const Icon(Icons.emoji_events),
+  title: const Text('Mis Logros'),
+  selected: currentRoute == AppRoutes.achievements,
+  onTap: () {
+    Navigator.pop(context);
+    if (currentRoute != AppRoutes.achievements) {
+      Navigator.pushReplacementNamed(context, AppRoutes.achievements);
+    }
+  },
+),
           // Elementos del menú (con Achievements en lugar de Rutas de Montaña)
           Expanded(
             child: Container(
