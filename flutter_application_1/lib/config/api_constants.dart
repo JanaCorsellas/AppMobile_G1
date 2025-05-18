@@ -43,7 +43,11 @@ class ApiConstants {
   static const String createNotification = '$baseUrl$apiPath/notifications';
   static const String bulkNotifications = '$baseUrl$apiPath/notifications/bulk';
   
-  // Achievement endpoints
+  // Achievement endpoints - ACTUALIZADOS
   static const String achievements = '$baseUrl$apiPath/achievements';
+  static const String allAchievements = '$baseUrl$apiPath/achievements/all/list';
   static String achievement(String id) => '$baseUrl$apiPath/achievements/$id';
+  static String userAchievements(String userId) => '$baseUrl$apiPath/achievements/user/$userId';
+  static String checkUserAchievements(String userId) => '$baseUrl$apiPath/achievements/user/$userId/check';
+  static const String initializeAchievements = '$baseUrl$apiPath/achievements/initialize/defaults';
 }
