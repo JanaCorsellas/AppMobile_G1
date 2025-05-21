@@ -1,8 +1,11 @@
 // lib/services/http_service.dart
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter_application_1/services/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http_parser/http_parser.dart';
+import 'package:path/path.dart' as path;
 
 class HttpService {
   final AuthService _authService;
@@ -66,6 +69,119 @@ class HttpService {
         headers: _getHeaders(additionalHeaders),
       );
     });
+  }
+
+  // Método para enviar peticiones multipart (para subir archivos)
+  Future<http.Response> postMultipart(
+    String url, {
+    Map<String, String>? fields,
+    File? imageFile,
+    String? imageFieldName = 'profilePicture',
+    Map<String, String>? additionalHeaders,
+  }) async {
+    try {
+      final request = http.MultipartRequest('POST', Uri.parse(url));
+      
+      // Añadir los headers
+      final headers = _getHeaders(additionalHeaders);
+      request.headers.addAll(headers);
+      
+      // Añadir campos de texto
+      if (fields != null) {
+        request.fields.addAll(fields);
+      }
+      
+      // Añadir archivo si existe
+      if (imageFile != null && imageFieldName != null) {
+        final fileName = path.basename(imageFile.path);
+        final mimeType = _getMimeType(fileName);
+        
+        _log('Añadiendo archivo: $fileName, tipo $mimeType');
+        
+        request.files.add(await http.MultipartFile.fromPath(
+          imageFieldName,
+          imageFile.path,
+          contentType: mimeType,
+        ));
+      }
+      
+      // Enviar la petición
+      _log('Enviando petición multipart a $url');
+      final streamedResponse = await request.send();
+      
+      // Convertir a una respuesta normal
+      final response = await http.Response.fromStream(streamedResponse);
+      _log('Respuesta recibida: ${response.statusCode}');
+      
+      return response;
+    } catch (e) {
+      _log('Error en solicitud multipart: $e');
+      rethrow;
+    }
+  }
+
+  // Método para enviar peticiones PUT con multipart (para actualizar con archivos)
+  Future<http.Response> putMultipart(
+    String url, {
+    Map<String, String>? fields,
+    File? imageFile,
+    String? imageFieldName = 'profilePicture',
+    Map<String, String>? additionalHeaders,
+  }) async {
+    try {
+      final request = http.MultipartRequest('PUT', Uri.parse(url));
+      
+      // Añadir los headers
+      final headers = _getHeaders(additionalHeaders);
+      request.headers.addAll(headers);
+      
+      // Añadir campos de texto
+      if (fields != null) {
+        request.fields.addAll(fields);
+      }
+      
+      // Añadir archivo si existe
+      if (imageFile != null && imageFieldName != null) {
+        final fileName = path.basename(imageFile.path);
+        final mimeType = _getMimeType(fileName);
+        
+        _log('Añadiendo archivo: $fileName, tipo $mimeType');
+        
+        request.files.add(await http.MultipartFile.fromPath(
+          imageFieldName,
+          imageFile.path,
+          contentType: mimeType,
+        ));
+      }
+      
+      // Enviar la petición
+      _log('Enviando petición multipart PUT a $url');
+      final streamedResponse = await request.send();
+      
+      // Convertir a una respuesta normal
+      final response = await http.Response.fromStream(streamedResponse);
+      _log('Respuesta recibida: ${response.statusCode}');
+      
+      return response;
+    } catch (e) {
+      _log('Error en solicitud multipart PUT: $e');
+      rethrow;
+    }
+  }
+
+  // Método auxiliar para determinar el tipo MIME basado en la extensión del archivo
+  MediaType _getMimeType(String fileName) {
+    final ext = path.extension(fileName).toLowerCase();
+    
+    switch (ext) {
+      case '.jpg':
+      case '.jpeg':
+        return MediaType('image', 'jpeg');
+      case '.png':
+        return MediaType('image', 'png');
+      default:
+        return MediaType('image', 'jpeg'); // Por defecto
+    }
   }
   
   // Enhanced request wrapper with token refresh

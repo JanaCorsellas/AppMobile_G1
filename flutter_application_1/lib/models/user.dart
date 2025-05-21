@@ -3,7 +3,12 @@ class User {
   final String id;
   final String username;
   final String email;
-  final String? profilePicture;
+  
+  // Modificar el campo para manejar una imagen binaria o una URL
+  final dynamic profilePicture; // Puede ser una URL String o un File dependiendo del contexto
+  final String? profilePictureUrl; // URL para compatibilidad con backend
+  final String? profilePictureContentType; // Tipo de contenido para la imagen
+  
   final String? bio;
   final int level;
   final double totalDistance;
@@ -21,6 +26,8 @@ class User {
     required this.username,
     required this.email,
     this.profilePicture,
+    this.profilePictureUrl,
+    this.profilePictureContentType,
     this.bio,
     required this.level,
     required this.totalDistance,
@@ -50,13 +57,28 @@ class User {
     } else if (json.containsKey('name')) {
       username = json['name'];
     }
+
+    // Determinar URL de profile picture o info de contenido
+    String? profilePictureUrl;
+    String? profilePictureContentType;
+    
+    if (json['profilePicture'] != null) {
+      if (json['profilePicture'] is String) {
+        profilePictureUrl = json['profilePicture'];
+      } else if (json['profilePicture'] is Map) {
+        profilePictureUrl = json['profilePicture']['url'];
+        profilePictureContentType = json['profilePicture']['contentType'];
+      }
+    }
     
     // Arreglo: Convertir todos los campos a los tipos correctos
     return User(
       id: userId,
       username: username,
       email: json['email'] ?? '',
-      profilePicture: json['profilePicture'],
+      profilePicture: profilePictureUrl, // Guardamos la URL como profilePicture 
+      profilePictureUrl: profilePictureUrl,
+      profilePictureContentType: profilePictureContentType,
       bio: json['bio'],
       level: json['level'] != null ? int.tryParse(json['level'].toString()) ?? 1 : 1,
       totalDistance: json['totalDistance'] != null 
@@ -86,11 +108,10 @@ class User {
   }
 
   Map<String, dynamic> toJson() {
-    return {
+    final map = {
       'id': id,
       'username': username,
       'email': email,
-      'profilePicture': profilePicture,
       'bio': bio,
       'level': level,
       'totalDistance': totalDistance,
@@ -103,13 +124,22 @@ class User {
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
+    
+    // Solo incluimos profilePicture si es una string (URL)
+    if (profilePictureUrl != null) {
+      map['profilePicture'] = profilePictureUrl;
+    }
+    
+    return map;
   }
 
   User copyWith({
     String? id,
     String? username,
     String? email,
-    String? profilePicture,
+    dynamic profilePicture,
+    String? profilePictureUrl,
+    String? profilePictureContentType,
     String? bio,
     int? level,
     double? totalDistance,
@@ -127,6 +157,8 @@ class User {
       username: username ?? this.username,
       email: email ?? this.email,
       profilePicture: profilePicture ?? this.profilePicture,
+      profilePictureUrl: profilePictureUrl ?? this.profilePictureUrl,
+      profilePictureContentType: profilePictureContentType ?? this.profilePictureContentType,
       bio: bio ?? this.bio,
       level: level ?? this.level,
       totalDistance: totalDistance ?? this.totalDistance,
