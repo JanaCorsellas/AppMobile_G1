@@ -1,6 +1,5 @@
 // lib/services/user_service.dart
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter_application_1/config/api_constants.dart';
 import 'package:flutter_application_1/models/user.dart';
 import 'package:flutter_application_1/services/http_service.dart';
@@ -207,50 +206,15 @@ class UserService {
       throw Exception('Failed to update user: $e');
     }
   }
-
-  // Update user with image
-  Future<User> updateUserWithImage(String id, Map<String, String> userData, File? imageFile) async {
-    try {
-      print('Updating user with image. User ID: $id, Has Image: ${imageFile != null}');
-      
-      final response = await _httpService.putMultipart(
-        ApiConstants.user(id),
-        fields: userData,
-        imageFile: imageFile,
-        imageFieldName: 'profilePicture',
-      );
-
-      final data = await _httpService.parseJsonResponse(response);
-      
-      final updatedUser = User.fromJson(data['user'] ?? data);
-      
-      // Update cache
-      if (updatedUser.id.isNotEmpty) {
-        _userCache[updatedUser.id] = updatedUser;
-      }
-      
-      return updatedUser;
-    } catch (e) {
-      print('Error updating user with image: $e');
-      throw Exception('Failed to update user: $e');
-    }
+Future<void> saveUserToCache(User user) async {
+  if (user.id.isNotEmpty) {
+    // Update cache
+    _userCache[user.id] = user;
+    
+    // Save to shared preferences
+    await _httpService.saveToCache('user', user.toJson());
   }
-
-  // Método para obtener la URL de la imagen de perfil
-  String getProfilePictureUrl(String userId) {
-    return '${ApiConstants.baseUrl}/api/users/$userId/profile-picture';
-  }
-
-  Future<void> saveUserToCache(User user) async {
-    if (user.id.isNotEmpty) {
-      // Update cache
-      _userCache[user.id] = user;
-      
-      // Save to shared preferences
-      await _httpService.saveToCache('user', user.toJson());
-    }
-  }
-
+}
   // Delete user
   Future<bool> deleteUser(String id) async {
     try {

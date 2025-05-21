@@ -1,7 +1,5 @@
 // lib/screens/user/user_profile.dart
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:flutter_application_1/services/http_service.dart';
 import 'package:flutter_application_1/widgets/custom_drawer.dart';
 import 'package:provider/provider.dart';
@@ -27,16 +25,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   late TextEditingController _usernameController;
   late TextEditingController _emailController;
   late TextEditingController _bioController;
+  late TextEditingController _profilePictureController;
   
   bool _isLoading = false;
   bool _isEditing = false;
   String _errorMessage = '';
   String _successMessage = '';
   User? _user;
-  
-  // Añadir variables para la imagen
-  File? _imageFile;
-  final _imagePicker = ImagePicker();
 
   @override
   void initState() {
@@ -44,6 +39,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     _usernameController = TextEditingController();
     _emailController = TextEditingController();
     _bioController = TextEditingController();
+    _profilePictureController = TextEditingController();
 
     // Create a new HttpService with the AuthService
     final authService = Provider.of<AuthService>(context, listen: false);
@@ -61,6 +57,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     _usernameController.dispose();
     _emailController.dispose();
     _bioController.dispose();
+    _profilePictureController.dispose();
     super.dispose();
   }
 
@@ -99,12 +96,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           _usernameController.text = user!.username;
           _emailController.text = user.email;
           _bioController.text = user.bio ?? '';
+          _profilePictureController.text = user.profilePicture ?? '';
           
           // Agregado: Log para depuración
           print("Datos cargados en controladores:");
           print("Username: ${_usernameController.text}");
           print("Email: ${_emailController.text}");
           print("Bio: ${_bioController.text}");
+          print("ProfilePicture: ${_profilePictureController.text}");
         });
       } else {
         setState(() {
@@ -123,72 +122,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
-  // Método para seleccionar una imagen
-  Future<void> _pickImage(ImageSource source) async {
-    try {
-      final pickedFile = await _imagePicker.pickImage(
-        source: source,
-        maxWidth: 800,
-        maxHeight: 800,
-        imageQuality: 85,
-      );
-      
-      if (pickedFile != null) {
-        setState(() {
-          _imageFile = File(pickedFile.path);
-        });
-      }
-    } catch (e) {
-      print('Error seleccionando imagen: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error seleccionando imagen: $e')),
-      );
-    }
-  }
-
-  // Método para mostrar opciones de selección de imagen
-  void _showImagePicker() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.photo_camera),
-                title: Text('Tomar foto'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.camera);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: Text('Seleccionar de la galería'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.gallery);
-                },
-              ),
-              if (_imageFile != null || (_user != null && _user!.profilePicture != null))
-                ListTile(
-                  leading: const Icon(Icons.delete),
-                  title: Text('Eliminar foto'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    setState(() {
-                      _imageFile = null;
-                    });
-                  },
-                ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   Future<void> _saveProfile() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
@@ -202,21 +135,16 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           'username': _usernameController.text,
           'email': _emailController.text,
           'bio': _bioController.text,
+          'profilePicture': _profilePictureController.text,
         };
 
-        // Usar el método que maneja la subida de imágenes
-        final updatedUser = await _userService.updateUserWithImage(
-          _user!.id, 
-          userData,
-          _imageFile, // Puede ser null si no se ha seleccionado una imagen
-        );
+        final updatedUser = await _userService.updateUser(_user!.id, userData);
         
         // Update local user data
         setState(() {
           _user = updatedUser;
           _successMessage = 'profile_updated'.tr(context);
           _isEditing = false;
-          _imageFile = null; // Resetear la imagen seleccionada
         });
         
         // Update auth service with new user data - THIS IS THE KEY FIX
@@ -342,50 +270,19 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Avatar modificado con soporte para selección de imagen
-                                  GestureDetector(
-                                    onTap: _isEditing ? _showImagePicker : null,
-                                    child: Stack(
-                                      children: [
-                                        CircleAvatar(
-                                          radius: 40.0,
-                                          backgroundColor: Colors.grey.shade200,
-                                          // Si hay una imagen seleccionada, mostrarla
-                                          backgroundImage: _imageFile != null
-                                              ? FileImage(_imageFile!) as ImageProvider
-                                              : _user!.profilePicture != null
-                                                  ? NetworkImage(_userService.getProfilePictureUrl(_user!.id))
-                                                  : null,
-                                          child: (_imageFile == null && _user!.profilePicture == null)
-                                              ? const Icon(
-                                                  Icons.person,
-                                                  size: 40.0,
-                                                  color: Colors.grey,
-                                                )
-                                              : null,
-                                        ),
-                                        if (_isEditing)
-                                          Positioned(
-                                            bottom: 0,
-                                            right: 0,
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                shape: BoxShape.circle,
-                                                border: Border.all(color: Colors.grey.shade300),
-                                              ),
-                                              child: Padding(
-                                                padding: const EdgeInsets.all(4.0),
-                                                child: Icon(
-                                                  Icons.camera_alt,
-                                                  size: 18.0,
-                                                  color: Colors.grey.shade700,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
+                                  CircleAvatar(
+                                    radius: 40.0,
+                                    backgroundColor: Colors.grey.shade200,
+                                    backgroundImage: _user!.profilePicture != null && _user!.profilePicture!.isNotEmpty
+                                        ? NetworkImage(_user!.profilePicture!)
+                                        : null,
+                                    child: _user!.profilePicture == null || _user!.profilePicture!.isEmpty
+                                        ? const Icon(
+                                            Icons.person,
+                                            size: 40.0,
+                                            color: Colors.grey,
+                                          )
+                                        : null,
                                   ),
                                   const SizedBox(width: 16.0),
                                   Expanded(
@@ -522,6 +419,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                       ),
                                       const SizedBox(height: 16.0),
                                       TextFormField(
+                                        controller: _profilePictureController,
+                                        decoration: InputDecoration(
+                                          labelText: 'profile_picture_url'.tr(context),
+                                          border: const OutlineInputBorder(),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16.0),
+                                      TextFormField(
                                         controller: _bioController,
                                         decoration: InputDecoration(
                                           labelText: 'biography'.tr(context),
@@ -542,7 +447,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                                 _usernameController.text = _user!.username;
                                                 _emailController.text = _user!.email;
                                                 _bioController.text = _user!.bio ?? '';
-                                                _imageFile = null;
+                                                _profilePictureController.text = _user!.profilePicture ?? '';
                                               });
                                             },
                                             child: Text('cancel'.tr(context)),
