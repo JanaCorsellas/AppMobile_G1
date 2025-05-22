@@ -3,7 +3,7 @@ class User {
   final String id;
   final String username;
   final String email;
-  final String? profilePicture;
+  final String? profilePicture; // Ahora almacena la ruta del archivo
   final String? bio;
   final int level;
   final double totalDistance;
@@ -34,6 +34,27 @@ class User {
     required this.updatedAt,
   });
 
+  // ✨ NEW: Get full profile picture URL
+  String? get profilePictureUrl {
+    if (profilePicture == null || profilePicture!.isEmpty) {
+      return null;
+    }
+    
+    // If it's already a full URL, return as is
+    if (profilePicture!.startsWith('http')) {
+      return profilePicture;
+    }
+    
+    // Otherwise, construct the full URL
+    // Cambiar localhost por tu IP o dominio en producción
+    return 'http://localhost:3000/$profilePicture';
+  }
+
+  // ✨ NEW: Check if user has profile picture
+  bool get hasProfilePicture {
+    return profilePicture != null && profilePicture!.isNotEmpty;
+  }
+
   factory User.fromJson(Map<String, dynamic> json) {
     // Mejorado: Manejo más robusto del ID
     String userId = '';
@@ -51,12 +72,22 @@ class User {
       username = json['name'];
     }
     
+    // ✨ NEW: Manejo mejorado del profilePicture
+    String? profilePicture;
+    if (json.containsKey('profilePicture')) {
+      profilePicture = json['profilePicture'];
+    }
+    // También verificar si viene con el campo virtual profilePictureUrl
+    if (json.containsKey('profilePictureUrl')) {
+      profilePicture = json['profilePictureUrl'];
+    }
+    
     // Arreglo: Convertir todos los campos a los tipos correctos
     return User(
       id: userId,
       username: username,
       email: json['email'] ?? '',
-      profilePicture: json['profilePicture'],
+      profilePicture: profilePicture,
       bio: json['bio'],
       level: json['level'] != null ? int.tryParse(json['level'].toString()) ?? 1 : 1,
       totalDistance: json['totalDistance'] != null 

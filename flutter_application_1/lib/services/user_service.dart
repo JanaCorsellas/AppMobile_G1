@@ -1,8 +1,13 @@
-// lib/services/user_service.dart
+// lib/services/user_service.dart - Compatible con Web
 import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/foundation.dart'; // Para kIsWeb
 import 'package:flutter_application_1/config/api_constants.dart';
 import 'package:flutter_application_1/models/user.dart';
 import 'package:flutter_application_1/services/http_service.dart';
+import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
+import 'package:http_parser/http_parser.dart';
 
 class UserService {
   final HttpService _httpService;
@@ -12,6 +17,122 @@ class UserService {
   
   UserService(this._httpService);
   
+  // Métodos existentes... (get, create, update, etc.)
+  
+  // ✅ ACTUALIZADO: Upload compatible con Web y Móvil
+  Future<Map<String, dynamic>> uploadProfilePicture(String userId, dynamic imageFile) async {
+  try {
+    print('Uploading profile picture for user: $userId');
+    print('Platform: ${kIsWeb ? "Web" : "Mobile"}');
+    
+    // Create multipart request
+    final uri = Uri.parse('${ApiConstants.baseUrl}/api/users/$userId/profile-picture');
+    final request = http.MultipartRequest('POST', uri);
+    
+    // Add authentication headers if available
+    final headers = _httpService.getAuthHeadersForMultipart();
+    request.headers.addAll(headers);
+    
+    // ✅ Manejo mejorado según plataforma
+    http.MultipartFile multipartFile;
+    
+    if (kIsWeb) {
+      // ✅ Para Web: imageFile es XFile
+      final XFile xFile = imageFile as XFile;
+      final bytes = await xFile.readAsBytes();
+      
+      // ✅ MEJORADO: Detectar MIME type y filename correctamente
+      String? mimeType;
+      String filename = xFile.name;
+      
+      // Intentar detectar MIME type por extensión si no está disponible
+      if (xFile.mimeType != null && xFile.mimeType!.isNotEmpty) {
+        mimeType = xFile.mimeType;
+      } else {
+        // Detectar por extensión
+        final extension = filename.split('.').last.toLowerCase();
+        switch (extension) {
+          case 'jpg':
+          case 'jpeg':
+            mimeType = 'image/jpeg';
+            break;
+          case 'png':
+            mimeType = 'image/png';
+            break;
+          case 'gif':
+            mimeType = 'image/gif';
+            break;
+          case 'webp':
+            mimeType = 'image/webp';
+            break;
+          default:
+            mimeType = 'image/jpeg'; // Default fallback
+        }
+      }
+      
+      // Asegurar que el filename tenga extensión
+      if (!filename.contains('.')) {
+        final extension = mimeType?.split('/').last ?? 'jpg';
+        filename = '$filename.$extension';
+      }
+      
+      multipartFile = http.MultipartFile.fromBytes(
+        'profilePicture', // ✅ IMPORTANTE: Nombre del campo debe coincidir
+        bytes,
+        filename: filename,
+        contentType: MediaType.parse(mimeType ?? 'image/jpeg'),
+      );
+      
+      print('Web: Uploading file $filename (${bytes.length} bytes)');
+      print('MIME type: $mimeType');
+    } else {
+      // ✅ Para Móvil: imageFile es File
+      final File file = imageFile as File;
+      
+      multipartFile = await http.MultipartFile.fromPath(
+        'profilePicture', // ✅ IMPORTANTE: Nombre del campo debe coincidir
+        file.path,
+      );
+      
+      print('Mobile: Uploading file ${file.path}');
+    }
+    
+    request.files.add(multipartFile);
+    
+    print('Sending multipart request...');
+    print('Request URL: ${request.url}');
+    print('Request headers: ${request.headers}');
+    
+    // Send the request
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+    
+    print('Upload response status: ${response.statusCode}');
+    print('Upload response body: ${response.body}');
+    
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      
+      // Update user cache with new profile picture
+      if (_userCache.containsKey(userId)) {
+        final cachedUser = _userCache[userId]!;
+        final updatedUser = cachedUser.copyWith(
+          profilePicture: data['profilePicture'],
+        );
+        _userCache[userId] = updatedUser;
+      }
+      
+      return data;
+    } else {
+      final errorData = json.decode(response.body);
+      throw Exception(errorData['message'] ?? 'Failed to upload image');
+    }
+  } catch (e) {
+    print('Error uploading profile picture: $e');
+    throw Exception('Failed to upload profile picture: $e');
+  }
+}
+
   // Get all users with pagination
   Future<Map<String, dynamic>> getUsers({
     int page = 1,
@@ -206,15 +327,59 @@ class UserService {
       throw Exception('Failed to update user: $e');
     }
   }
-Future<void> saveUserToCache(User user) async {
-  if (user.id.isNotEmpty) {
-    // Update cache
-    _userCache[user.id] = user;
-    
-    // Save to shared preferences
-    await _httpService.saveToCache('user', user.toJson());
+
+  // ✅ Delete profile picture
+  Future<bool> deleteProfilePicture(String userId) async {
+    try {
+      print('Deleting profile picture for user: $userId');
+      
+      final response = await _httpService.delete(
+        '${ApiConstants.baseUrl}/api/users/$userId/profile-picture'
+      );
+      
+      if (response.statusCode == 200) {
+        // Update user cache to remove profile picture
+        if (_userCache.containsKey(userId)) {
+          final cachedUser = _userCache[userId]!;
+          final updatedUser = cachedUser.copyWith(profilePicture: null);
+          _userCache[userId] = updatedUser;
+        }
+        
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      print('Error deleting profile picture: $e');
+      return false;
+    }
   }
-}
+
+  // ✅ Get profile picture URL
+  String? getProfilePictureUrl(String? profilePicturePath) {
+    if (profilePicturePath == null || profilePicturePath.isEmpty) {
+      return null;
+    }
+    
+    // If it's already a full URL, return as is
+    if (profilePicturePath.startsWith('http')) {
+      return profilePicturePath;
+    }
+    
+    // Otherwise, construct the full URL
+    return '${ApiConstants.baseUrl}/$profilePicturePath';
+  }
+
+  Future<void> saveUserToCache(User user) async {
+    if (user.id.isNotEmpty) {
+      // Update cache
+      _userCache[user.id] = user;
+      
+      // Save to shared preferences
+      await _httpService.saveToCache('user', user.toJson());
+    }
+  }
+
   // Delete user
   Future<bool> deleteUser(String id) async {
     try {
