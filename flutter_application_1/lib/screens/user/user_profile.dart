@@ -1,4 +1,4 @@
-// lib/screens/user/user_profile.dart - Versión compatible con Web
+// lib/screens/user/user_profile.dart - Versión corregida
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'; // Para kIsWeb
 import 'package:flutter_application_1/services/http_service.dart';
@@ -11,6 +11,7 @@ import 'package:flutter_application_1/services/user_service.dart';
 import 'package:flutter_application_1/extensions/string_extensions.dart';
 import 'package:flutter_application_1/services/socket_service.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:io';
 
 class UserProfileScreen extends StatefulWidget {
@@ -35,6 +36,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   String _errorMessage = '';
   String _successMessage = '';
   User? _user;
+
+  // ✅ NUEVO: Key para forzar rebuild del widget de imagen
+  Key _profileImageKey = UniqueKey();
 
   @override
   void initState() {
@@ -89,6 +93,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           _usernameController.text = user!.username;
           _emailController.text = user.email;
           _bioController.text = user.bio ?? '';
+          
+          // ✅ NUEVO: Generar nueva key para forzar rebuild
+          _profileImageKey = UniqueKey();
           
           print("Datos cargados en controladores:");
           print("Username: ${_usernameController.text}");
@@ -155,20 +162,28 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       // Upload image
       final result = await _userService.uploadProfilePicture(_user!.id, imageFile);
 
-      // Update user data
+      // ✅ MEJORADO: Update user data y limpiar caché
+      final updatedUser = _user!.copyWith(
+        profilePicture: result['profilePicture'],
+      );
+
       setState(() {
-        _user = _user!.copyWith(
-          profilePicture: result['profilePicture'],
-        );
+        _user = updatedUser;
         _successMessage = 'profile_picture_updated'.tr(context);
+        
+        // ✅ NUEVO: Generar nueva key para forzar rebuild de imagen
+        _profileImageKey = UniqueKey();
       });
+
+      // ✅ NUEVO: Limpiar caché de imágenes
+      await _clearImageCache(updatedUser.profilePictureUrl);
 
       // Update auth service with new user data
       final authService = Provider.of<AuthService>(context, listen: false);
-      authService.updateCurrentUser(_user!);
+      authService.updateCurrentUser(updatedUser);
 
       // Save updated user data to persistent storage
-      await _userService.saveUserToCache(_user!);
+      await _userService.saveUserToCache(updatedUser);
 
       print('Profile picture uploaded successfully: ${result['profilePicture']}');
 
@@ -214,6 +229,26 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
+  // ✅ NUEVO: Método para limpiar caché de imágenes
+  Future<void> _clearImageCache([String? imageUrl]) async {
+    try {
+      // Limpiar caché específico si se proporciona URL
+      if (imageUrl != null && imageUrl.isNotEmpty) {
+        await CachedNetworkImage.evictFromCache(imageUrl);
+        print('Caché limpiado para: $imageUrl');
+      }
+      
+      // También limpiar la URL anterior si existe
+      if (_user?.profilePictureUrl != null) {
+        await CachedNetworkImage.evictFromCache(_user!.profilePictureUrl!);
+        print('Caché limpiado para URL anterior: ${_user!.profilePictureUrl}');
+      }
+    } catch (e) {
+      print('Error limpiando caché de imágenes: $e');
+    }
+  }
+
+  // ✅ MEJORADO: Eliminar imagen con limpieza de caché
   Future<void> _deleteProfilePicture() async {
     try {
       // Show confirmation dialog
@@ -246,22 +281,35 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         _successMessage = '';
       });
 
+      // ✅ NUEVO: Guardar URL anterior para limpiar caché
+      final oldImageUrl = _user?.profilePictureUrl;
+
       // Delete image
       final success = await _userService.deleteProfilePicture(_user!.id);
 
       if (success) {
-        // Update user data
+        // ✅ MEJORADO: Update user data
+        final updatedUser = _user!.copyWith(profilePicture: null);
+        
         setState(() {
-          _user = _user!.copyWith(profilePicture: null);
+          _user = updatedUser;
           _successMessage = 'profile_picture_deleted'.tr(context);
+          
+          // ✅ NUEVO: Generar nueva key para forzar rebuild
+          _profileImageKey = UniqueKey();
         });
+
+        // ✅ NUEVO: Limpiar caché de la imagen anterior
+        if (oldImageUrl != null) {
+          await _clearImageCache(oldImageUrl);
+        }
 
         // Update auth service
         final authService = Provider.of<AuthService>(context, listen: false);
-        authService.updateCurrentUser(_user!);
+        authService.updateCurrentUser(updatedUser);
 
         // Save to cache
-        await _userService.saveUserToCache(_user!);
+        await _userService.saveUserToCache(updatedUser);
 
         print('Profile picture deleted successfully');
       } else {
@@ -323,24 +371,88 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
-  // ✅ ACTUALIZADO: Texto del botón según plataforma
+  // ✅ NUEVO: Método para refrescar toda la pantalla
+  Future<void> _refreshProfile() async {
+    // Limpiar caché del usuario
+    _userService.clearCache();
+    
+    // Limpiar caché de imágenes
+    await _clearImageCache();
+    
+    // Recargar datos del usuario
+    await _loadUserData();
+    
+    // Mostrar mensaje de confirmación
+    setState(() {
+      _successMessage = 'Perfil actualizado';
+    });
+    
+    // Limpiar mensaje después de 3 segundos
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _successMessage = '';
+        });
+      }
+    });
+  }
+
+  // ✅ MEJORADO: Widget de imagen con CachedNetworkImage
   Widget _buildProfilePicture() {
     return Stack(
       alignment: Alignment.center,
       children: [
-        CircleAvatar(
-          radius: 50.0,
-          backgroundColor: Colors.grey.shade200,
-          backgroundImage: _user!.hasProfilePicture 
-              ? NetworkImage(_user!.profilePictureUrl!)
-              : null,
-          child: !_user!.hasProfilePicture
-              ? const Icon(
-                  Icons.person,
-                  size: 50.0,
-                  color: Colors.grey,
-                )
-              : null,
+        // ✅ NUEVO: Usar key para forzar rebuild y CachedNetworkImage
+        Container(
+          key: _profileImageKey,
+          child: CircleAvatar(
+            radius: 50.0,
+            backgroundColor: Colors.grey.shade200,
+            child: _user!.hasProfilePicture 
+                ? ClipOval(
+                    child: CachedNetworkImage(
+                      imageUrl: _user!.profilePictureUrl!,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        width: 100,
+                        height: 100,
+                        color: Colors.grey.shade200,
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) {
+                        print('Error cargando imagen: $error');
+                        return Container(
+                          width: 100,
+                          height: 100,
+                          color: Colors.grey.shade200,
+                          child: const Icon(
+                            Icons.person,
+                            size: 50.0,
+                            color: Colors.grey,
+                          ),
+                        );
+                      },
+                      // ✅ IMPORTANTE: Headers para evitar problemas de caché
+                      httpHeaders: const {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0',
+                      },
+                    ),
+                  )
+                : const Icon(
+                    Icons.person,
+                    size: 50.0,
+                    color: Colors.grey,
+                  ),
+          ),
         ),
         if (_isUploadingImage)
           Container(
@@ -408,8 +520,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         title: Text('my_profile'.tr(context)),
         leading: null,
         automaticallyImplyLeading: true,
-        // ✅ Mostrar indicador de plataforma en debug
+        // ✅ NUEVO: Botón de refresh en la AppBar
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _refreshProfile,
+            tooltip: 'Actualizar perfil',
+          ),
           if (kDebugMode)
             Chip(
               label: Text(kIsWeb ? 'WEB' : 'MOBILE'),
