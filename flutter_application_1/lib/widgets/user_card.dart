@@ -1,5 +1,7 @@
+// lib/widgets/user_card.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/models/user.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class UserCard extends StatelessWidget {
   final User user;
@@ -29,18 +31,7 @@ class UserCard extends StatelessWidget {
         child: Column(
           children: [
             ListTile(
-              leading: CircleAvatar(
-                backgroundColor: Colors.grey.shade200,
-                backgroundImage: user.profilePicture != null && user.profilePicture!.isNotEmpty
-                    ? NetworkImage(user.profilePicture!)
-                    : null,
-                child: user.profilePicture == null || user.profilePicture!.isEmpty
-                    ? const Icon(
-                        Icons.person,
-                        color: Colors.grey,
-                      )
-                    : null,
-              ),
+              leading: _buildProfilePicture(),
               title: Row(
                 children: [
                   Text(
@@ -149,6 +140,56 @@ class UserCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  // ✨ NEW: Build profile picture with network image support
+  Widget _buildProfilePicture() {
+    if (user.hasProfilePicture && user.profilePictureUrl != null) {
+      return CircleAvatar(
+        backgroundColor: Colors.grey.shade200,
+        child: ClipOval(
+          child: CachedNetworkImage(
+            imageUrl: user.profilePictureUrl!,
+            width: 40,
+            height: 40,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => Container(
+              width: 40,
+              height: 40,
+              color: Colors.grey.shade200,
+              child: const Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.grey,
+                  ),
+                ),
+              ),
+            ),
+            errorWidget: (context, url, error) => Container(
+              width: 40,
+              height: 40,
+              color: Colors.grey.shade200,
+              child: const Icon(
+                Icons.person,
+                color: Colors.grey,
+                size: 24,
+              ),
+            ),
+          ),
+        ),
+      );
+    } else {
+      return CircleAvatar(
+        backgroundColor: Colors.grey.shade200,
+        child: const Icon(
+          Icons.person,
+          color: Colors.grey,
+        ),
+      );
+    }
   }
 
   void _showOptionsMenu(BuildContext context) {

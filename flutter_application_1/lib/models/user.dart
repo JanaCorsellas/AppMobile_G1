@@ -1,9 +1,9 @@
-// lib/models/user.dart
+// lib/models/user.dart - Versión corregida
 class User {
   final String id;
   final String username;
   final String email;
-  final String? profilePicture;
+  final String? profilePicture; // Ahora almacena la ruta del archivo
   final String? bio;
   final int level;
   final double totalDistance;
@@ -34,6 +34,34 @@ class User {
     required this.updatedAt,
   });
 
+  // ✅ MEJORADO: Get full profile picture URL con validación más estricta
+  String? get profilePictureUrl {
+    if (profilePicture == null || profilePicture!.isEmpty) {
+      return null;
+    }
+    
+    // If it's already a full URL, return as is
+    if (profilePicture!.startsWith('http')) {
+      return profilePicture;
+    }
+    
+    // ✅ NUEVO: Agregar timestamp para evitar caché del navegador
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    
+    // Otherwise, construct the full URL
+    // Cambiar localhost por tu IP o dominio en producción
+    return 'http://localhost:3000/$profilePicture?t=$timestamp';
+  }
+
+  // ✅ MEJORADO: Check if user has profile picture con validación más estricta
+  bool get hasProfilePicture {
+    return profilePicture != null && 
+           profilePicture!.isNotEmpty && 
+           profilePicture != 'null' && 
+           profilePicture != 'undefined';
+  }
+
+  // ✅ MEJORADO: fromJson con mejor manejo de profilePicture
   factory User.fromJson(Map<String, dynamic> json) {
     // Mejorado: Manejo más robusto del ID
     String userId = '';
@@ -51,12 +79,44 @@ class User {
       username = json['name'];
     }
     
+    // ✅ NUEVO: Manejo mejorado y más estricto del profilePicture
+    String? profilePicture;
+    
+    // Verificar múltiples campos posibles
+    if (json.containsKey('profilePicture')) {
+      final value = json['profilePicture'];
+      // Solo asignar si no es null, undefined, o string vacío
+      if (value != null && 
+          value.toString().isNotEmpty && 
+          value.toString() != 'null' && 
+          value.toString() != 'undefined') {
+        profilePicture = value.toString();
+      }
+    }
+    
+    // También verificar si viene con el campo virtual profilePictureUrl
+    if (profilePicture == null && json.containsKey('profilePictureUrl')) {
+      final value = json['profilePictureUrl'];
+      if (value != null && 
+          value.toString().isNotEmpty && 
+          value.toString() != 'null' && 
+          value.toString() != 'undefined') {
+        profilePicture = value.toString();
+      }
+    }
+    
+    // Debug logging
+    print('User.fromJson - profilePicture processing:');
+    print('  Raw profilePicture: ${json['profilePicture']}');
+    print('  Raw profilePictureUrl: ${json['profilePictureUrl']}');
+    print('  Final profilePicture: $profilePicture');
+    
     // Arreglo: Convertir todos los campos a los tipos correctos
     return User(
       id: userId,
       username: username,
       email: json['email'] ?? '',
-      profilePicture: json['profilePicture'],
+      profilePicture: profilePicture, // ✅ Valor ya filtrado
       bio: json['bio'],
       level: json['level'] != null ? int.tryParse(json['level'].toString()) ?? 1 : 1,
       totalDistance: json['totalDistance'] != null 
@@ -105,11 +165,13 @@ class User {
     };
   }
 
+  // ✅ MEJORADO: copyWith con mejor manejo de profilePicture null
   User copyWith({
     String? id,
     String? username,
     String? email,
     String? profilePicture,
+    bool clearProfilePicture = false, // ✅ NUEVO: flag explícito para limpiar
     String? bio,
     int? level,
     double? totalDistance,
@@ -122,11 +184,21 @@ class User {
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
+    // ✅ NUEVO: Manejar explícitamente la limpieza de profilePicture
+    String? newProfilePicture;
+    if (clearProfilePicture) {
+      newProfilePicture = null;
+    } else if (profilePicture != null) {
+      newProfilePicture = profilePicture;
+    } else {
+      newProfilePicture = this.profilePicture;
+    }
+    
     return User(
       id: id ?? this.id,
       username: username ?? this.username,
       email: email ?? this.email,
-      profilePicture: profilePicture ?? this.profilePicture,
+      profilePicture: newProfilePicture,
       bio: bio ?? this.bio,
       level: level ?? this.level,
       totalDistance: totalDistance ?? this.totalDistance,

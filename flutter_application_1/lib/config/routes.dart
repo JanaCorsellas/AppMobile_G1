@@ -24,7 +24,7 @@ class AppRoutes {
   static const String notifications = '/notifications';
   static const String activitySelection = '/activity-selection';
   static const String tracking = '/tracking';
-  //static const String achievements = '/achievements';
+  static const String achievements = '/achievements';
   static const String activities = '/activities';
   static const String settingsRoute = '/settings';
 
@@ -61,8 +61,8 @@ class AppRoutes {
               resuming: resuming,
             ),
           );
-        /*case achievements:
-          return MaterialPageRoute(builder: (_) => const AchievementsScreen());*/
+           case achievements:
+          return MaterialPageRoute(builder: (_) => const AchievementsScreen());
         case activities:
           return MaterialPageRoute(builder: (_) => const ActivitiesListScreen());
         case settingsRoute:

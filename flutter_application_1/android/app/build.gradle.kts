@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.flutter_application_1"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 34  // ✅ ACTUALIZADO: Era flutter.compileSdkVersion, ahora 34 para compatibilidad
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -24,8 +24,8 @@ android {
         applicationId = "com.example.flutter_application_1"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        minSdk = 21          // ✅ ACTUALIZADO: Era flutter.minSdkVersion, ahora 21 mínimo para image_picker
+        targetSdk = 34       // ✅ ACTUALIZADO: Era flutter.targetSdkVersion, ahora 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

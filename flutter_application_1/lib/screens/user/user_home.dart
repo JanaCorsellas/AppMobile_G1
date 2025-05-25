@@ -11,7 +11,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter_application_1/screens/activity/activity_detail_screen.dart';
 import 'package:flutter_application_1/widgets/custom_drawer.dart';
 import 'package:flutter_application_1/extensions/string_extensions.dart';
-
+import 'package:flutter_application_1/widgets/achievement_progress_widget.dart';
 class UserHomeScreen extends StatefulWidget {
   const UserHomeScreen({Key? key}) : super(key: key);
 
@@ -260,6 +260,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                 const SizedBox(height: 32.0),
                 _buildQuickStats(context, user),
                 const SizedBox(height: 32.0),
+                const AchievementProgressWidget(),
                 _buildRecentActivities(context),
                 
                 // Usuarios conectados (Updated section)
