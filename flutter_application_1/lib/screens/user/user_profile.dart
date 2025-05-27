@@ -37,7 +37,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   String _successMessage = '';
   User? _user;
 
-  // ✅ NUEVO: Key para forzar rebuild del widget de imagen
+
   Key _profileImageKey = UniqueKey();
 
   @override
@@ -94,7 +94,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           _emailController.text = user.email;
           _bioController.text = user.bio ?? '';
           
-          // ✅ NUEVO: Generar nueva key para forzar rebuild
+      
           _profileImageKey = UniqueKey();
           
           print("Datos cargados en controladores:");
@@ -120,16 +120,16 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
-  // ✅ ACTUALIZADO: Compatible con Web
+
   Future<void> _pickAndUploadImage() async {
     try {
       ImageSource? source;
       
-      // ✅ En Web: Solo mostrar galería (file picker)
+
       if (kIsWeb) {
         source = ImageSource.gallery;
       } else {
-        // ✅ En móvil: Mostrar opciones de cámara y galería
+
         source = await _showImageSourceDialog();
         if (source == null) return;
       }
@@ -150,8 +150,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         _successMessage = '';
       });
 
-      // ✅ En Web: Usar XFile directamente
-      // ✅ En móvil: Convertir a File
+   
       dynamic imageFile;
       if (kIsWeb) {
         imageFile = pickedFile; // XFile para web
@@ -162,7 +161,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       // Upload image
       final result = await _userService.uploadProfilePicture(_user!.id, imageFile);
 
-      // ✅ MEJORADO: Update user data y limpiar caché
+
       final updatedUser = _user!.copyWith(
         profilePicture: result['profilePicture'],
       );
@@ -171,11 +170,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         _user = updatedUser;
         _successMessage = 'profile_picture_updated'.tr(context);
         
-        // ✅ NUEVO: Generar nueva key para forzar rebuild de imagen
+    
         _profileImageKey = UniqueKey();
       });
 
-      // ✅ NUEVO: Limpiar caché de imágenes
       await _clearImageCache(updatedUser.profilePictureUrl);
 
       // Update auth service with new user data
@@ -199,9 +197,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
-  // ✅ ACTUALIZADO: Solo mostrar en móvil
+ 
   Future<ImageSource?> _showImageSourceDialog() async {
-    // ✅ En Web: No mostrar este diálogo
+   
     if (kIsWeb) return ImageSource.gallery;
     
     return await showDialog<ImageSource?>(
@@ -229,7 +227,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
-  // ✅ NUEVO: Método para limpiar caché de imágenes
+  
   Future<void> _clearImageCache([String? imageUrl]) async {
     try {
       // Limpiar caché específico si se proporciona URL
@@ -248,87 +246,185 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
-  // ✅ MEJORADO: Eliminar imagen con limpieza de caché
-  Future<void> _deleteProfilePicture() async {
-    try {
-      // Show confirmation dialog
-      final bool? confirm = await showDialog<bool>(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text('delete_profile_picture'.tr(context)),
-            content: Text('delete_profile_picture_confirmation'.tr(context)),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: Text('cancel'.tr(context)),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: Text('delete'.tr(context)),
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
-              ),
-            ],
-          );
-        },
+  // REEMPLAZAR la función _deleteProfilePicture en user_profile.dart
+
+Future<void> _deleteProfilePicture() async {
+  try {
+    // Show confirmation dialog
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('delete_profile_picture'.tr(context)),
+          content: Text('delete_profile_picture_confirmation'.tr(context)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('cancel'.tr(context)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('delete'.tr(context)),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) return;
+
+    setState(() {
+      _isUploadingImage = true;
+      _errorMessage = '';
+      _successMessage = '';
+    });
+
+    
+    final oldImageUrl = _user?.profilePictureUrl;
+    
+    print(' Deleting profile picture for user: ${_user!.id}');
+    print(' Current image URL: $oldImageUrl');
+
+    
+    final success = await _userService.deleteProfilePicture(_user!.id);
+
+    if (success) {
+      print(' Delete API call successful');
+      
+      
+      await _clearImageCacheCompletely(oldImageUrl);
+      
+      
+      final updatedUser = _user!.copyWith(
+        profilePicture: null,
+        clearProfilePicture: true, // Flag explícito para limpiar
       );
-
-      if (confirm != true) return;
-
+      
       setState(() {
-        _isUploadingImage = true;
-        _errorMessage = '';
-        _successMessage = '';
+        _user = updatedUser;
+        _successMessage = 'profile_picture_deleted'.tr(context);
+        
+        
+        _profileImageKey = UniqueKey();
       });
 
-      // ✅ NUEVO: Guardar URL anterior para limpiar caché
-      final oldImageUrl = _user?.profilePictureUrl;
+      
+      final authService = Provider.of<AuthService>(context, listen: false);
+      authService.updateCurrentUser(updatedUser);
 
-      // Delete image
-      final success = await _userService.deleteProfilePicture(_user!.id);
+      
+      await _userService.saveUserToCache(updatedUser);
 
-      if (success) {
-        // ✅ MEJORADO: Update user data
-        final updatedUser = _user!.copyWith(profilePicture: null);
-        
+      
+      await Future.delayed(const Duration(milliseconds: 500));
+      await _clearImageCacheCompletely(oldImageUrl);
+      
+     
+      if (mounted) {
         setState(() {
-          _user = updatedUser;
-          _successMessage = 'profile_picture_deleted'.tr(context);
-          
-          // ✅ NUEVO: Generar nueva key para forzar rebuild
           _profileImageKey = UniqueKey();
-        });
-
-        // ✅ NUEVO: Limpiar caché de la imagen anterior
-        if (oldImageUrl != null) {
-          await _clearImageCache(oldImageUrl);
-        }
-
-        // Update auth service
-        final authService = Provider.of<AuthService>(context, listen: false);
-        authService.updateCurrentUser(updatedUser);
-
-        // Save to cache
-        await _userService.saveUserToCache(updatedUser);
-
-        print('Profile picture deleted successfully');
-      } else {
-        setState(() {
-          _errorMessage = 'profile_picture_delete_error'.tr(context);
         });
       }
 
-    } catch (e) {
+      print(' Profile picture deletion completed successfully');
+
+    } else {
       setState(() {
-        _errorMessage = 'profile_picture_delete_error'.tr(context) + ': $e';
-      });
-      print('Error deleting profile picture: $e');
-    } finally {
-      setState(() {
-        _isUploadingImage = false;
+        _errorMessage = 'profile_picture_delete_error'.tr(context);
       });
     }
+
+  } catch (e) {
+    setState(() {
+      _errorMessage = 'profile_picture_delete_error'.tr(context) + ': $e';
+    });
+    print(' Error deleting profile picture: $e');
+  } finally {
+    setState(() {
+      _isUploadingImage = false;
+    });
   }
+}
+
+
+Future<void> _clearImageCacheCompletely([String? specificUrl]) async {
+  try {
+    print('🧹 Starting complete image cache cleanup...');
+    
+    // 1. Limpiar URL específica si se proporciona
+    if (specificUrl != null && specificUrl.isNotEmpty) {
+      await CachedNetworkImage.evictFromCache(specificUrl);
+      print('🧹 Cleared specific URL: $specificUrl');
+      
+      // También limpiar posibles variaciones de la URL
+      final variations = [
+        specificUrl,
+        '$specificUrl?t=${DateTime.now().millisecondsSinceEpoch}',
+        specificUrl.split('?')[0], // URL sin parámetros
+      ];
+      
+      for (final variation in variations) {
+        await CachedNetworkImage.evictFromCache(variation);
+      }
+    }
+    
+    // 2. Limpiar todas las posibles URLs del usuario actual
+    if (_user != null) {
+      final possibleUrls = [
+        _user!.profilePicture,
+        _user!.profilePictureUrl,
+        // También URLs con timestamps anteriores
+      ].where((url) => url != null && url.isNotEmpty).toList();
+      
+      for (final url in possibleUrls) {
+        await CachedNetworkImage.evictFromCache(url!);
+        print('🧹 Cleared user URL: $url');
+      }
+    }
+    
+    // 3. Limpiar caché general (método agresivo)
+    await CachedNetworkImage.evictFromCache('');
+    
+    print(' Complete image cache cleanup finished');
+    
+  } catch (e) {
+    print(' Error during cache cleanup: $e');
+    // No fallar por errores de caché
+  }
+}
+
+
+Future<void> _refreshProfile() async {
+  print(' Starting profile refresh...');
+  
+  // Limpiar caché del usuario
+  _userService.clearCache();
+  
+  
+  await _clearImageCacheCompletely();
+  
+  
+  await _loadUserData();
+  
+  
+  setState(() {
+    _successMessage = 'Perfil actualizado';
+    _profileImageKey = UniqueKey(); // Forzar rebuild
+  });
+  
+  // Limpiar mensaje después de 3 segundos
+  Future.delayed(const Duration(seconds: 3), () {
+    if (mounted) {
+      setState(() {
+        _successMessage = '';
+      });
+    }
+  });
+  
+  
+}
+ 
 
   Future<void> _saveProfile() async {
     if (_formKey.currentState!.validate()) {
@@ -371,38 +467,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
-  // ✅ NUEVO: Método para refrescar toda la pantalla
-  Future<void> _refreshProfile() async {
-    // Limpiar caché del usuario
-    _userService.clearCache();
-    
-    // Limpiar caché de imágenes
-    await _clearImageCache();
-    
-    // Recargar datos del usuario
-    await _loadUserData();
-    
-    // Mostrar mensaje de confirmación
-    setState(() {
-      _successMessage = 'Perfil actualizado';
-    });
-    
-    // Limpiar mensaje después de 3 segundos
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        setState(() {
-          _successMessage = '';
-        });
-      }
-    });
-  }
 
-  // ✅ MEJORADO: Widget de imagen con CachedNetworkImage
+  
   Widget _buildProfilePicture() {
     return Stack(
       alignment: Alignment.center,
       children: [
-        // ✅ NUEVO: Usar key para forzar rebuild y CachedNetworkImage
+       
         Container(
           key: _profileImageKey,
           child: CircleAvatar(
@@ -439,7 +510,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           ),
                         );
                       },
-                      // ✅ IMPORTANTE: Headers para evitar problemas de caché
+                      
                       httpHeaders: const {
                         'Cache-Control': 'no-cache, no-store, must-revalidate',
                         'Pragma': 'no-cache',

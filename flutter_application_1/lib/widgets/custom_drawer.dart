@@ -173,7 +173,7 @@ class CustomDrawer extends StatelessWidget {
                     route: AppRoutes.activitySelection,
                     currentRoute: currentRoute,
                   ),
-                  _buildMenuItem(
+                 /* _buildMenuItem(
                     context,
                     icon: Icons.music_note_outlined,
                     title: 'my_songs'.tr(context),
@@ -185,7 +185,7 @@ class CustomDrawer extends StatelessWidget {
                         const SnackBar(content: Text('Pantalla de playlist en desarrollo'))
                       );
                     },
-                  ),
+                  ),*/
                   _buildMenuItem(
                     context,
                     icon: Icons.emoji_events_outlined,
