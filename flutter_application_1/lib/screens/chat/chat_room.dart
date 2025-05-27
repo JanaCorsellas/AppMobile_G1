@@ -1,5 +1,6 @@
-// flutter_application_1/lib/screens/chat/chat_room.dart
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/services/notification_services.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +11,7 @@ import 'package:flutter_application_1/services/chat_service.dart';
 import 'package:flutter_application_1/services/socket_service.dart';
 import 'package:flutter_application_1/services/user_service.dart';
 import 'package:flutter_application_1/services/http_service.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ChatRoomScreen extends StatefulWidget {
   final String roomId;
@@ -33,6 +35,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> with WidgetsBindingObse
   bool _showLoadingError = false;
   String _errorMessage = '';
   String _chatTitle = 'Chat';
+  String? _chatProfilePictureUrl;
+  String? _groupPictureUrl;
+  bool _isGroup = false;
+  bool _isCurrentUserGroupMember = false;
+  bool _isUploadingGroupImage = false;
 
   @override
   void initState() {
@@ -97,6 +104,21 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> with WidgetsBindingObse
             .firstWhere((room) => room.id == widget.roomId);
         print("Sala cargada correctamente: ${_currentRoom?.name}");
         
+        // Store group picture and membership info
+        if (_currentRoom != null && _currentRoom!.isGroup) {
+          setState(() {
+            _isGroup = true;
+            _groupPictureUrl = _currentRoom!.groupPictureUrl;
+            _isCurrentUserGroupMember = _currentRoom!.participants.contains(currentUserId);
+          });
+        } else {
+          setState(() {
+            _isGroup = false;
+            _groupPictureUrl = null;
+            _isCurrentUserGroupMember = false;
+          });
+        }
+
         // Actualizar título de chat para salas 1:1
         if (_currentRoom != null && !_currentRoom!.isGroup && _currentRoom!.participants.length == 2) {
           String otherUserId = _currentRoom!.participants
@@ -112,6 +134,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> with WidgetsBindingObse
               if (otherUser != null && mounted) {
                 setState(() {
                   _chatTitle = otherUser.username;
+                  _chatProfilePictureUrl = otherUser.profilePictureUrl;
                 });
               } else {
                 setState(() {
@@ -143,6 +166,21 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> with WidgetsBindingObse
           try {
             _currentRoom = chatService.chatRooms
                 .firstWhere((room) => room.id == widget.roomId);
+            
+            // Store group picture and membership info
+            if (_currentRoom != null && _currentRoom!.isGroup) {
+              setState(() {
+                _isGroup = true;
+                _groupPictureUrl = _currentRoom!.groupPictureUrl;
+                _isCurrentUserGroupMember = _currentRoom!.participants.contains(currentUserId);
+              });
+            } else {
+              setState(() {
+                _isGroup = false;
+                _groupPictureUrl = null;
+                _isCurrentUserGroupMember = false;
+              });
+            }
                 
             // Actualizar título de chat para salas 1:1
             if (_currentRoom != null && !_currentRoom!.isGroup && _currentRoom!.participants.length == 2) {
@@ -159,6 +197,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> with WidgetsBindingObse
                   if (otherUser != null && mounted) {
                     setState(() {
                       _chatTitle = otherUser.username;
+                      _chatProfilePictureUrl = otherUser.profilePictureUrl;
                     });
                   } else {
                     setState(() {
@@ -200,6 +239,42 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> with WidgetsBindingObse
       if (mounted) {
         setState(() => _isLoadingMessages = false);
       }
+    }
+  }
+
+  Future<void> _pickAndUploadGroupImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile == null) return;
+
+    setState(() {
+      _isUploadingGroupImage = true;
+    });
+
+    try {
+      final chatService = Provider.of<ChatService>(context, listen: false);
+      final imageUrl = await chatService.uploadGroupPicture(
+        _currentRoom!.id,
+        kIsWeb ? pickedFile : pickedFile.path, // Pass XFile for web, path for mobile
+      );
+
+      if (imageUrl != null) {
+        setState(() {
+          _groupPictureUrl = imageUrl;
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error al subir la imagen de grupo')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      setState(() {
+        _isUploadingGroupImage = false;
+      });
     }
   }
 
@@ -247,13 +322,56 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> with WidgetsBindingObse
     
     return Scaffold(
       appBar: AppBar(
-        title: Text(_chatTitle),
+        title: Row(
+          children: [
+            if (_isGroup)
+              Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundImage: (_groupPictureUrl != null && _groupPictureUrl!.isNotEmpty)
+                        ? CachedNetworkImageProvider(_groupPictureUrl!)
+                        : null,
+                    child: (_groupPictureUrl == null || _groupPictureUrl!.isEmpty)
+                        ? const Icon(Icons.groups)
+                        : null,
+                  ),
+                  if (_isCurrentUserGroupMember)
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: GestureDetector(
+                        onTap: _isUploadingGroupImage ? null : _pickAndUploadGroupImage,
+                        child: CircleAvatar(
+                          radius: 10,
+                          backgroundColor: Colors.white,
+                          child: _isUploadingGroupImage
+                              ? const SizedBox(
+                                  width: 12,
+                                  height: 12,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(Icons.edit, size: 14, color: Colors.blue),
+                        ),
+                      ),
+                    ),
+                ],
+              )
+            else
+              (_chatProfilePictureUrl != null && _chatProfilePictureUrl!.isNotEmpty)
+                  ? CircleAvatar(
+                      backgroundImage: CachedNetworkImageProvider(_chatProfilePictureUrl!),
+                    )
+                  : const CircleAvatar(child: Icon(Icons.person)),
+            const SizedBox(width: 8),
+            Text(_chatTitle),
+          ],
+        ),
         actions: [
-          // Se quitó el indicador de conexión (icono WiFi)
           IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadRoom,
-            tooltip: 'Recargar mensajes',
+          icon: const Icon(Icons.refresh),
+          onPressed: _loadRoom,
+          tooltip: 'Recargar mensajes',
           ),
         ],
       ),
