@@ -7,6 +7,7 @@ class ChatRoom {
   final String? lastMessage;
   final DateTime? lastMessageTime;
   final bool isGroup;
+  final String? groupPictureUrl;
 
   ChatRoom({
     required this.id,
@@ -17,6 +18,7 @@ class ChatRoom {
     this.lastMessage,
     this.lastMessageTime,
     this.isGroup = false,
+    this.groupPictureUrl,
   });
 
   factory ChatRoom.fromJson(Map<String, dynamic> json) {
@@ -65,6 +67,7 @@ class ChatRoom {
       name: roomName,
       description: json['description'],
       participants: participantsList,
+      groupPictureUrl: json['groupPictureUrl'],
       createdAt: createdAtDate,
       lastMessage: json['lastMessage'],
       lastMessageTime: lastMessageTimeDate,
@@ -78,6 +81,7 @@ class ChatRoom {
       'name': name,
       'description': description,
       'participants': participants,
+      'groupPictureUrl': groupPictureUrl,
       'createdAt': createdAt.toIso8601String(),
       'lastMessage': lastMessage,
       'lastMessageTime': lastMessageTime?.toIso8601String(),

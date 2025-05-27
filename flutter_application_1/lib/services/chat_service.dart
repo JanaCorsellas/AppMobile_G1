@@ -1,6 +1,8 @@
 // flutter_application_1/lib/services/chat_service.dart
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -599,6 +601,48 @@ class ChatService with ChangeNotifier {
       _processedMessageIds.removeWhere((id) => id.startsWith('${roomId}_'));
       _saveLocalMessages(roomId, []);
       notifyListeners();
+    }
+  }
+
+  Future<String?> uploadGroupPicture(String roomId, dynamic imageFile) async {
+    try {
+      final uri = Uri.parse('${ApiConstants.chatRooms}/$roomId/group-picture');
+
+      http.Response response;
+
+      if (kIsWeb) {
+        // For web, imageFile is an XFile
+        final bytes = await imageFile.readAsBytes();
+        final request = http.MultipartRequest('POST', uri);
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'groupPicture',
+            bytes,
+            filename: imageFile.name,
+          ),
+        );
+        final streamedResponse = await request.send();
+        response = await http.Response.fromStream(streamedResponse);
+      } else {
+        // For mobile, imageFile is a file path
+        final request = http.MultipartRequest('POST', uri);
+        request.files.add(
+          await http.MultipartFile.fromPath('groupPicture', imageFile),
+        );
+        final streamedResponse = await request.send();
+        response = await http.Response.fromStream(streamedResponse);
+      }
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['groupPictureUrl'];
+      } else {
+        print('Error uploading group picture: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      print('Exception uploading group picture: $e');
+      return null;
     }
   }
 
