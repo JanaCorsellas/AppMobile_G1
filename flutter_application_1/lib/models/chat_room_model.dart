@@ -98,6 +98,7 @@ class ChatRoom {
     String? lastMessage,
     DateTime? lastMessageTime,
     bool? isGroup,
+    String? groupPictureUrl,
   }) {
     return ChatRoom(
       id: id ?? this.id,
@@ -108,6 +109,7 @@ class ChatRoom {
       lastMessage: lastMessage ?? this.lastMessage,
       lastMessageTime: lastMessageTime ?? this.lastMessageTime,
       isGroup: isGroup ?? this.isGroup,
+      groupPictureUrl: groupPictureUrl ?? this.groupPictureUrl,
     );
   }
 }
