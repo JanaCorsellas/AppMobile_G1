@@ -1,8 +1,10 @@
 // lib/config/api_constants.dart
 class ApiConstants {
   // Base URL - adjust this to your actual backend URL
-  static const String baseUrl = 'http://ea1-api.upc.edu';
+  //static const String baseUrl = 'http://ea1-api.upc.edu';
+  static const String baseUrl = 'http://localhost:3000';
   static const String apiPath = '/api';
+  //static const String apiPath = '/api-docs';
   
   // Auth endpoints
   static const String login = '$baseUrl$apiPath/auth/login';

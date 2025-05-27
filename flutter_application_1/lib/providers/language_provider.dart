@@ -100,6 +100,11 @@ class LanguageProvider with ChangeNotifier {
       'es': 'Inicio',
       'ca': 'Inici',
     },
+    'feed': {
+      'en': 'General Feed',
+      'es': 'Feed General',
+      'ca': 'Feed General',
+    },
     'profile': {
       'en': 'Profile',
       'es': 'Perfil',

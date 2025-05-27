@@ -121,6 +121,8 @@ class Activity {
     );
   }
 
+  get username => null;
+
   Map<String, dynamic> toJson() {
     // Convert enum to string
     String typeToString(ActivityType type) {
