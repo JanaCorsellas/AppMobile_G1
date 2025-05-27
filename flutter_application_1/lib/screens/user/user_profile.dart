@@ -647,21 +647,7 @@ Future<void> _refreshProfile() async {
                     children: [
                       
                       if (kIsWeb)
-                        Container(
-                          padding: const EdgeInsets.all(12.0),
-                          margin: const EdgeInsets.only(bottom: 16.0),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.shade50,
-                            borderRadius: BorderRadius.circular(8.0),
-                            border: Border.all(color: Colors.blue.shade200),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.info, color: Colors.blue.shade600),
-                              const SizedBox(width: 8.0),
-                            ],
-                          ),
-                        ),
+                       
                       
                       if (_errorMessage.isNotEmpty)
                         Container(
