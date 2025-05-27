@@ -11,6 +11,8 @@ import 'package:flutter_application_1/screens/chat/chat_room.dart';
 import 'package:flutter_application_1/services/socket_service.dart';
 import 'package:flutter_application_1/services/http_service.dart';
 import 'package:flutter_application_1/extensions/string_extensions.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({Key? key}) : super(key: key);
@@ -29,7 +31,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   bool _showCreateForm = false;
   
   // Map para almacenar nombres de usuarios para chats personales
-  Map<String, String> _userNamesCache = {};
+  Map<String, Map<String, String>> _userCache = {};
 
   @override
   void initState() {
@@ -118,11 +120,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
             orElse: () => '',
           );
           
-          if (otherUserId.isNotEmpty && !_userNamesCache.containsKey(otherUserId)) {
+          if (otherUserId.isNotEmpty && !_userCache.containsKey(otherUserId)) {
             final user = await _userService.getUserById(otherUserId);
             if (user != null) {
               setState(() {
-                _userNamesCache[otherUserId] = user.username;
+                _userCache[otherUserId] = {
+                  'username': user.username,
+                  'profilePictureUrl': user.profilePictureUrl ?? '',
+                };
               });
             }
           }
@@ -215,8 +220,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
               orElse: () => '',
             );
             
-            if (otherUserId.isNotEmpty && _userNamesCache.containsKey(otherUserId)) {
-              displayName = _userNamesCache[otherUserId]!;
+            if (otherUserId.isNotEmpty && _userCache.containsKey(otherUserId)) {
+              displayName = _userCache[otherUserId]!['username'] ?? room.name;
             }
           }
           
@@ -280,13 +285,15 @@ class _ChatListScreenState extends State<ChatListScreen> {
         );
       },
       child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: chatColor.withOpacity(0.2),
-          child: Icon(
-            chatIcon,
-            color: chatColor,
-          ),
-        ),
+        leading: !room.isGroup && room.participants.length == 2
+          ? _buildUserAvatar(room)
+          : CircleAvatar(
+              backgroundColor: chatColor.withOpacity(0.2),
+              child: Icon(
+                chatIcon,
+                color: chatColor,
+              ),
+            ),
         title: Row(
           children: [
             Expanded(
@@ -377,6 +384,28 @@ class _ChatListScreenState extends State<ChatListScreen> {
         },
       ),
     );
+  }
+
+  Widget _buildUserAvatar(ChatRoom room) {
+    final currentUserId = Provider.of<AuthService>(context, listen: false).currentUser?.id ?? '';
+    final otherUserId = room.participants.firstWhere(
+      (id) => id != currentUserId,
+      orElse: () => '',
+    );
+    final userData = _userCache[otherUserId];
+    final profileUrl = userData?['profilePictureUrl'] ?? '';
+
+    if (profileUrl.isNotEmpty) {
+      return CircleAvatar(
+        backgroundColor: Colors.grey[200],
+        backgroundImage: CachedNetworkImageProvider(profileUrl),
+      );
+    } else {
+      return const CircleAvatar(
+        backgroundColor: Colors.grey,
+        child: Icon(Icons.person, color: Colors.white),
+      );
+    }
   }
 
   // Formatear hora del último mensaje
@@ -555,7 +584,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       chatName = otherUser['username'];
                       
                       // Guardar en caché
-                      _userNamesCache[selectedUserIds[0]] = otherUser['username'];
+                      _userCache[selectedUserIds[0]] = otherUser['username'];
                     }
                     
                     // Crear sala de chat
