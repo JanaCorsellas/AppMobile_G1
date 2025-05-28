@@ -591,7 +591,7 @@ Future<void> _refreshProfile() async {
         title: Text('my_profile'.tr(context)),
         leading: null,
         automaticallyImplyLeading: true,
-        // ✅ NUEVO: Botón de refresh en la AppBar
+      
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -645,29 +645,9 @@ Future<void> _refreshProfile() async {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ✅ Mostrar nota informativa en Web
+                      
                       if (kIsWeb)
-                        Container(
-                          padding: const EdgeInsets.all(12.0),
-                          margin: const EdgeInsets.only(bottom: 16.0),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.shade50,
-                            borderRadius: BorderRadius.circular(8.0),
-                            border: Border.all(color: Colors.blue.shade200),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.info, color: Colors.blue.shade600),
-                              const SizedBox(width: 8.0),
-                              Expanded(
-                                child: Text(
-                                  '💻 Modo Web: Solo selector de archivos disponible',
-                                  style: TextStyle(color: Colors.blue.shade800),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                       
                       
                       if (_errorMessage.isNotEmpty)
                         Container(

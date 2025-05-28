@@ -285,15 +285,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
         );
       },
       child: ListTile(
-        leading: !room.isGroup && room.participants.length == 2
-          ? _buildUserAvatar(room)
-          : CircleAvatar(
-              backgroundColor: chatColor.withOpacity(0.2),
-              child: Icon(
-                chatIcon,
-                color: chatColor,
-              ),
-            ),
+        leading: room.isGroup 
+          ? _buildGroupAvatar(room) 
+          : _buildUserAvatar(room),
+
         title: Row(
           children: [
             Expanded(
@@ -404,6 +399,22 @@ class _ChatListScreenState extends State<ChatListScreen> {
       return const CircleAvatar(
         backgroundColor: Colors.grey,
         child: Icon(Icons.person, color: Colors.white),
+      );
+    }
+  }
+
+  Widget _buildGroupAvatar(ChatRoom room) {
+    // Si tiene foto de grupo, mostrarla
+    if (room.groupPictureUrl != null && room.groupPictureUrl!.isNotEmpty) {
+      return CircleAvatar(
+        backgroundColor: Colors.grey[200],
+        backgroundImage: CachedNetworkImageProvider(room.groupPictureUrl!),
+      );
+    } else {
+      // Sin foto: icono por defecto
+      return CircleAvatar(
+        backgroundColor: Colors.blue.withOpacity(0.2),
+        child: const Icon(Icons.group, color: Colors.blue),
       );
     }
   }
@@ -584,7 +595,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       chatName = otherUser['username'];
                       
                       // Guardar en caché
-                      _userCache[selectedUserIds[0]] = otherUser['username'];
+                      _userCache[selectedUserIds[0]] = {
+                        'username': otherUser['username'],
+                        'profilePictureUrl': otherUser['profilePictureUrl'] ?? '',
+                      };
                     }
                     
                     // Crear sala de chat
