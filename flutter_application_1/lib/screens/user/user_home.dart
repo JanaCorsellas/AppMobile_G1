@@ -171,7 +171,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
     return Scaffold(
       drawer: const CustomDrawer(currentRoute: AppRoutes.userHome),
       appBar: AppBar(
-        title: const Text('TRAKER'),
+        title: const Text('Trazer'),
         actions: [
           // Indicador de notificaciones
           

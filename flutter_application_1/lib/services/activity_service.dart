@@ -71,6 +71,41 @@ class ActivityService {
     }
   }
 
+  Future<List<Activity>> getAllActivities() async {
+    try {
+      final uri = ApiConstants.activities; // No pagination params
+      final response = await _httpService.get(uri);
+      final data = await _httpService.parseJsonResponse(response);
+
+      final List<Activity> activities = [];
+
+      if (data is List) {
+        for (var item in data) {
+          try {
+            activities.add(Activity.fromJson(item));
+          } catch (e) {
+            print('Error parsing activity: $e');
+          }
+        }
+        return activities;
+      } else if (data['activities'] != null) {
+        for (var item in data['activities']) {
+          try {
+            activities.add(Activity.fromJson(item));
+          } catch (e) {
+            print('Error parsing activity: $e');
+          }
+        }
+        return activities;
+      }
+
+      return [];
+    } catch (e) {
+      print('Error getting all activities: $e');
+      throw Exception('Failed to load all activities');
+    }
+  }
+
   // Get activity by ID
   Future<Activity> getActivityById(String id) async {
     try {

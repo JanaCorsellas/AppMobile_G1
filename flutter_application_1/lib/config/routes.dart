@@ -4,6 +4,7 @@ import 'package:flutter_application_1/screens/activity/activity_detail_screen.da
 import 'package:flutter_application_1/screens/activity/activity_list_screen.dart';
 import 'package:flutter_application_1/screens/auth/login_screen.dart';
 import 'package:flutter_application_1/screens/auth/register_screen.dart';
+import 'package:flutter_application_1/screens/user/user_feed.dart';
 import 'package:flutter_application_1/screens/user/user_home.dart';
 import 'package:flutter_application_1/screens/user/user_profile.dart';
 import 'package:flutter_application_1/screens/chat/chat_list.dart';
@@ -17,6 +18,7 @@ class AppRoutes {
   static const String login = '/login';
   static const String register = '/register';
   static const String userHome = '/user-home';
+  static const String userFeed = '/user-feed';
   static const String userProfile = '/user-profile';
   static const String admin = '/admin';
   static const String chatList = '/chat-list';
@@ -37,6 +39,8 @@ class AppRoutes {
           return MaterialPageRoute(builder: (_) => const RegisterScreen());
         case userHome:
           return MaterialPageRoute(builder: (_) => const UserHomeScreen());
+        case userFeed:
+          return MaterialPageRoute(builder: (_) => const UserFeedScreen()); // Assuming user feed is the same as user home
         case userProfile:
           return MaterialPageRoute(builder: (_) => const UserProfileScreen());
         case chatList:

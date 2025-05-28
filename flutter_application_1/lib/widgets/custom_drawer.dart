@@ -119,7 +119,7 @@ class CustomDrawer extends StatelessWidget {
                       Icon(Icons.terrain, color: Colors.white, size: 18),
                       SizedBox(width: 8),
                       Text(
-                        'Activity Tracker',
+                        'Trazer',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -132,7 +132,6 @@ class CustomDrawer extends StatelessWidget {
               ),
             ),
           ),
-          // Elementos del menú (con Achievements en lugar de Rutas de Montaña)
           Expanded(
             child: Container(
               color: Colors.white,
@@ -144,6 +143,13 @@ class CustomDrawer extends StatelessWidget {
                     icon: Icons.home_outlined,
                     title: 'home'.tr(context),
                     route: AppRoutes.userHome,
+                    currentRoute: currentRoute,
+                  ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.dynamic_feed,
+                    title: 'feed'.tr(context),
+                    route: AppRoutes.userFeed,
                     currentRoute: currentRoute,
                   ),
                   _buildMenuItem(

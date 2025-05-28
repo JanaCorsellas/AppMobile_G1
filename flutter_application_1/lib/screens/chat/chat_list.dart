@@ -288,6 +288,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
         leading: room.isGroup 
           ? _buildGroupAvatar(room) 
           : _buildUserAvatar(room),
+
         title: Row(
           children: [
             Expanded(
@@ -594,7 +595,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       chatName = otherUser['username'];
                       
                       // Guardar en caché
-                      _userCache[selectedUserIds[0]] = otherUser['username'];
+                      _userCache[selectedUserIds[0]] = {
+                        'username': otherUser['username'],
+                        'profilePictureUrl': otherUser['profilePictureUrl'] ?? '',
+                      };
                     }
                     
                     // Crear sala de chat
