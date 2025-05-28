@@ -46,12 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
         );
 
         if (user != null) {
-          // Navegar según el rol del usuario
-          if (authService.isAdmin == true) {
-            Navigator.pushReplacementNamed(context, AppRoutes.admin);
-          } else {
-            Navigator.pushReplacementNamed(context, AppRoutes.userHome);
-          }
+          Navigator.pushReplacementNamed(context, AppRoutes.userHome);
         } else {
           setState(() {
             _errorMessage = authService.error.isNotEmpty 
