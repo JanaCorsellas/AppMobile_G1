@@ -25,6 +25,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   late final UserService _userService;
   final _formKey = GlobalKey<FormState>();
   final ImagePicker _imagePicker = ImagePicker();
+  List<String> _followers = [];
+  bool _isFollowersLoading = false;
   
   late TextEditingController _usernameController;
   late TextEditingController _emailController;
@@ -103,6 +105,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           print("Bio: ${_bioController.text}");
           print("ProfilePicture URL: ${user.profilePictureUrl}");
         });
+        _fetchFollowersUsernames(user.id);
       } else {
         setState(() {
           _errorMessage = 'user_data_not_found'.tr(context);
@@ -116,6 +119,27 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     } finally {
       setState(() {
         _isLoading = false;
+      });
+    }
+  }
+
+    Future<void> _fetchFollowersUsernames(String userId) async {
+    setState(() {
+      _isFollowersLoading = true;
+    });
+    try {
+      final usernames = await _userService.getFollowersUsernames(userId);
+      setState(() {
+        _followers = usernames;
+      });
+    } catch (e) {
+      setState(() {
+        _followers = [];
+      });
+      print('Error fetching followers usernames: $e');
+    } finally {
+      setState(() {
+        _isFollowersLoading = false;
       });
     }
   }
@@ -797,6 +821,40 @@ Future<void> _refreshProfile() async {
                                     '${_user!.challengesCompleted?.length ?? 0} ' + 'challenges'.tr(context),
                                     style: const TextStyle(fontSize: 14.0),
                                   ),
+                                ),
+                                ExpansionTile(
+                                  leading: const Icon(Icons.people),
+                                  title: Text('followers'.tr(context)),
+                                  subtitle: Text(
+                                    '${_followers.length} ' + 'followers'.tr(context),
+                                    style: const TextStyle(fontSize: 14.0),
+                                  ),
+                                  children: _isFollowersLoading
+                                      ? [
+                                          const Padding(
+                                            padding: EdgeInsets.all(16.0),
+                                            child: Center(child: CircularProgressIndicator()),
+                                          ),
+                                        ]
+                                      : _followers.isNotEmpty
+                                          ? _followers.map((username) {
+                                              return Padding(
+                                                padding: const EdgeInsets.only(left: 24.0),
+                                                child: ListTile(
+                                                  leading: const Icon(Icons.person),
+                                                  title: Text(username),
+                                                ),
+                                              );
+                                            }).toList()
+                                          : [
+                                              Padding(
+                                                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                                                child: Text(
+                                                  'No followers yet'.tr(context),
+                                                  style: const TextStyle(color: Colors.grey),
+                                                ),
+                                              ),
+                                            ],
                                 ),
                               ] else ...[
                                 const SizedBox(height: 16.0),

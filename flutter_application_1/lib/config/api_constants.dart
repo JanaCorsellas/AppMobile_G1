@@ -18,6 +18,7 @@ class ApiConstants {
   static String userByUsername(String username) => '$baseUrl$apiPath/users/username/$username';
   static String searchUsers(String query) => '$baseUrl$apiPath/users/search?query=$query';
   static String toggleUserVisibility(String id) => '$baseUrl$apiPath/users/$id/toggle-visibility';
+  static String getUserFollowers(String id) => '$baseUrl$apiPath/users/followers/$id';
   
   // Activity endpoints
   static const String activities = '$baseUrl$apiPath/activities';

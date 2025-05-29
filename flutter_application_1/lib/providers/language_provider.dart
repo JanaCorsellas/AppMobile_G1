@@ -130,6 +130,16 @@ class LanguageProvider with ChangeNotifier {
       'es': 'Logros',
       'ca': 'Assoliments',
     },
+    'followers': {
+      'en': 'Followers',
+      'es': 'Seguidores',
+      'ca': 'Seguidors',
+    },
+    'No followers yet': {
+      'en': 'No followers yet',
+      'es': 'Aún no tienes seguidores',
+      'ca': 'Encara no tens seguidors',
+    },
     'chat': {
       'en': 'Chat',
       'es': 'Chat',

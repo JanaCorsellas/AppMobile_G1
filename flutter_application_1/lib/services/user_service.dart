@@ -473,4 +473,47 @@ class UserService {
       print('Error limpiando todo el caché de imágenes: $e');
     }
   }
+
+Future<List<String>> getUserFollowers(String userId) async {
+    try {
+      final response = await _httpService.get('${ApiConstants.baseUrl}/api/users/followers/$userId');
+      if (response.statusCode == 200) {
+        final data = await _httpService.parseJsonResponse(response);
+        // Assuming the endpoint returns a JSON array of user IDs
+        if (data is List) {
+          return data.map<String>((id) => id.toString()).toList();
+        }
+        throw Exception('Unexpected response format for followers');
+      } else {
+        throw Exception('Failed to fetch followers: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching followers: $e');
+      throw Exception('Failed to fetch followers: $e');
+    }
+  }
+
+  Future<List<String>> getFollowersUsernames(String userId) async {
+  try {
+    final followerIds = await getUserFollowers(userId);
+    List<String> usernames = [];
+
+    for (final id in followerIds) {
+      try {
+        final user = await getUserById(id);
+        if (user != null && user.username != null) {
+          usernames.add(user.username!);
+        }
+      } catch (e) {
+        print('Error fetching user for follower ID $id: $e');
+        // Optionally continue or handle error
+      }
+    }
+    return usernames;
+  } catch (e) {
+    print('Error fetching followers usernames: $e');
+    throw Exception('Failed to fetch followers usernames: $e');
+  }
+}
+
 }

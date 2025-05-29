@@ -15,6 +15,7 @@ class User {
   final String role;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final List<String> followers;
 
   User({
     required this.id,
@@ -32,6 +33,7 @@ class User {
     required this.role,
     required this.createdAt,
     required this.updatedAt,
+    required this.followers,
   });
 
   // ✅ MEJORADO: Get full profile picture URL con validación más estricta
@@ -142,6 +144,9 @@ class User {
       updatedAt: json['updatedAt'] != null 
           ? DateTime.parse(json['updatedAt'].toString())
           : DateTime.now(),
+      followers: json['followers'] != null
+          ? List<String>.from(json['followers'].map((e) => e.toString()))
+          : [],
     );
   }
 
@@ -210,6 +215,7 @@ class User {
       role: role ?? this.role,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      followers: followers ?? this.followers,
     );
   }
 }
