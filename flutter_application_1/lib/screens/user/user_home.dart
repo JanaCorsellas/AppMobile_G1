@@ -1,5 +1,5 @@
+// lib/screens/user/user_home.dart - VERSIÓN COMPLETA Y LIMPIA
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart'; // NUEVO IMPORT
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/config/routes.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
@@ -13,7 +13,6 @@ import 'package:flutter_application_1/screens/activity/activity_detail_screen.da
 import 'package:flutter_application_1/widgets/custom_drawer.dart';
 import 'package:flutter_application_1/extensions/string_extensions.dart';
 import 'package:flutter_application_1/widgets/achievement_progress_widget.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class UserHomeScreen extends StatefulWidget {
   const UserHomeScreen({Key? key}) : super(key: key);
@@ -34,65 +33,11 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
     
     // Verificar si hay actividades de tracking activas cuando se carga la pantalla
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkGoogleAuthResponse(); // NUEVO: Verificar respuesta de Google Auth
       _checkActiveTrackings();
       _loadUserActivities();
     });
   }
 
-  // NUEVO: Verificar si venimos de Google Auth
-  void _checkGoogleAuthResponse() async {
-  if (kIsWeb) {
-    final prefs = await SharedPreferences.getInstance();
-    final googleAuthSuccess = prefs.getString('google_auth_success');
-    
-    if (googleAuthSuccess == 'true') {
-      // Limpiar flag
-      await prefs.remove('google_auth_success');
-      
-      try {
-        // Verificar que los datos estén en localStorage
-        final token = prefs.getString('access_token');
-        final refreshToken = prefs.getString('refresh_token');
-        final userData = prefs.getString('user');
-        
-        if (token != null && refreshToken != null && userData != null) {
-          final authService = Provider.of<AuthService>(context, listen: false);
-          final socketService = Provider.of<SocketService>(context, listen: false);
-          
-          // Actualizar AuthService
-          authService.updateTokensAndUser(token, refreshToken, userData);
-          
-          // Conectar socket
-          socketService.connect(authService.currentUser, accessToken: token);
-          
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('¡Autenticación con Google exitosa!'),
-                backgroundColor: Colors.green,
-                duration: Duration(seconds: 3),
-              ),
-            );
-            
-            // Recargar datos
-            await _loadUserActivities();
-          }
-        }
-      } catch (e) {
-        print('Error procesando datos de Google Auth: $e');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error procesando autenticación: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    }
-  }
-}
   // Verificar si hay actividades de tracking activas
   Future<void> _checkActiveTrackings() async {
     if (_isCheckingTrackings) return;
@@ -174,7 +119,6 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
     final socketService = Provider.of<SocketService>(context);
     final user = authService.currentUser;
     
-
     // Mostrar estado de la conexión de Socket.IO
     Widget connectionIndicator() {
       Color color;
@@ -230,9 +174,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
       appBar: AppBar(
         title: const Text('TRAKER'),
         actions: [
-          // Indicador de notificaciones
-          
-          // Botón de chat
+          // Botón de notificaciones
           IconButton(
             icon: const Icon(Icons.notifications),
             onPressed: () {
@@ -240,7 +182,6 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
             },
             tooltip: 'notifications'.tr(context),
           ),
-          
         ],
       ),
       body: RefreshIndicator(
@@ -320,7 +261,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                 const AchievementProgressWidget(),
                 _buildRecentActivities(context),
                 
-                // Usuarios conectados (Updated section)
+                // Usuarios conectados
                 const SizedBox(height: 32.0),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -341,7 +282,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                     ),
                     const SizedBox(height: 16.0),
                     
-                    // IMPROVED: Display usernames instead of IDs
+                    // Display usernames instead of IDs
                     socketService.onlineUsers.isEmpty
                         ? Text(
                             'no_users_online'.tr(context),

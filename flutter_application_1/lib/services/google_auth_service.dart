@@ -1,9 +1,8 @@
-// lib/services/google_auth_service.dart - Versión SIMPLE
+// lib/services/google_auth_service.dart - VERSIÓN FINAL SIMPLE
 import 'dart:convert';
 import 'dart:html' as html;
-import 'dart:js' as js;
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_application_1/config/api_constants.dart';
 
 class GoogleAuthService {
@@ -11,36 +10,12 @@ class GoogleAuthService {
   factory GoogleAuthService() => _instance;
   GoogleAuthService._internal();
 
-  static const String _clientId = '732241276462-ual5nsaiq2bcdr7odgesci6badrobpu8.apps.googleusercontent.com';
   bool _initialized = false;
 
   Future<void> initialize() async {
     if (_initialized) return;
-    
-    if (kIsWeb) {
-      // Para web, esperar a que se cargue Google
-      await _waitForGoogle();
-    }
-    
     _initialized = true;
     print('GoogleAuthService inicializado');
-  }
-
-  Future<void> _waitForGoogle() async {
-    int attempts = 0;
-    while (attempts < 50) {
-      try {
-        if (js.context.hasProperty('google')) {
-          print('Google API cargada');
-          return;
-        }
-      } catch (e) {
-        // Continuar esperando
-      }
-      await Future.delayed(const Duration(milliseconds: 100));
-      attempts++;
-    }
-    print('Google API no se cargó, pero continuando...');
   }
 
   Future<Map<String, dynamic>?> signInWithGoogle() async {
@@ -52,7 +27,7 @@ class GoogleAuthService {
       if (kIsWeb) {
         return await _webSignIn();
       } else {
-        throw Exception('Móvil no implementado en versión simple');
+        throw Exception('Móvil no implementado');
       }
     } catch (e) {
       print('Error en signInWithGoogle: $e');
@@ -62,97 +37,158 @@ class GoogleAuthService {
 
   Future<Map<String, dynamic>?> _webSignIn() async {
     try {
-      print('Iniciando autenticación web con popup...');
+      print('🚀 Iniciando autenticación con Google');
       
-      // URL de autorización de Google
-      final authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' +
-          'client_id=$_clientId&' +
-          'redirect_uri=${Uri.encodeComponent('${html.window.location.origin}/oauth_callback.html')}&' +
-          'response_type=code&' +
-          'scope=${Uri.encodeComponent('openid email profile')}&' +
-          'access_type=offline&' +
-          'prompt=select_account';
+      // Guardar estado antes del redirect
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('auth_source', 'google_login');
       
-      print('Abriendo popup: $authUrl');
+      // Usar la URL que ya funciona en tu backend
+      const String googleAuthUrl = '${ApiConstants.baseUrl}/api/auth/google';
       
-      // Abrir popup
-      final popup = html.window.open(
-        authUrl,
-        'google_auth',
-        'width=500,height=600,left=100,top=100'
-      );
+      print('🔗 Redirigiendo a: $googleAuthUrl');
       
-      if (popup == null) {
-        throw Exception('No se pudo abrir popup. Habilita los popups.');
-      }
+      // Redirigir directamente
+      html.window.location.href = googleAuthUrl;
       
-      // Esperar el código
-      String? code;
-      
-      await for (final event in html.window.onMessage) {
-        if (event.data is String) {
-          final data = event.data as String;
-          if (data.startsWith('auth_code:')) {
-            code = data.substring('auth_code:'.length);
-            popup.close();
-            break;
-          } else if (data == 'auth_error') {
-            popup.close();
-            throw Exception('Error en autenticación');
-          }
-        }
-        
-        // Verificar si el popup se cerró
-        try {
-          if (popup.closed == true) {
-            print('Popup cerrado por el usuario');
-            return null;
-          }
-        } catch (e) {
-          break;
-        }
-      }
-      
-      if (code == null) {
-        return null;
-      }
-      
-      // Enviar código al backend
-      return await _sendCodeToBackend(code);
+      // Esta función no retornará porque hay redirect
+      return null;
       
     } catch (e) {
-      print('Error en _webSignIn: $e');
+      print('❌ Error en _webSignIn: $e');
       rethrow;
     }
   }
 
-  Future<Map<String, dynamic>?> _sendCodeToBackend(String code) async {
+  // Verificar si hay autenticación completada después del redirect
+  Future<Map<String, dynamic>?> checkPendingAuth() async {
     try {
-      final response = await http.post(
-        Uri.parse('${ApiConstants.baseUrl}/api/auth/google/web'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'code': code}),
-      );
+      print('🔍 Verificando autenticación pendiente...');
       
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['success'] == true) {
+      // Método 1: Verificar localStorage (si el backend guarda ahí)
+      final storageAuth = await _checkLocalStorageAuth();
+      if (storageAuth != null) {
+        return storageAuth;
+      }
+      
+      // Método 2: Verificar URL parameters (si el backend pasa datos por URL)
+      final urlAuth = await _checkUrlAuth();
+      if (urlAuth != null) {
+        return urlAuth;
+      }
+      
+      // Método 3: Verificar SharedPreferences (datos previos)
+      final prefsAuth = await _checkSharedPreferencesAuth();
+      if (prefsAuth != null) {
+        return prefsAuth;
+      }
+      
+      return null;
+    } catch (e) {
+      print('Error verificando auth pendiente: $e');
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> _checkLocalStorageAuth() async {
+    try {
+      final storage = html.window.localStorage;
+      final authSuccess = storage['google_auth_success'];
+      final authData = storage['google_auth_data'];
+      
+      if (authSuccess == 'true' && authData != null) {
+        print('✅ Datos encontrados en localStorage');
+        
+        // Limpiar localStorage
+        storage.remove('google_auth_success');
+        storage.remove('google_auth_data');
+        
+        final data = json.decode(authData);
+        return {
+          'token': data['token'],
+          'refreshToken': data['refreshToken'],
+          'user': data['user'],
+        };
+      }
+    } catch (e) {
+      print('Error verificando localStorage: $e');
+    }
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> _checkUrlAuth() async {
+    try {
+      final uri = Uri.parse(html.window.location.href);
+      final googleAuthParam = uri.queryParameters['google_auth'];
+      
+      if (googleAuthParam != null) {
+        print('✅ Datos encontrados en URL parameters');
+        
+        // Decodificar los datos
+        final decodedData = utf8.decode(base64.decode(googleAuthParam));
+        final data = json.decode(decodedData);
+        
+        // Limpiar la URL
+        html.window.history.replaceState(null, '', uri.path);
+        
+        return {
+          'token': data['token'],
+          'refreshToken': data['refreshToken'],
+          'user': data['user'],
+        };
+      }
+    } catch (e) {
+      print('Error verificando URL parameters: $e');
+    }
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> _checkSharedPreferencesAuth() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final authSource = prefs.getString('auth_source');
+      
+      if (authSource == 'google_login') {
+        print('🔍 Verificando datos guardados...');
+        
+        final token = prefs.getString('access_token');
+        final refreshToken = prefs.getString('refresh_token');
+        final userJson = prefs.getString('user');
+        
+        if (token != null && refreshToken != null && userJson != null) {
+          print('✅ Datos encontrados en SharedPreferences');
+          
+          // Limpiar flag
+          await prefs.remove('auth_source');
+          
           return {
-            'token': data['token'],
-            'refreshToken': data['refreshToken'],
-            'user': data['user'],
+            'token': token,
+            'refreshToken': refreshToken,
+            'user': json.decode(userJson),
           };
         }
       }
-      
-      throw Exception('Error del servidor: ${response.body}');
     } catch (e) {
-      print('Error enviando código al backend: $e');
-      rethrow;
+      print('Error verificando SharedPreferences: $e');
     }
+    return null;
   }
 
   Future<void> signOut() async {
-    print('Sign out');
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('auth_source');
+      
+      // Limpiar localStorage también
+      if (kIsWeb) {
+        final storage = html.window.localStorage;
+        storage.remove('google_auth_success');
+        storage.remove('google_auth_data');
+      }
+      
+      print('✅ Google sign out completado');
+    } catch (e) {
+      print('Error en sign out: $e');
+    }
   }
 }

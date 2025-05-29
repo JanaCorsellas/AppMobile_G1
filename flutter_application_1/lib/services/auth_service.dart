@@ -124,60 +124,42 @@ void updateTokensAndUser(String token, String refreshToken, String userDataJson)
 
   // NUEVO: Login con Google
   Future<User?> loginWithGoogle(SocketService socketService) async {
-    _isLoading = true;
-    _error = '';
-    notifyListeners();
+  _isLoading = true;
+  _error = '';
+  notifyListeners();
 
-    try {
-      print("Iniciando login con Google");
-      
-      final result = await _googleAuthService.signInWithGoogle();
-      
-      if (result == null) {
-        _isLoading = false;
-        notifyListeners();
-        return null; // Usuario canceló
-      }
-
-      // Extraer datos del resultado
-      _accessToken = result['token'];
-      _refreshToken = result['refreshToken'];
-      final userData = result['user'];
-
-      if (_accessToken == null || _refreshToken == null || userData == null) {
-        throw Exception('Datos incompletos del servidor');
-      }
-
-      // Crear objeto User
-      _currentUser = User.fromJson(userData);
-      _isLoggedIn = true;
-
-      // Guardar en SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('access_token', _accessToken!);
-      await prefs.setString('refresh_token', _refreshToken!);
-      await prefs.setString('user', json.encode(userData));
-
+  try {
+    print(" Iniciando login con Google");
+    
+    // Verificar primero si ya hay auth pendiente
+    final hasPendingAuth = await checkAndHandleGoogleAuth();
+    if (hasPendingAuth && _currentUser != null) {
       // Conectar socket
       socketService.disconnect();
       await Future.delayed(Duration(milliseconds: 500));
       socketService.connect(_currentUser, accessToken: _accessToken);
-
-      print("Login con Google exitoso para: ${_currentUser!.email}");
-
+      
       _isLoading = false;
       notifyListeners();
       return _currentUser;
-
-    } catch (e) {
-      print('Error en login con Google: $e');
-      _error = 'Error en autenticación con Google: $e';
-      _isLoading = false;
-      notifyListeners();
-      return null;
     }
-  }
+    
+    // Si no hay auth pendiente, iniciar el flujo
+    await _googleAuthService.signInWithGoogle();
+    
+    // El signInWithGoogle hace redirect, así que este código no se ejecutará
+    _isLoading = false;
+    notifyListeners();
+    return null;
 
+  } catch (e) {
+    print(' Error en login con Google: $e');
+    _error = 'Error en autenticación con Google: $e';
+    _isLoading = false;
+    notifyListeners();
+    return null;
+  }
+}
   // Login tradicional (mantener existente)
   Future<User?> login(String username, String password, SocketService socketService) async {
     _isLoading = true;
@@ -391,37 +373,35 @@ void updateTokensAndUser(String token, String refreshToken, String userDataJson)
       print("Error saving user data: $e");
     }
   }
-  Future<bool> checkAndHandleGoogleAuth() async {
+ Future<bool> checkAndHandleGoogleAuth() async {
   try {
-    final response = await http.get(
-      Uri.parse('${ApiConstants.baseUrl}/api/auth/google/data'),
-      headers: {'Content-Type': 'application/json'},
-    );
+    print('🔍 Verificando autenticación Google pendiente...');
     
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
+    // Verificar si hay datos de Google Auth pendientes
+    final pendingAuth = await _googleAuthService.checkPendingAuth();
+    
+    if (pendingAuth != null) {
+      print('✅ Procesando autenticación Google...');
       
-      if (data['success'] == true) {
-        _accessToken = data['token'];
-        _refreshToken = data['refreshToken'];
-        _currentUser = User.fromJson(data['user']);
-        _isLoggedIn = true;
-        
-        // Guardar en SharedPreferences
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('access_token', _accessToken!);
-        await prefs.setString('refresh_token', _refreshToken!);
-        await prefs.setString('user', json.encode(data['user']));
-        
-        print('Google auth data retrieved successfully');
-        notifyListeners();
-        return true;
-      }
+      _accessToken = pendingAuth['token'];
+      _refreshToken = pendingAuth['refreshToken'];
+      _currentUser = User.fromJson(pendingAuth['user']);
+      _isLoggedIn = true;
+      
+      // Guardar en SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('access_token', _accessToken!);
+      await prefs.setString('refresh_token', _refreshToken!);
+      await prefs.setString('user', json.encode(pendingAuth['user']));
+      
+      print('✅ Autenticación Google completada para: ${_currentUser!.email}');
+      notifyListeners();
+      return true;
     }
     
     return false;
   } catch (e) {
-    print('Error checking Google auth: $e');
+    print('❌ Error verificando Google auth: $e');
     return false;
   }
 }

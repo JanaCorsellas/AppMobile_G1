@@ -1,35 +1,87 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Autenticando...</title>
-    <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            text-align: center; 
-            padding: 50px;
-            background: #f5f5f5;
-        }
-        .loading { 
-            font-size: 18px; 
-            color: #666; 
-        }
-    </style>
+    <title>OAuth Callback</title>
 </head>
 <body>
-    <div class="loading">Procesando autenticación...</div>
-    
+    <div style="text-align: center; padding: 50px; font-family: Arial;">
+        <h2>Procesando autenticación...</h2>
+        <p>Redirigiendo...</p>
+    </div>
+
     <script>
+        // Extraer el código de la URL
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code');
         const error = urlParams.get('error');
-        
-        if (code) {
-            window.opener.postMessage('auth_code:' + code, '*');
+
+        if (error) {
+            // Enviar error al padre
+            if (window.opener) {
+                window.opener.postMessage('auth_error', '*');
+            } else {
+                // Si no hay popup, redirigir a la app con error
+                window.location.href = '/?error=auth_failed';
+            }
+        } else if (code) {
+            // Enviar código al padre (popup)
+            if (window.opener) {
+                window.opener.postMessage('auth_code:' + code, '*');
+            } else {
+                // Si no hay popup (redirect directo), manejar aquí
+                handleDirectCallback(code);
+            }
         } else {
-            window.opener.postMessage('auth_error', '*');
+            // Sin código ni error
+            if (window.opener) {
+                window.opener.postMessage('auth_error', '*');
+            } else {
+                window.location.href = '/?error=no_code';
+            }
         }
-        
-        window.close();
+
+        // Cerrar popup si existe
+        if (window.opener) {
+            window.close();
+        }
+
+        // Función para manejar callback directo (sin popup)
+        async function handleDirectCallback(code) {
+            try {
+                console.log('Procesando código OAuth:', code);
+                
+                // Enviar código al backend
+                const response = await fetch('/api/auth/google/web', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ code: code })
+                });
+
+                const data = await response.json();
+                console.log('Respuesta del backend:', data);
+
+                if (data.success) {
+                    // Guardar tokens en localStorage
+                    localStorage.setItem('access_token', data.token);
+                    localStorage.setItem('refresh_token', data.refreshToken);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    localStorage.setItem('google_auth_success', 'true');
+                    
+                    console.log('Datos guardados en localStorage');
+                    
+                    // Redirigir a la app
+                    window.location.href = '/#/user-home';
+                } else {
+                    console.error('Error del backend:', data);
+                    window.location.href = '/?error=backend_error';
+                }
+            } catch (error) {
+                console.error('Error procesando callback:', error);
+                window.location.href = '/?error=processing_error';
+            }
+        }
     </script>
 </body>
 </html>
