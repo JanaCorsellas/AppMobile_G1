@@ -5,6 +5,7 @@ import 'package:flutter_application_1/config/api_constants.dart';
 import 'package:flutter_application_1/models/notification_models.dart';
 import 'package:flutter_application_1/services/http_service.dart';
 import 'package:flutter_application_1/services/socket_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class NotificationService with ChangeNotifier {
   final HttpService _httpService;
@@ -15,18 +16,35 @@ class NotificationService with ChangeNotifier {
   int _unreadCount = 0;
   bool _isInitialized = false;
   
-  NotificationService(this._httpService, this._socketService) {
-    _setupSocketListeners();
-  }
+  NotificationService(this._httpService, this._socketService);
   
   List<NotificationModel> get notifications => _notifications;
   bool get isLoading => _isLoading;
   int get unreadCount => _unreadCount;
   
-  void _setupSocketListeners() {
-    _socketService.socket.on('new_notification', (data) {
-      print('New notification received via Socket.IO: $data');
-      _handleNewNotification(data);
+
+  void setupFirebaseMessaging() {
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print('Received a foreground FCM message: ${message.notification?.title}');
+      _handleFirebaseFCM(message);
+    });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print('FCM notification clicked!');
+      _handleFirebaseFCM(message);
+    });
+  }
+
+  void _handleFirebaseFCM(RemoteMessage message) {
+    final data = message.data;
+    _handleNewNotification({
+      'id': data['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      'type': data['type'] ?? 'chat_message',
+      'title': data['title'] ?? message.notification?.title ?? 'Nuevo mensaje',
+      'message': data['body'] ?? message.notification?.body ?? '',
+      'data': data,
+      'read': false,
+      'createdAt': DateTime.now().toIso8601String(),
     });
   }
   
@@ -61,14 +79,14 @@ class NotificationService with ChangeNotifier {
         _notifications = [];
       }
       
-      if (data['notifications'] != null && data['notifications'] is List) {
-        for (var item in data['notifications']) {
+      if (data is List) {
+        for (var item in data) {
           final notification = NotificationModel.fromJson(item);
           _notifications.add(notification);
         }
       }
       
-      _unreadCount = data['unread'] ?? 0;
+      //_unreadCount = data['unread'] ?? 0;
       await _saveNotificationsToCache();
       
     } catch (e) {

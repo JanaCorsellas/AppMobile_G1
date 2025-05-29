@@ -1,3 +1,5 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/config/routes.dart';
@@ -14,10 +16,35 @@ import 'package:flutter_application_1/providers/language_provider.dart';
 import 'package:flutter_application_1/extensions/string_extensions.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_application_1/services/achievementService.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  if (kIsWeb) {
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: "AIzaSyAVGap3-2Tk9_Y_zW4gA-860n3z4f1i2qU",
+        authDomain: "trazer-e4cb2.firebaseapp.com",
+        projectId: "trazer-e4cb2",
+        storageBucket: "trazer-e4cb2.firebasestorage.app",
+        messagingSenderId: "782085531087",
+        appId: "1:782085531087:web:fbc005500d06279a4f5eba",
+        measurementId: "G-YKZ1SH85QD",
+      ),
+    );
+  } else {
+    await Firebase.initializeApp();
+  }
+
+  await FirebaseMessaging.instance.requestPermission();
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
   runApp(const MyApp());
+}
+// Función para manejar mensajes en segundo plano
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print("Mensaje en segundo plano: ${message.messageId}");
 }
 
 class MyApp extends StatefulWidget {
@@ -91,6 +118,7 @@ class _MyAppState extends State<MyApp> {
         await _notificationService.initialize(_authService.currentUser!.id);
       }
     }
+    _notificationService.setupFirebaseMessaging();
     
     setState(() {
       _initialized = true;
