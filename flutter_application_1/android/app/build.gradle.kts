@@ -3,6 +3,11 @@ plugins {
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    id 'com.google.gms.google-services' 
+}
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation 'com.google.gms:google-services:4.3.15' // AGREGAR ESTA LÍNEA
 }
 
 android {
@@ -24,8 +29,8 @@ android {
         applicationId = "com.example.flutter_application_1"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 21          // ✅ ACTUALIZADO: Era flutter.minSdkVersion, ahora 21 mínimo para image_picker
-        targetSdk = 34       // ✅ ACTUALIZADO: Era flutter.targetSdkVersion, ahora 34
+        minSdk = 21          
+        targetSdk = 34      
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

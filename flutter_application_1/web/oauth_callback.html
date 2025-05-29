@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Autenticando...</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            padding: 50px;
+            background: #f5f5f5;
+        }
+        .loading { 
+            font-size: 18px; 
+            color: #666; 
+        }
+    </style>
+</head>
+<body>
+    <div class="loading">Procesando autenticación...</div>
+    
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const error = urlParams.get('error');
+        
+        if (code) {
+            window.opener.postMessage('auth_code:' + code, '*');
+        } else {
+            window.opener.postMessage('auth_error', '*');
+        }
+        
+        window.close();
+    </script>
+</body>
+</html>

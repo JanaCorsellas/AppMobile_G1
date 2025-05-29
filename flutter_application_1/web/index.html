@@ -31,6 +31,15 @@
 
   <title>flutter_application_1</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- NUEVO: Google Sign-In Meta Tag -->
+  <meta name="google-signin-client_id" content="732241276462-ual5nsaiq2bcdr7odgesci6badrobpu8.apps.googleusercontent.com">
+  
+  <!-- NUEVO: Google Identity Services (método recomendado actualmente) -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  
+  <!-- NUEVO: Fallback - Google Platform Library (para compatibilidad) -->
+  <script src="https://apis.google.com/js/platform.js" async defer></script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

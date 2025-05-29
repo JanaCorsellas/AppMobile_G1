@@ -1,11 +1,13 @@
-// lib/screens/auth/login_screen.dart
+// lib/screens/auth/login_screen.dart - Con botón de Google
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/config/routes.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
 import 'package:flutter_application_1/services/socket_service.dart';
 import 'package:flutter_application_1/extensions/string_extensions.dart';
-
+import 'dart:html' as html;
+import 'package:shared_preferences/shared_preferences.dart';
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
 
@@ -19,6 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   
   bool _isLoading = false;
+  bool _isGoogleLoading = false; // NUEVO
   String _errorMessage = '';
 
   @override
@@ -46,7 +49,6 @@ class _LoginScreenState extends State<LoginScreen> {
         );
 
         if (user != null) {
-          // Navegar según el rol del usuario
           if (authService.isAdmin == true) {
             Navigator.pushReplacementNamed(context, AppRoutes.admin);
           } else {
@@ -73,6 +75,57 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
   }
+
+  void _loginWithGoogle() async {
+  setState(() {
+    _isGoogleLoading = true;
+    _errorMessage = '';
+  });
+
+  try {
+    if (kIsWeb) {
+      // Para web: redirigir directamente al backend
+      const String googleAuthUrl = 'http://localhost:3000/api/auth/google';
+      
+      // Guardar estado para saber de dónde venimos
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('auth_source', 'google_login');
+      
+      print('Redirigiendo a Google Auth: $googleAuthUrl');
+      
+      // Redirigir directamente
+      html.window.location.href = googleAuthUrl;
+      
+    } else {
+      // Para móvil (futuro)
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final socketService = Provider.of<SocketService>(context, listen: false);
+      
+      final user = await authService.loginWithGoogle(socketService);
+      
+      if (user != null) {
+        Navigator.pushReplacementNamed(context, AppRoutes.userHome);
+      } else {
+        setState(() {
+          _errorMessage = authService.error.isNotEmpty 
+              ? authService.error 
+              : 'Error en autenticación con Google';
+        });
+      }
+    }
+  } catch (e) {
+    setState(() {
+      _errorMessage = 'Error en autenticación con Google: $e';
+    });
+    print('Error: $e');
+  } finally {
+    if (mounted) {
+      setState(() {
+        _isGoogleLoading = false;
+      });
+    }
+  }
+}
 
  @override
 Widget build(BuildContext context) {
@@ -102,13 +155,13 @@ Widget build(BuildContext context) {
       ),
       // Capa 3: Contenido de la pantalla
       Scaffold(
-        backgroundColor: Colors.transparent, // Importante para ver la imagen de fondo
+        backgroundColor: Colors.transparent,
         body: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             child: Card(
               elevation: 4.0,
-              color: Colors.white.withOpacity(0.85), // Tarjeta semitransparente
+              color: Colors.white.withOpacity(0.85),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16.0),
               ),
@@ -128,6 +181,65 @@ Widget build(BuildContext context) {
                         ),
                       ),
                       const SizedBox(height: 24.0),
+                      
+                      // NUEVO: Botón de Google Sign-In
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50.0,
+                        child: OutlinedButton.icon(
+                          onPressed: _isGoogleLoading || _isLoading ? null : _loginWithGoogle,
+                          icon: _isGoogleLoading 
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : Image.asset(
+                                  'assets/images/', 
+                                  height: 24,
+                                  width: 24,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Icon(Icons.account_circle, color: Colors.red);
+                                  },
+                                ),
+                          label: Text(
+                            _isGoogleLoading 
+                                ? 'Conectando con Google...' 
+                                : 'Continuar con Google',
+                            style: const TextStyle(fontSize: 16.0),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.grey),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                          ),
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 16.0),
+                      
+                      // Divider con "O"
+                      Row(
+                        children: [
+                          const Expanded(child: Divider()),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                            child: Text(
+                              'O',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const Expanded(child: Divider()),
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 16.0),
+                      
+                      // Campos de login tradicional
                       TextFormField(
                         controller: _usernameController,
                         decoration: InputDecoration(
@@ -175,7 +287,7 @@ Widget build(BuildContext context) {
                         width: double.infinity,
                         height: 50.0,
                         child: ElevatedButton(
-                          onPressed: _isLoading ? null : _login,
+                          onPressed: _isLoading || _isGoogleLoading ? null : _login,
                           style: ElevatedButton.styleFrom(
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8.0),

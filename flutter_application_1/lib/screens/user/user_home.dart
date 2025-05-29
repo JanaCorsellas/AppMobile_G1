@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; // NUEVO IMPORT
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/config/routes.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
@@ -12,6 +13,8 @@ import 'package:flutter_application_1/screens/activity/activity_detail_screen.da
 import 'package:flutter_application_1/widgets/custom_drawer.dart';
 import 'package:flutter_application_1/extensions/string_extensions.dart';
 import 'package:flutter_application_1/widgets/achievement_progress_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 class UserHomeScreen extends StatefulWidget {
   const UserHomeScreen({Key? key}) : super(key: key);
 
@@ -20,7 +23,7 @@ class UserHomeScreen extends StatefulWidget {
 }
 
 class _UserHomeScreenState extends State<UserHomeScreen> {
-  bool _isCheckingTrackings = false; // Tracks if tracking check is in progress
+  bool _isCheckingTrackings = false;
   bool _isLoadingActivities = false;
   List<Activity> _userActivities = [];
   bool _showAllActivities = false;
@@ -31,11 +34,65 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
     
     // Verificar si hay actividades de tracking activas cuando se carga la pantalla
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkGoogleAuthResponse(); // NUEVO: Verificar respuesta de Google Auth
       _checkActiveTrackings();
       _loadUserActivities();
     });
   }
 
+  // NUEVO: Verificar si venimos de Google Auth
+  void _checkGoogleAuthResponse() async {
+  if (kIsWeb) {
+    final prefs = await SharedPreferences.getInstance();
+    final googleAuthSuccess = prefs.getString('google_auth_success');
+    
+    if (googleAuthSuccess == 'true') {
+      // Limpiar flag
+      await prefs.remove('google_auth_success');
+      
+      try {
+        // Verificar que los datos estén en localStorage
+        final token = prefs.getString('access_token');
+        final refreshToken = prefs.getString('refresh_token');
+        final userData = prefs.getString('user');
+        
+        if (token != null && refreshToken != null && userData != null) {
+          final authService = Provider.of<AuthService>(context, listen: false);
+          final socketService = Provider.of<SocketService>(context, listen: false);
+          
+          // Actualizar AuthService
+          authService.updateTokensAndUser(token, refreshToken, userData);
+          
+          // Conectar socket
+          socketService.connect(authService.currentUser, accessToken: token);
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('¡Autenticación con Google exitosa!'),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 3),
+              ),
+            );
+            
+            // Recargar datos
+            await _loadUserActivities();
+          }
+        }
+      } catch (e) {
+        print('Error procesando datos de Google Auth: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error procesando autenticación: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+}
   // Verificar si hay actividades de tracking activas
   Future<void> _checkActiveTrackings() async {
     if (_isCheckingTrackings) return;
