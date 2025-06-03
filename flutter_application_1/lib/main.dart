@@ -14,6 +14,7 @@ import 'package:flutter_application_1/providers/language_provider.dart';
 import 'package:flutter_application_1/extensions/string_extensions.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_application_1/services/achievementService.dart';
+import 'package:flutter_application_1/services/user_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,6 +41,7 @@ class _MyAppState extends State<MyApp> {
   late final ThemeProvider _themeProvider;
   late final LanguageProvider _languageProvider;
   late final AchievementService _achievementService;
+  late final UserService _userService;
   
   bool _initialized = false;
 
@@ -59,7 +61,9 @@ class _MyAppState extends State<MyApp> {
     
     // Create HTTP service before other services that depend on it
     _httpService = HttpService(_authService);
-    
+
+    _userService = UserService(_httpService);
+
     // Now we can create services that depend on HttpService
     _achievementService = AchievementService(_httpService);
     _activityTrackingService = ActivityTrackingService(_httpService);
@@ -122,6 +126,7 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider.value(value: _themeProvider),
         ChangeNotifierProvider.value(value: _languageProvider),
         Provider.value(value: _achievementService),
+        Provider.value(value: _userService),
       ],
       child: Consumer2<ThemeProvider, LanguageProvider>(
         builder: (context, themeProvider, languageProvider, _) {

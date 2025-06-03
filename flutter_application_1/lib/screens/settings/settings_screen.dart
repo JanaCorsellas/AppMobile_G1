@@ -6,6 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_application_1/providers/theme_provider.dart';
 import 'package:flutter_application_1/providers/language_provider.dart';
 import 'package:flutter_application_1/extensions/string_extensions.dart';
+import 'package:flutter_application_1/screens/settings/password_change_screen.dart';
+import 'package:flutter_application_1/services/user_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -205,6 +207,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             // Implement activity sharing toggle
                           },
                           secondary: const Icon(Icons.share),
+                        ),
+                        //const Divider(),
+                        ListTile(
+                          leading: const Icon(Icons.lock_outline),
+                          title: Text('change_password'.tr(context)),
+                          subtitle: Text('change_your_password'.tr(context)),
+                          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const PasswordChangeScreen(), // No userService param needed
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
