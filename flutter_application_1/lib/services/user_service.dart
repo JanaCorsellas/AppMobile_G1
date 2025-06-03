@@ -296,6 +296,23 @@ class UserService {
     }
   }
 
+  Future<List<User>> searchUsersByUsername(String username) async {
+  try {
+    final response = await _httpService.get(ApiConstants.searchUsers(username));
+    if (response.statusCode == 200) {
+      final data = await _httpService.parseJsonResponse(response);
+      // FIX: Extract the 'users' property from the response
+      final usersList = data['users'] as List<dynamic>? ?? [];
+      return usersList.map((item) => User.fromJson(item)).toList();
+    } else {
+      throw Exception('Failed to search users: ${response.statusCode}');
+    }
+  } catch (e) {
+    print('Error searching users: $e');
+    throw Exception('Failed to search users: $e');
+  }
+}
+
   // Create user
   Future<User> createUser(Map<String, dynamic> userData) async {
     try {

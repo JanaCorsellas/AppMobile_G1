@@ -16,7 +16,7 @@ class ApiConstants {
   static const String users = '$baseUrl$apiPath/users';
   static String user(String id) => '$baseUrl$apiPath/users/$id';
   static String userByUsername(String username) => '$baseUrl$apiPath/users/username/$username';
-  static String searchUsers(String query) => '$baseUrl$apiPath/users/search?query=$query';
+  static String searchUsers(String username) => '$baseUrl$apiPath/users/search?search=${Uri.encodeComponent(username)}';
   static String toggleUserVisibility(String id) => '$baseUrl$apiPath/users/$id/toggle-visibility';
   static String getUserFollowers(String id) => '$baseUrl$apiPath/users/followers/$id';
   

@@ -154,6 +154,13 @@ class CustomDrawer extends StatelessWidget {
                   ),
                   _buildMenuItem(
                     context,
+                    icon: Icons.search,
+                    title: 'user_search'.tr(context),
+                    route: AppRoutes.userSearch,
+                    currentRoute: currentRoute,
+                  ),
+                  _buildMenuItem(
+                    context,
                     icon: Icons.person_outline,
                     title: 'profile'.tr(context),
                     route: AppRoutes.userProfile,

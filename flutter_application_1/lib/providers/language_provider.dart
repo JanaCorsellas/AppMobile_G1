@@ -105,6 +105,11 @@ class LanguageProvider with ChangeNotifier {
       'es': 'Feed General',
       'ca': 'Feed General',
     },
+    'user_search' : {
+      'en' : 'User Search',
+      'es' : 'Búsqueda de Usuarios',
+      'ca' : 'Cerca Usuaris',
+    },
     'profile': {
       'en': 'Profile',
       'es': 'Perfil',
