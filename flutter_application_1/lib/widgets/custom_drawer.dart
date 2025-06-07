@@ -145,13 +145,7 @@ class CustomDrawer extends StatelessWidget {
                     route: AppRoutes.userHome,
                     currentRoute: currentRoute,
                   ),
-                  _buildMenuItem(
-                    context,
-                    icon: Icons.dynamic_feed,
-                    title: 'feed'.tr(context),
-                    route: AppRoutes.userFeed,
-                    currentRoute: currentRoute,
-                  ),
+              
                   _buildMenuItem(
                     context,
                     icon: Icons.person_outline,

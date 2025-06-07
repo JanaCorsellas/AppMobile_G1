@@ -11,6 +11,10 @@ class ApiConstants {
   static const String register = '$baseUrl$apiPath/auth/register';
   static const String refreshToken = '$baseUrl$apiPath/auth/refresh';
   static const String logout = '$baseUrl$apiPath/auth/logout';
+    
+  // Google OAuth endpoints
+  static const String googleAuth = '$baseUrl$apiPath/auth/google';
+  static const String googleCallback = '$baseUrl$apiPath/auth/google/callback';
   
   // User endpoints
   static const String users = '$baseUrl$apiPath/users';
