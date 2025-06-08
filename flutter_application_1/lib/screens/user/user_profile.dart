@@ -1,7 +1,8 @@
-// lib/screens/user/user_profile.dart - Versión corregida
+// lib/screens/user/user_profile.dart - Versión con sistema de seguimiento integrado
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'; // Para kIsWeb
 import 'package:flutter_application_1/services/http_service.dart';
+import 'package:flutter_application_1/services/follow_service.dart'; // ✅ NUEVO
 import 'package:flutter_application_1/widgets/custom_drawer.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/config/routes.dart';
@@ -15,7 +16,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:io';
 
 class UserProfileScreen extends StatefulWidget {
-  const UserProfileScreen({Key? key}) : super(key: key);
+  final String? userId; // ✅ NUEVO: Para permitir ver otros perfiles
+  
+  const UserProfileScreen({Key? key, this.userId}) : super(key: key);
 
   @override
   _UserProfileScreenState createState() => _UserProfileScreenState();
@@ -37,6 +40,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   String _successMessage = '';
   User? _user;
 
+  // ✅ NUEVAS VARIABLES PARA SISTEMA DE SEGUIMIENTO
+  bool _isFollowing = false;
+  bool _isFollowingLoading = false;
+  int _followersCount = 0;
+  int _followingCount = 0;
+  bool _followStatsLoaded = false;
 
   Key _profileImageKey = UniqueKey();
 
@@ -56,6 +65,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     
     // Load user data
     _loadUserData();
+    // ✅ NUEVO: Cargar datos de seguimiento
+    _loadFollowData();
   }
 
   @override
@@ -65,6 +76,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     _bioController.dispose();
     super.dispose();
   }
+
+  // ✅ NUEVO: Getter para determinar si es el perfil propio
+  bool get _isOwnProfile => widget.userId == null || widget.userId == Provider.of<AuthService>(context, listen: false).currentUser?.id;
 
   Future<void> _loadUserData() async {
     setState(() {
@@ -77,14 +91,21 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       
       User? user;
       
-      if (authService.currentUser != null) {
-        user = authService.currentUser;
-        print("Usando usuario del auth service con ID: ${user?.id}");
-        print("ProfilePicture: ${user?.profilePicture}");
+      if (_isOwnProfile) {
+        // Cargar perfil propio
+        if (authService.currentUser != null) {
+          user = authService.currentUser;
+          print("Usando usuario del auth service con ID: ${user?.id}");
+          print("ProfilePicture: ${user?.profilePicture}");
+        } else {
+          print("No se encontró usuario en auth service, intentando con API...");
+          user = await _userService.getUserById(authService.currentUser?.id ?? '');
+          print("Usuario obtenido de API con ID: ${user?.id}");
+        }
       } else {
-        print("No se encontró usuario en auth service, intentando con API...");
-        user = await _userService.getUserById(authService.currentUser?.id ?? '');
-        print("Usuario obtenido de API con ID: ${user?.id}");
+        // ✅ NUEVO: Cargar perfil de otro usuario
+        user = await _userService.getUserById(widget.userId!);
+        print("Usuario externo obtenido de API con ID: ${user?.id}");
       }
       
       if (user != null) {
@@ -94,7 +115,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           _emailController.text = user.email;
           _bioController.text = user.bio ?? '';
           
-      
           _profileImageKey = UniqueKey();
           
           print("Datos cargados en controladores:");
@@ -120,16 +140,281 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
+  // ✅ NUEVO: Cargar datos de seguimiento
+  Future<void> _loadFollowData() async {
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final followService = Provider.of<FollowService>(context, listen: false);
+      
+      final currentUser = authService.currentUser;
+      if (currentUser == null) return;
+
+      final targetUserId = widget.userId ?? currentUser.id;
+      
+      // Cargar estadísticas de seguimiento
+      final stats = await followService.getFollowStats(
+        targetUserId,
+        authService.accessToken,
+      );
+
+      if (stats != null && mounted) {
+        setState(() {
+          _followersCount = stats['followersCount'] ?? 0;
+          _followingCount = stats['followingCount'] ?? 0;
+          _followStatsLoaded = true;
+        });
+      }
+
+      // Si no es el perfil propio, verificar si lo seguimos
+      if (!_isOwnProfile) {
+        final status = await followService.checkFollowStatus(
+          currentUser.id,
+          targetUserId,
+          authService.accessToken,
+        );
+
+        if (mounted) {
+          setState(() {
+            _isFollowing = status['isFollowing'] ?? false;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error cargando datos de seguimiento: $e');
+      setState(() {
+        _followStatsLoaded = true; // Marcar como cargado aunque falle
+      });
+    }
+  }
+
+  // ✅ NUEVO: Toggle follow/unfollow
+  Future<void> _toggleFollow() async {
+    if (widget.userId == null || _isOwnProfile) return;
+
+    setState(() {
+      _isFollowingLoading = true;
+    });
+
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final followService = Provider.of<FollowService>(context, listen: false);
+    
+    try {
+      bool success;
+      if (_isFollowing) {
+        success = await followService.unfollowUser(
+          authService.currentUser!.id,
+          widget.userId!,
+          authService.accessToken,
+        );
+      } else {
+        success = await followService.followUser(
+          authService.currentUser!.id,
+          widget.userId!,
+          authService.accessToken,
+        );
+      }
+
+      if (success) {
+        setState(() {
+          _isFollowing = !_isFollowing;
+          if (_isFollowing) {
+            _followersCount++;
+          } else {
+            _followersCount--;
+          }
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _isFollowing
+                  ? 'user_followed_successfully'.tr(context)
+                  : 'user_unfollowed_successfully'.tr(context),
+            ),
+            backgroundColor: _isFollowing ? Colors.green : Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isFollowingLoading = false;
+      });
+    }
+  }
+
+  // ✅ NUEVO: Navegar a pantalla de seguidores
+  void _navigateToFollowers() {
+    if (_user != null) {
+      Navigator.pushNamed(
+        context,
+        AppRoutes.followers,
+        arguments: {
+          'userId': _user!.id,
+          'userName': _user!.username,
+        },
+      );
+    }
+  }
+
+  // ✅ NUEVO: Navegar a pantalla de seguidos
+  void _navigateToFollowing() {
+    if (_user != null) {
+      Navigator.pushNamed(
+        context,
+        AppRoutes.following,
+        arguments: {
+          'userId': _user!.id,
+          'userName': _user!.username,
+        },
+      );
+    }
+  }
+
+  // ✅ NUEVO: Widget para mostrar estadísticas de seguimiento
+  Widget _buildFollowStats() {
+    if (!_followStatsLoaded) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
+    }
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.0),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildStatItem(
+              label: 'followers'.tr(context),
+              value: _followersCount.toString(),
+              icon: Icons.people,
+              color: Colors.blue,
+              onTap: _navigateToFollowers,
+            ),
+            Container(
+              height: 40,
+              width: 1,
+              color: Colors.grey[300],
+            ),
+            _buildStatItem(
+              label: 'following'.tr(context),
+              value: _followingCount.toString(),
+              icon: Icons.person_add,
+              color: Colors.green,
+              onTap: _navigateToFollowing,
+            ),
+            Container(
+              height: 40,
+              width: 1,
+              color: Colors.grey[300],
+            ),
+            _buildStatItem(
+              label: 'level'.tr(context),
+              value: _user?.level.toString() ?? '0',
+              icon: Icons.star,
+              color: Colors.amber,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ✅ NUEVO: Widget para un item de estadística
+  Widget _buildStatItem({
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color color,
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            color: color,
+            size: 24,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[600],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ✅ NUEVO: Widget para botón de seguir/no seguir
+  Widget _buildFollowButton() {
+    if (_isOwnProfile) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      child: ElevatedButton.icon(
+        onPressed: _isFollowingLoading ? null : _toggleFollow,
+        icon: _isFollowingLoading
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              )
+            : Icon(_isFollowing ? Icons.person_remove : Icons.person_add),
+        label: Text(
+          _isFollowing ? 'unfollow'.tr(context) : 'follow'.tr(context),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: _isFollowing ? Colors.grey[400] : Colors.blue,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      ),
+    );
+  }
 
   Future<void> _pickAndUploadImage() async {
+    // Solo permitir en perfil propio
+    if (!_isOwnProfile) return;
+    
     try {
       ImageSource? source;
       
-
       if (kIsWeb) {
         source = ImageSource.gallery;
       } else {
-
         source = await _showImageSourceDialog();
         if (source == null) return;
       }
@@ -150,7 +435,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         _successMessage = '';
       });
 
-   
       dynamic imageFile;
       if (kIsWeb) {
         imageFile = pickedFile; // XFile para web
@@ -161,7 +445,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       // Upload image
       final result = await _userService.uploadProfilePicture(_user!.id, imageFile);
 
-
       final updatedUser = _user!.copyWith(
         profilePicture: result['profilePicture'],
       );
@@ -169,8 +452,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       setState(() {
         _user = updatedUser;
         _successMessage = 'profile_picture_updated'.tr(context);
-        
-    
         _profileImageKey = UniqueKey();
       });
 
@@ -197,9 +478,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
- 
   Future<ImageSource?> _showImageSourceDialog() async {
-   
     if (kIsWeb) return ImageSource.gallery;
     
     return await showDialog<ImageSource?>(
@@ -227,7 +506,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
-  
   Future<void> _clearImageCache([String? imageUrl]) async {
     try {
       // Limpiar caché específico si se proporciona URL
@@ -246,187 +524,174 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
-  // REEMPLAZAR la función _deleteProfilePicture en user_profile.dart
-
-Future<void> _deleteProfilePicture() async {
-  try {
-    // Show confirmation dialog
-    final bool? confirm = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('delete_profile_picture'.tr(context)),
-          content: Text('delete_profile_picture_confirmation'.tr(context)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text('cancel'.tr(context)),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text('delete'.tr(context)),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirm != true) return;
-
-    setState(() {
-      _isUploadingImage = true;
-      _errorMessage = '';
-      _successMessage = '';
-    });
-
+  Future<void> _deleteProfilePicture() async {
+    // Solo permitir en perfil propio
+    if (!_isOwnProfile) return;
     
-    final oldImageUrl = _user?.profilePictureUrl;
-    
-    print(' Deleting profile picture for user: ${_user!.id}');
-    print(' Current image URL: $oldImageUrl');
-
-    
-    final success = await _userService.deleteProfilePicture(_user!.id);
-
-    if (success) {
-      print(' Delete API call successful');
-      
-      
-      await _clearImageCacheCompletely(oldImageUrl);
-      
-      
-      final updatedUser = _user!.copyWith(
-        profilePicture: null,
-        clearProfilePicture: true, // Flag explícito para limpiar
+    try {
+      // Show confirmation dialog
+      final bool? confirm = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('delete_profile_picture'.tr(context)),
+            content: Text('delete_profile_picture_confirmation'.tr(context)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text('cancel'.tr(context)),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text('delete'.tr(context)),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+              ),
+            ],
+          );
+        },
       );
-      
+
+      if (confirm != true) return;
+
       setState(() {
-        _user = updatedUser;
-        _successMessage = 'profile_picture_deleted'.tr(context);
-        
-        
-        _profileImageKey = UniqueKey();
+        _isUploadingImage = true;
+        _errorMessage = '';
+        _successMessage = '';
       });
 
+      final oldImageUrl = _user?.profilePictureUrl;
       
-      final authService = Provider.of<AuthService>(context, listen: false);
-      authService.updateCurrentUser(updatedUser);
+      print('🗑️ Deleting profile picture for user: ${_user!.id}');
+      print('🗑️ Current image URL: $oldImageUrl');
 
-      
-      await _userService.saveUserToCache(updatedUser);
+      final success = await _userService.deleteProfilePicture(_user!.id);
 
-      
-      await Future.delayed(const Duration(milliseconds: 500));
-      await _clearImageCacheCompletely(oldImageUrl);
-      
-     
-      if (mounted) {
+      if (success) {
+        print('✅ Delete API call successful');
+        
+        await _clearImageCacheCompletely(oldImageUrl);
+        
+        final updatedUser = _user!.copyWith(
+          profilePicture: null,
+          clearProfilePicture: true, // Flag explícito para limpiar
+        );
+        
         setState(() {
+          _user = updatedUser;
+          _successMessage = 'profile_picture_deleted'.tr(context);
           _profileImageKey = UniqueKey();
+        });
+
+        final authService = Provider.of<AuthService>(context, listen: false);
+        authService.updateCurrentUser(updatedUser);
+
+        await _userService.saveUserToCache(updatedUser);
+        await Future.delayed(const Duration(milliseconds: 500));
+        await _clearImageCacheCompletely(oldImageUrl);
+        
+        if (mounted) {
+          setState(() {
+            _profileImageKey = UniqueKey();
+          });
+        }
+
+        print('✅ Profile picture deletion completed successfully');
+
+      } else {
+        setState(() {
+          _errorMessage = 'profile_picture_delete_error'.tr(context);
         });
       }
 
-      print(' Profile picture deletion completed successfully');
-
-    } else {
+    } catch (e) {
       setState(() {
-        _errorMessage = 'profile_picture_delete_error'.tr(context);
+        _errorMessage = 'profile_picture_delete_error'.tr(context) + ': $e';
+      });
+      print('❌ Error deleting profile picture: $e');
+    } finally {
+      setState(() {
+        _isUploadingImage = false;
       });
     }
+  }
 
-  } catch (e) {
+  Future<void> _clearImageCacheCompletely([String? specificUrl]) async {
+    try {
+      print('🧹 Starting complete image cache cleanup...');
+      
+      // 1. Limpiar URL específica si se proporciona
+      if (specificUrl != null && specificUrl.isNotEmpty) {
+        await CachedNetworkImage.evictFromCache(specificUrl);
+        print('🧹 Cleared specific URL: $specificUrl');
+        
+        // También limpiar posibles variaciones de la URL
+        final variations = [
+          specificUrl,
+          '$specificUrl?t=${DateTime.now().millisecondsSinceEpoch}',
+          specificUrl.split('?')[0], // URL sin parámetros
+        ];
+        
+        for (final variation in variations) {
+          await CachedNetworkImage.evictFromCache(variation);
+        }
+      }
+      
+      // 2. Limpiar todas las posibles URLs del usuario actual
+      if (_user != null) {
+        final possibleUrls = [
+          _user!.profilePicture,
+          _user!.profilePictureUrl,
+          // También URLs con timestamps anteriores
+        ].where((url) => url != null && url.isNotEmpty).toList();
+        
+        for (final url in possibleUrls) {
+          await CachedNetworkImage.evictFromCache(url!);
+          print('🧹 Cleared user URL: $url');
+        }
+      }
+      
+      // 3. Limpiar caché general (método agresivo)
+      await CachedNetworkImage.evictFromCache('');
+      
+      print('✅ Complete image cache cleanup finished');
+      
+    } catch (e) {
+      print('❌ Error during cache cleanup: $e');
+      // No fallar por errores de caché
+    }
+  }
+
+  Future<void> _refreshProfile() async {
+    print('🔄 Starting profile refresh...');
+    
+    // Limpiar caché del usuario
+    _userService.clearCache();
+    
+    await _clearImageCacheCompletely();
+    
+    await _loadUserData();
+    // ✅ NUEVO: También refrescar datos de seguimiento
+    await _loadFollowData();
+    
     setState(() {
-      _errorMessage = 'profile_picture_delete_error'.tr(context) + ': $e';
+      _successMessage = 'Perfil actualizado';
+      _profileImageKey = UniqueKey(); // Forzar rebuild
     });
-    print(' Error deleting profile picture: $e');
-  } finally {
-    setState(() {
-      _isUploadingImage = false;
+    
+    // Limpiar mensaje después de 3 segundos
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _successMessage = '';
+        });
+      }
     });
   }
-}
-
-
-Future<void> _clearImageCacheCompletely([String? specificUrl]) async {
-  try {
-    print('🧹 Starting complete image cache cleanup...');
-    
-    // 1. Limpiar URL específica si se proporciona
-    if (specificUrl != null && specificUrl.isNotEmpty) {
-      await CachedNetworkImage.evictFromCache(specificUrl);
-      print('🧹 Cleared specific URL: $specificUrl');
-      
-      // También limpiar posibles variaciones de la URL
-      final variations = [
-        specificUrl,
-        '$specificUrl?t=${DateTime.now().millisecondsSinceEpoch}',
-        specificUrl.split('?')[0], // URL sin parámetros
-      ];
-      
-      for (final variation in variations) {
-        await CachedNetworkImage.evictFromCache(variation);
-      }
-    }
-    
-    // 2. Limpiar todas las posibles URLs del usuario actual
-    if (_user != null) {
-      final possibleUrls = [
-        _user!.profilePicture,
-        _user!.profilePictureUrl,
-        // También URLs con timestamps anteriores
-      ].where((url) => url != null && url.isNotEmpty).toList();
-      
-      for (final url in possibleUrls) {
-        await CachedNetworkImage.evictFromCache(url!);
-        print('🧹 Cleared user URL: $url');
-      }
-    }
-    
-    // 3. Limpiar caché general (método agresivo)
-    await CachedNetworkImage.evictFromCache('');
-    
-    print(' Complete image cache cleanup finished');
-    
-  } catch (e) {
-    print(' Error during cache cleanup: $e');
-    // No fallar por errores de caché
-  }
-}
-
-
-Future<void> _refreshProfile() async {
-  print(' Starting profile refresh...');
-  
-  // Limpiar caché del usuario
-  _userService.clearCache();
-  
-  
-  await _clearImageCacheCompletely();
-  
-  
-  await _loadUserData();
-  
-  
-  setState(() {
-    _successMessage = 'Perfil actualizado';
-    _profileImageKey = UniqueKey(); // Forzar rebuild
-  });
-  
-  // Limpiar mensaje después de 3 segundos
-  Future.delayed(const Duration(seconds: 3), () {
-    if (mounted) {
-      setState(() {
-        _successMessage = '';
-      });
-    }
-  });
-  
-  
-}
- 
 
   Future<void> _saveProfile() async {
+    // Solo permitir en perfil propio
+    if (!_isOwnProfile) return;
+    
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
@@ -467,13 +732,10 @@ Future<void> _refreshProfile() async {
     }
   }
 
-
-  
   Widget _buildProfilePicture() {
     return Stack(
       alignment: Alignment.center,
       children: [
-       
         Container(
           key: _profileImageKey,
           child: CircleAvatar(
@@ -510,7 +772,6 @@ Future<void> _refreshProfile() async {
                           ),
                         );
                       },
-                      
                       httpHeaders: const {
                         'Cache-Control': 'no-cache, no-store, must-revalidate',
                         'Pragma': 'no-cache',
@@ -539,7 +800,8 @@ Future<void> _refreshProfile() async {
               ),
             ),
           ),
-        if (!_isEditing)
+        // Solo mostrar botones de edición en perfil propio
+        if (_isOwnProfile && !_isEditing)
           Positioned(
             bottom: 0,
             right: 0,
@@ -550,7 +812,6 @@ Future<void> _refreshProfile() async {
               ),
               child: IconButton(
                 icon: Icon(
-                  // ✅ Icono diferente según plataforma
                   kIsWeb ? Icons.upload_file : Icons.camera_alt, 
                   color: Colors.white, 
                   size: 20
@@ -562,7 +823,7 @@ Future<void> _refreshProfile() async {
               ),
             ),
           ),
-        if (!_isEditing && _user!.hasProfilePicture)
+        if (_isOwnProfile && !_isEditing && _user!.hasProfilePicture)
           Positioned(
             top: 0,
             right: 0,
@@ -586,12 +847,14 @@ Future<void> _refreshProfile() async {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: const CustomDrawer(currentRoute: AppRoutes.userProfile),
+      drawer: _isOwnProfile ? const CustomDrawer(currentRoute: AppRoutes.userProfile) : null,
       appBar: AppBar(
-        title: Text('my_profile'.tr(context)),
-        leading: null,
-        automaticallyImplyLeading: true,
-      
+        title: Text(_isOwnProfile ? 'my_profile'.tr(context) : _user?.username ?? 'profile'.tr(context)),
+        leading: !_isOwnProfile ? IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ) : null,
+        automaticallyImplyLeading: _isOwnProfile,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -604,17 +867,19 @@ Future<void> _refreshProfile() async {
               backgroundColor: kIsWeb ? Colors.blue : Colors.green,
               labelStyle: const TextStyle(color: Colors.white, fontSize: 10),
             ),
-          const SizedBox(width: 8),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              final authService = Provider.of<AuthService>(context, listen: false);
-              final socketService = Provider.of<SocketService>(context, listen: false);
-              await authService.logout(socketService);
-              Navigator.pushReplacementNamed(context, AppRoutes.login);
-            },
-            tooltip: 'logout'.tr(context),
-          ),
+          if (_isOwnProfile) ...[
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () async {
+                final authService = Provider.of<AuthService>(context, listen: false);
+                final socketService = Provider.of<SocketService>(context, listen: false);
+                await authService.logout(socketService);
+                Navigator.pushReplacementNamed(context, AppRoutes.login);
+              },
+              tooltip: 'logout'.tr(context),
+            ),
+          ],
         ],
       ),
       body: _isLoading
@@ -645,9 +910,6 @@ Future<void> _refreshProfile() async {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      
-                      if (kIsWeb)
-                       
                       
                       if (_errorMessage.isNotEmpty)
                         Container(
@@ -691,6 +953,14 @@ Future<void> _refreshProfile() async {
                             ],
                           ),
                         ),
+                      
+                      // ✅ NUEVO: Estadísticas de seguimiento
+                      _buildFollowStats(),
+                      const SizedBox(height: 16.0),
+                      
+                      // ✅ NUEVO: Botón de seguir/no seguir
+                      _buildFollowButton(),
+                      
                       Card(
                         elevation: 4.0,
                         shape: RoundedRectangleBorder(
@@ -735,7 +1005,8 @@ Future<void> _refreshProfile() async {
                                       ],
                                     ),
                                   ),
-                                  if (!_isEditing)
+                                  // Solo mostrar botón editar en perfil propio
+                                  if (_isOwnProfile && !_isEditing)
                                     IconButton(
                                       icon: const Icon(Icons.edit),
                                       onPressed: () {
@@ -746,7 +1017,6 @@ Future<void> _refreshProfile() async {
                                     ),
                                 ],
                               ),
-                              // Resto del código igual...
                               const SizedBox(height: 16.0),
                               if (!_isEditing) ...[
                                 const Divider(),
@@ -798,7 +1068,8 @@ Future<void> _refreshProfile() async {
                                     style: const TextStyle(fontSize: 14.0),
                                   ),
                                 ),
-                              ] else ...[
+                              ] else if (_isOwnProfile) ...[
+                                // Solo mostrar formulario de edición en perfil propio
                                 const SizedBox(height: 16.0),
                                 Form(
                                   key: _formKey,

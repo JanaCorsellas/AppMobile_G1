@@ -14,6 +14,8 @@ import 'package:flutter_application_1/screens/tracking/activity_selection_screen
 import 'package:flutter_application_1/screens/tracking/tracking_screen.dart';
 import 'package:flutter_application_1/screens/notifications/notifications_screen.dart';
 import 'package:flutter_application_1/screens/settings/settings_screen.dart';
+import 'package:flutter_application_1/screens/user/followers_screen.dart';
+import 'package:flutter_application_1/screens/user/following_screen.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -30,6 +32,8 @@ class AppRoutes {
   static const String achievements = '/achievements';
   static const String activities = '/activities';
   static const String settingsRoute = '/settings';
+  static const String followers = '/followers';
+  static const String following = '/following';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     // ===== DEBUG LOGS =====
@@ -77,6 +81,28 @@ class AppRoutes {
         case userProfile:
           print('📱 ROUTE DEBUG: Cargando UserProfileScreen');
           return MaterialPageRoute(builder: (_) => const UserProfileScreen());
+         case followers:
+          print('📱 ROUTE DEBUG: Cargando FollowersScreen');
+          final args = settings.arguments as Map<String, dynamic>?;
+          final userId = args?['userId'] as String? ?? '';
+          final userName = args?['userName'] as String? ?? '';
+          return MaterialPageRoute(
+            builder: (_) => FollowersScreen(
+              userId: userId,
+              userName: userName,
+            ),
+          );
+        case following:
+          print('📱 ROUTE DEBUG: Cargando FollowingScreen');
+          final args = settings.arguments as Map<String, dynamic>?;
+          final userId = args?['userId'] as String? ?? '';
+          final userName = args?['userName'] as String? ?? '';
+          return MaterialPageRoute(
+            builder: (_) => FollowingScreen(
+              userId: userId,
+              userName: userName,
+            ),
+          );
         case chatList:
           print('📱 ROUTE DEBUG: Cargando ChatListScreen');
           return MaterialPageRoute(builder: (_) => const ChatListScreen());

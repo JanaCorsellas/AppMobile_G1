@@ -15,6 +15,10 @@ class User {
   final String role;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final List<String> followers;
+  final List<String> following;
+  final int followersCount;
+  final int followingCount;
 
   User({
     required this.id,
@@ -32,6 +36,10 @@ class User {
     required this.role,
     required this.createdAt,
     required this.updatedAt,
+    this.followers = const [],
+    this.following = const [],
+    this.followersCount = 0,
+    this.followingCount = 0,
   });
 
   // ✅ MEJORADO: Get full profile picture URL con validación más estricta
@@ -142,6 +150,14 @@ class User {
       updatedAt: json['updatedAt'] != null 
           ? DateTime.parse(json['updatedAt'].toString())
           : DateTime.now(),
+           followers: json['followers'] != null 
+          ? List<String>.from(json['followers'].map((e) => e.toString()))
+          : [],
+      following: json['following'] != null 
+          ? List<String>.from(json['following'].map((e) => e.toString()))
+          : [],
+      followersCount: json['followersCount'] ?? json['followers']?.length ?? 0,
+      followingCount: json['followingCount'] ?? json['following']?.length ?? 0,
     );
   }
 
@@ -162,6 +178,11 @@ class User {
       'role': role,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'followers': followers,
+      'following': following,
+      'followersCount': followersCount,
+      'followingCount': followingCount,
+      
     };
   }
 
@@ -183,6 +204,10 @@ class User {
     String? role,
     DateTime? createdAt,
     DateTime? updatedAt,
+    List<String>? followers,
+    List<String>? following,
+    int? followersCount,
+    int? followingCount,
   }) {
     // ✅ NUEVO: Manejar explícitamente la limpieza de profilePicture
     String? newProfilePicture;
@@ -210,6 +235,20 @@ class User {
       role: role ?? this.role,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      followers: followers ?? this.followers,
+      following: following ?? this.following,
+      followersCount: followersCount ?? this.followersCount,
+      followingCount: followingCount ?? this.followingCount,
     );
   }
+  bool isFollowing(String userId) {
+    return following.contains(userId);
+  }
+
+  bool isFollowedBy(String userId) {
+    return followers.contains(userId);
+  }
+
+  bool get hasFollowers => followersCount > 0;
+  bool get hasFollowing => followingCount > 0;
 }

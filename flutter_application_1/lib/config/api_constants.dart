@@ -20,8 +20,8 @@ class ApiConstants {
   static const String users = '$baseUrl$apiPath/users';
   static String user(String id) => '$baseUrl$apiPath/users/$id';
   static String userByUsername(String username) => '$baseUrl$apiPath/users/username/$username';
-  static String searchUsers(String query) => '$baseUrl$apiPath/users/search?query=$query';
   static String toggleUserVisibility(String id) => '$baseUrl$apiPath/users/$id/toggle-visibility';
+  static const String searchUsers = '$baseUrl$apiPath/users/search';
   
   // Activity endpoints
   static const String activities = '$baseUrl$apiPath/activities';
@@ -58,4 +58,14 @@ class ApiConstants {
   static String userAchievements(String userId) => '$baseUrl$apiPath/achievements/user/$userId';
   static String checkUserAchievements(String userId) => '$baseUrl$apiPath/achievements/user/$userId/check';
   static const String initializeAchievements = '$baseUrl$apiPath/achievements/initialize/defaults';
+
+  // Follow endpoints
+  static String getUserFollowers(String userId) => '$baseUrl$apiPath/users/$userId/followers';
+  static String getUserFollowing(String userId) => '$baseUrl$apiPath/users/$userId/following';
+  static String followUser(String userId, String targetUserId) => '$baseUrl$apiPath/users/$userId/follow/$targetUserId';
+  static String unfollowUser(String userId, String targetUserId) => '$baseUrl$apiPath/users/$userId/unfollow/$targetUserId';
+  static String checkFollowStatus(String userId, String targetUserId) => '$baseUrl$apiPath/users/$userId/follow-status/$targetUserId';
+  static String getUserFollowStats(String userId) => '$baseUrl$apiPath/users/$userId/follow-stats';
+
+
 }

@@ -14,6 +14,7 @@ import 'package:flutter_application_1/providers/language_provider.dart';
 import 'package:flutter_application_1/extensions/string_extensions.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_application_1/services/achievementService.dart';
+import 'package:flutter_application_1/services/follow_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -121,6 +122,7 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider.value(value: _notificationService),
         ChangeNotifierProvider.value(value: _themeProvider),
         ChangeNotifierProvider.value(value: _languageProvider),
+        ChangeNotifierProvider(create: (_) => FollowService()),
         Provider.value(value: _achievementService),
       ],
       child: Consumer2<ThemeProvider, LanguageProvider>(
