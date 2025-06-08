@@ -16,6 +16,7 @@ import 'package:flutter_application_1/screens/notifications/notifications_screen
 import 'package:flutter_application_1/screens/settings/settings_screen.dart';
 import 'package:flutter_application_1/screens/user/followers_screen.dart';
 import 'package:flutter_application_1/screens/user/following_screen.dart';
+import 'package:flutter_application_1/screens/activity/following_activities_screen.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -34,6 +35,7 @@ class AppRoutes {
   static const String settingsRoute = '/settings';
   static const String followers = '/followers';
   static const String following = '/following';
+    static const String followingActivities = '/following-activities';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     // ===== DEBUG LOGS =====
@@ -75,6 +77,9 @@ class AppRoutes {
               body: Center(child: Text('Error: $e')),
             ));
           }
+        case followingActivities:
+          print('📱 ROUTE DEBUG: Cargando FollowingActivitiesScreen');
+          return MaterialPageRoute(builder: (_) => const FollowingActivitiesScreen());
         case userHome:
           print('📱 ROUTE DEBUG: Cargando UserHomeScreen');
           return MaterialPageRoute(builder: (_) => const UserHomeScreen());

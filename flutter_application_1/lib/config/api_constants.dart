@@ -66,6 +66,7 @@ class ApiConstants {
   static String unfollowUser(String userId, String targetUserId) => '$baseUrl$apiPath/users/$userId/unfollow/$targetUserId';
   static String checkFollowStatus(String userId, String targetUserId) => '$baseUrl$apiPath/users/$userId/follow-status/$targetUserId';
   static String getUserFollowStats(String userId) => '$baseUrl$apiPath/users/$userId/follow-stats';
+  static String followingActivities(String userId) => '$baseUrl$apiPath/activities/following/$userId';
 
 
 }

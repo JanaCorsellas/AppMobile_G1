@@ -118,7 +118,48 @@ class ActivityService {
       throw Exception('Failed to load activity');
     }
   }
-
+ Future<Map<String, dynamic>> getFollowingActivities(
+    String userId, {
+    int page = 1,
+    int limit = 10,
+  }) async {
+    try {
+      final uri = ApiConstants.followingActivities(userId) + "?page=${page}&limit=${limit}";
+      print('🔍 Fetching following activities from: $uri');
+      
+      final response = await _httpService.get(uri);
+      final data = await _httpService.parseJsonResponse(response);
+      
+      print('📱 Following activities response: $data');
+      
+      // Parse activities list
+      final List<Activity> activities = [];
+      
+      if (data['activities'] != null) {
+        for (var item in data['activities']) {
+          try {
+            activities.add(Activity.fromJson(item));
+          } catch (e) {
+            print('Error parsing following activity: $e');
+            // Continue with next item
+          }
+        }
+      }
+      
+      return {
+        'activities': activities,
+        'totalActivities': data['totalActivities'] ?? 0,
+        'totalPages': data['totalPages'] ?? 1,
+        'currentPage': data['currentPage'] ?? page,
+        'hasMore': data['hasMore'] ?? false,
+        'followingCount': data['followingCount'] ?? 0,
+      };
+      
+    } catch (e) {
+      print('Error in getFollowingActivities: $e');
+      throw Exception('Failed to load following activities: $e');
+    }
+  }
   // Get activities by user ID - with enhanced debugging
   Future<List<Activity>> getActivitiesByUserId(String userId) async {
     try {

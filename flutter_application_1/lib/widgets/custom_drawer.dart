@@ -160,6 +160,14 @@ class CustomDrawer extends StatelessWidget {
                     route: AppRoutes.activities,
                     currentRoute: currentRoute,
                   ),
+                  // ✅ NUEVO: Actividades de seguidos
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.people_alt_outlined,
+                    title: 'following_activities'.tr(context),
+                    route: AppRoutes.followingActivities,
+                    currentRoute: currentRoute,
+                  ),
                   _buildMenuItem(
                     context,
                     icon: Icons.directions_run,
