@@ -13,6 +13,7 @@ import 'package:flutter_application_1/extensions/string_extensions.dart';
 import 'package:flutter_application_1/services/socket_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart'; // ✅ NUEVO IMPORT CACHE
 import 'dart:io';
 
 class UserProfileScreen extends StatefulWidget {
@@ -48,6 +49,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   bool _followStatsLoaded = false;
 
   Key _profileImageKey = UniqueKey();
+
+  // ✅ NUEVAS VARIABLES PARA CONTROL DE CACHE
+  bool _imageRefreshMode = false;
+  int _imageRefreshCounter = 0;
+  String? _lastImageUrl; // Para trackear cambios de URL
 
   @override
   void initState() {
@@ -405,6 +411,157 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
+  // ✅ MÉTODOS NUEVOS DE CACHE
+
+  /// ✅ MÉTODO MEJORADO: Limpiar cache específico de usuario
+  Future<void> _clearUserImageCache() async {
+    try {
+      print('🧹 Limpiando cache específico del usuario...');
+      
+      // Obtener posibles URLs del usuario
+      final urlsToClean = <String>[];
+      
+      if (_user?.profilePictureUrl != null) {
+        urlsToClean.add(_user!.profilePictureUrl!);
+      }
+      
+      if (_user?.profilePicture != null) {
+        urlsToClean.add(_user!.profilePicture!);
+      }
+      
+      if (_lastImageUrl != null) {
+        urlsToClean.add(_lastImageUrl!);
+      }
+      
+      // Limpiar cada URL y sus variaciones
+      for (final url in urlsToClean) {
+        await _clearUrlVariations(url);
+      }
+      
+      print('✅ Cache específico del usuario limpiado');
+    } catch (e) {
+      print('❌ Error limpiando cache específico: $e');
+    }
+  }
+
+  /// ✅ MÉTODO NUEVO: Limpiar variaciones de una URL
+  Future<void> _clearUrlVariations(String baseUrl) async {
+    try {
+      // URL base
+      await CachedNetworkImage.evictFromCache(baseUrl);
+      await DefaultCacheManager().removeFile(baseUrl);
+      
+      // URL sin parámetros de query
+      final urlWithoutParams = baseUrl.split('?')[0];
+      await CachedNetworkImage.evictFromCache(urlWithoutParams);
+      await DefaultCacheManager().removeFile(urlWithoutParams);
+      
+      // Variaciones con timestamps
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final urlsWithTimestamp = [
+        '$urlWithoutParams?t=$timestamp',
+        '$baseUrl&t=$timestamp',
+        '$baseUrl?t=$timestamp',
+      ];
+      
+      for (final url in urlsWithTimestamp) {
+        await CachedNetworkImage.evictFromCache(url);
+        await DefaultCacheManager().removeFile(url);
+      }
+      
+      print('🧹 Variaciones de URL limpiadas: $baseUrl');
+    } catch (e) {
+      print('❌ Error limpiando variaciones de URL: $e');
+    }
+  }
+
+  /// ✅ MÉTODO NUEVO: Generar URL con cache-busting
+  String _buildCacheBustingUrl(String originalUrl) {
+    if (originalUrl.isEmpty) return originalUrl;
+    
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final separator = originalUrl.contains('?') ? '&' : '?';
+    return '$originalUrl${separator}t=$timestamp&refresh=$_imageRefreshCounter';
+  }
+
+  /// ✅ MÉTODO NUEVO: Activar modo refresh temporal
+  void _activateRefreshMode() {
+    setState(() {
+      _imageRefreshMode = true;
+      _imageRefreshCounter++;
+    });
+    
+    // Desactivar después de 3 segundos
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _imageRefreshMode = false;
+        });
+      }
+    });
+  }
+
+  /// ✅ MÉTODO NUEVO: Pre-limpiar cache antes de operaciones
+  Future<void> _preClearCache() async {
+    try {
+      // Guardar URL actual para limpieza
+      _lastImageUrl = _user?.profilePictureUrl;
+      
+      // Limpiar cache específico
+      await _clearUserImageCache();
+      
+      // Limpiar cache general si es necesario
+      if (_imageRefreshMode) {
+        await CachedNetworkImage.evictFromCache('');
+      }
+      
+      print('✅ Pre-limpieza de cache completada');
+    } catch (e) {
+      print('❌ Error en pre-limpieza: $e');
+    }
+  }
+
+  /// ✅ MÉTODO NUEVO: Post-procesar después de cambios de imagen
+  Future<void> _postProcessImageChange(String? newImageUrl) async {
+    try {
+      print('🔄 Post-procesando cambio de imagen...');
+      
+      // Limpiar cache de la URL anterior
+      if (_lastImageUrl != null && _lastImageUrl != newImageUrl) {
+        await _clearUrlVariations(_lastImageUrl!);
+      }
+      
+      // Activar modo refresh
+      _activateRefreshMode();
+      
+      // Forzar reconstrucción del widget de imagen
+      setState(() {
+        _profileImageKey = UniqueKey();
+      });
+      
+      // Actualizar última URL conocida
+      _lastImageUrl = newImageUrl;
+      
+      print('✅ Post-procesamiento completado');
+    } catch (e) {
+      print('❌ Error en post-procesamiento: $e');
+    }
+  }
+
+  /// ✅ MÉTODO NUEVO: Obtener URL de imagen optimizada para cache
+  String? _getOptimizedImageUrl() {
+    if (_user?.profilePictureUrl == null) return null;
+    
+    String imageUrl = _user!.profilePictureUrl!;
+    
+    // Si estamos en modo refresh, agregar cache-busting
+    if (_imageRefreshMode || _imageRefreshCounter > 0) {
+      imageUrl = _buildCacheBustingUrl(imageUrl);
+    }
+    
+    return imageUrl;
+  }
+
   Future<void> _pickAndUploadImage() async {
     // Solo permitir en perfil propio
     if (!_isOwnProfile) return;
@@ -435,6 +592,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         _successMessage = '';
       });
 
+      // ✅ PRE-LIMPIAR CACHE
+      await _preClearCache();
+
       dynamic imageFile;
       if (kIsWeb) {
         imageFile = pickedFile; // XFile para web
@@ -452,10 +612,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       setState(() {
         _user = updatedUser;
         _successMessage = 'profile_picture_updated'.tr(context);
-        _profileImageKey = UniqueKey();
       });
 
-      await _clearImageCache(updatedUser.profilePictureUrl);
+      // ✅ POST-PROCESAR CAMBIO DE IMAGEN
+      await _postProcessImageChange(updatedUser.profilePictureUrl);
 
       // Update auth service with new user data
       final authService = Provider.of<AuthService>(context, listen: false);
@@ -564,12 +724,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       print('🗑️ Deleting profile picture for user: ${_user!.id}');
       print('🗑️ Current image URL: $oldImageUrl');
 
+      // ✅ PRE-LIMPIAR CACHE
+      await _preClearCache();
+
       final success = await _userService.deleteProfilePicture(_user!.id);
 
       if (success) {
         print('✅ Delete API call successful');
-        
-        await _clearImageCacheCompletely(oldImageUrl);
         
         final updatedUser = _user!.copyWith(
           profilePicture: null,
@@ -579,21 +740,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         setState(() {
           _user = updatedUser;
           _successMessage = 'profile_picture_deleted'.tr(context);
-          _profileImageKey = UniqueKey();
         });
+
+        // ✅ POST-PROCESAR CAMBIO DE IMAGEN (eliminación)
+        await _postProcessImageChange(null);
 
         final authService = Provider.of<AuthService>(context, listen: false);
         authService.updateCurrentUser(updatedUser);
 
         await _userService.saveUserToCache(updatedUser);
-        await Future.delayed(const Duration(milliseconds: 500));
-        await _clearImageCacheCompletely(oldImageUrl);
-        
-        if (mounted) {
-          setState(() {
-            _profileImageKey = UniqueKey();
-          });
-        }
 
         print('✅ Profile picture deletion completed successfully');
 
@@ -667,7 +822,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     // Limpiar caché del usuario
     _userService.clearCache();
     
-    await _clearImageCacheCompletely();
+    // ✅ LIMPIAR CACHE MEJORADO
+    await _clearUserImageCache();
     
     await _loadUserData();
     // ✅ NUEVO: También refrescar datos de seguimiento
@@ -675,8 +831,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     
     setState(() {
       _successMessage = 'Perfil actualizado';
-      _profileImageKey = UniqueKey(); // Forzar rebuild
     });
+
+    // ✅ ACTIVAR MODO REFRESH
+    _activateRefreshMode();
     
     // Limpiar mensaje después de 3 segundos
     Future.delayed(const Duration(seconds: 3), () {
@@ -737,14 +895,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       alignment: Alignment.center,
       children: [
         Container(
-          key: _profileImageKey,
+          key: ValueKey('profile_${_user?.id}_${_imageRefreshCounter}'), // ✅ KEY ÚNICO MEJORADA
           child: CircleAvatar(
             radius: 50.0,
             backgroundColor: Colors.grey.shade200,
             child: _user!.hasProfilePicture 
                 ? ClipOval(
                     child: CachedNetworkImage(
-                      imageUrl: _user!.profilePictureUrl!,
+                      imageUrl: _getOptimizedImageUrl() ?? _user!.profilePictureUrl!, // ✅ URL OPTIMIZADA
                       width: 100,
                       height: 100,
                       fit: BoxFit.cover,
@@ -777,6 +935,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         'Pragma': 'no-cache',
                         'Expires': '0',
                       },
+                      // ✅ CONFIGURACIONES ANTI-CACHE MEJORADAS
+                      useOldImageOnUrlChange: false,
+                      fadeInDuration: const Duration(milliseconds: 300),
+                      fadeOutDuration: const Duration(milliseconds: 100),
                     ),
                   )
                 : const Icon(
@@ -866,6 +1028,18 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               label: Text(kIsWeb ? 'WEB' : 'MOBILE'),
               backgroundColor: kIsWeb ? Colors.blue : Colors.green,
               labelStyle: const TextStyle(color: Colors.white, fontSize: 10),
+            ),
+          // ✅ BOTÓN DEBUG PARA LIMPIAR CACHE (solo en debug)
+          if (kDebugMode)
+            IconButton(
+              icon: const Icon(Icons.clear_all),
+              onPressed: () async {
+                await _clearUserImageCache();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('🧹 Cache limpiado manualmente')),
+                );
+              },
+              tooltip: 'Limpiar cache',
             ),
           if (_isOwnProfile) ...[
             const SizedBox(width: 8),
