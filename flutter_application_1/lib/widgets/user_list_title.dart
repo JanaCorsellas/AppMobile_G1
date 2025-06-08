@@ -143,62 +143,87 @@ class _UserListTileState extends State<UserListTile> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final authService = Provider.of<AuthService>(context);
-    final isCurrentUser = authService.currentUser?.id == widget.user.id;
+Widget build(BuildContext context) {
+  // ✅ DEBUG: Verificar datos del usuario
+  print('🎯 UserListTile - Usuario: ${widget.user.username}');
+  print('👥 FollowersCount: ${widget.user.followersCount}');
+  print('➡️ FollowingCount: ${widget.user.followingCount}');
+  print('📊 Followers array length: ${widget.user.followers.length}');
+  
+  final authService = Provider.of<AuthService>(context, listen: false);
+  final currentUser = authService.currentUser;
+  final isCurrentUser = currentUser?.id == widget.user.id;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      elevation: 2,
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: _buildAvatar(),
-        title: Text(
-          widget.user.username,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-          ),
+  return Card(
+    elevation: 2,
+    margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+    child: ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      leading: _buildAvatar(),
+      title: Text(
+        widget.user.username,
+        style: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 16,
         ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (widget.user.bio != null && widget.user.bio!.isNotEmpty)
+      ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (widget.user.bio != null && widget.user.bio!.isNotEmpty)
+            Text(
+              widget.user.bio!,
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 14,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Icon(
+                Icons.star,
+                size: 16,
+                color: Colors.amber[600],
+              ),
+              const SizedBox(width: 4),
               Text(
-                widget.user.bio!,
+                '${'level'.tr(context)} ${widget.user.level}',
                 style: TextStyle(
                   color: Colors.grey[600],
-                  fontSize: 14,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
+              const SizedBox(width: 16),
+              Icon(
+                Icons.people,
+                size: 16,
+                color: Colors.blue[600],
+              ),
+              const SizedBox(width: 4),
+              // ✅ CORREGIDO: Usar followersCount directamente
+              Text(
+                '${widget.user.followersCount} ${'followers'.tr(context)}',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              // ✅ OPCIONAL: Mostrar también following
+              if (widget.user.followingCount > 0) ...[
+                const SizedBox(width: 12),
                 Icon(
-                  Icons.star,
+                  Icons.person_add,
                   size: 16,
-                  color: Colors.amber[600],
+                  color: Colors.green[600],
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '${'level'.tr(context)} ${widget.user.level}',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Icon(
-                  Icons.people,
-                  size: 16,
-                  color: Colors.blue[600],
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '${widget.user.followersCount} ${'followers'.tr(context)}',
+                  '${widget.user.followingCount} ${'following'.tr(context)}',
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontSize: 12,
@@ -206,14 +231,15 @@ class _UserListTileState extends State<UserListTile> {
                   ),
                 ),
               ],
-            ),
-          ],
-        ),
-        trailing: _buildTrailing(isCurrentUser),
-        onTap: widget.onUserTap,
+            ],
+          ),
+        ],
       ),
-    );
-  }
+      trailing: _buildTrailing(isCurrentUser),
+      onTap: widget.onUserTap,
+    ),
+  );
+}
 
   Widget _buildAvatar() {
     return CircleAvatar(

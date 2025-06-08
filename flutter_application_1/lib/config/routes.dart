@@ -79,8 +79,12 @@ class AppRoutes {
           print('📱 ROUTE DEBUG: Cargando UserHomeScreen');
           return MaterialPageRoute(builder: (_) => const UserHomeScreen());
         case userProfile:
-          print('📱 ROUTE DEBUG: Cargando UserProfileScreen');
-          return MaterialPageRoute(builder: (_) => const UserProfileScreen());
+           print('📱 ROUTE DEBUG: Cargando UserProfileScreen');
+            final args = settings.arguments as Map<String, dynamic>?;
+            final userId = args?['userId'] as String?;
+            return MaterialPageRoute(
+             builder: (_) => UserProfileScreen(userId: userId),
+  );
          case followers:
           print('📱 ROUTE DEBUG: Cargando FollowersScreen');
           final args = settings.arguments as Map<String, dynamic>?;

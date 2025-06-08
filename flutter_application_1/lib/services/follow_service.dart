@@ -102,89 +102,112 @@ class FollowService with ChangeNotifier {
     return false;
   }
 
-  /// Obtener lista de seguidores
   Future<List<User>> getFollowers(String userId, String? token) async {
-    _isLoading = true;
-    _error = '';
-    notifyListeners();
+  _isLoading = true;
+  _error = '';
+  notifyListeners();
 
-    try {
-      print('Obteniendo seguidores para usuario: $userId');
+  try {
+    print('🔍 Obteniendo seguidores para usuario: $userId');
+    
+    final response = await http.get(
+      Uri.parse(ApiConstants.getUserFollowers(userId)),
+      headers: _getHeaders(token),
+    );
+
+    print('📡 Respuesta seguidores: ${response.statusCode}');
+    print('📄 Body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final List<dynamic> followersJson = data['followers'] ?? [];
       
-      final response = await http.get(
-        Uri.parse(ApiConstants.getUserFollowers(userId)),
-        headers: _getHeaders(token),
-      );
-
-      print('Respuesta seguidores: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final List<dynamic> followersJson = data['followers'] ?? [];
-        
-        final List<User> followers = followersJson
-            .map((json) => User.fromJson(json))
-            .toList();
-
-        print('Seguidores obtenidos: ${followers.length}');
-        _isLoading = false;
-        notifyListeners();
-        return followers;
-      } else {
-        final errorData = json.decode(response.body);
-        _error = errorData['message'] ?? 'Error al obtener seguidores';
+      print('👥 Seguidores JSON recibidos: ${followersJson.length}');
+      
+      final List<User> followers = [];
+      for (var followerJson in followersJson) {
+        try {
+          print('🔍 Procesando seguidor: ${followerJson['username']} - Followers: ${followerJson['followersCount']} - Following: ${followerJson['followingCount']}');
+          final user = User.fromJson(followerJson);
+          followers.add(user);
+          print('✅ Seguidor agregado: ${user.username} - FollowersCount: ${user.followersCount}');
+        } catch (e) {
+          print('❌ Error procesando seguidor: $e');
+          print('📄 Datos del seguidor: $followerJson');
+        }
       }
-    } catch (e) {
-      _error = 'Error de conexión: $e';
-      print('Error al obtener seguidores: $e');
-    }
 
-    _isLoading = false;
-    notifyListeners();
-    return [];
+      print('🎯 Total seguidores procesados: ${followers.length}');
+      _isLoading = false;
+      notifyListeners();
+      return followers;
+    } else {
+      final errorData = json.decode(response.body);
+      _error = errorData['message'] ?? 'Error al obtener seguidores';
+    }
+  } catch (e) {
+    _error = 'Error de conexión: $e';
+    print('❌ Error al obtener seguidores: $e');
   }
 
-  /// Obtener lista de usuarios que sigue
-  Future<List<User>> getFollowing(String userId, String? token) async {
-    _isLoading = true;
-    _error = '';
-    notifyListeners();
+  _isLoading = false;
+  notifyListeners();
+  return [];
+}
 
-    try {
-      print('Obteniendo siguiendo para usuario: $userId');
+/// ✅ MEJORADO: Obtener lista de usuarios que sigue con debugging
+Future<List<User>> getFollowing(String userId, String? token) async {
+  _isLoading = true;
+  _error = '';
+  notifyListeners();
+
+  try {
+    print('🔍 Obteniendo siguiendo para usuario: $userId');
+    
+    final response = await http.get(
+      Uri.parse(ApiConstants.getUserFollowing(userId)),
+      headers: _getHeaders(token),
+    );
+
+    print('📡 Respuesta siguiendo: ${response.statusCode}');
+    print('📄 Body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final List<dynamic> followingJson = data['following'] ?? [];
       
-      final response = await http.get(
-        Uri.parse(ApiConstants.getUserFollowing(userId)),
-        headers: _getHeaders(token),
-      );
-
-      print(' Respuesta siguiendo: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final List<dynamic> followingJson = data['following'] ?? [];
-        
-        final List<User> following = followingJson
-            .map((json) => User.fromJson(json))
-            .toList();
-
-        print('Siguiendo obtenidos: ${following.length}');
-        _isLoading = false;
-        notifyListeners();
-        return following;
-      } else {
-        final errorData = json.decode(response.body);
-        _error = errorData['message'] ?? 'Error al obtener siguiendo';
+      print('👤 Siguiendo JSON recibidos: ${followingJson.length}');
+      
+      final List<User> following = [];
+      for (var followingUserJson in followingJson) {
+        try {
+          print('🔍 Procesando seguido: ${followingUserJson['username']} - Followers: ${followingUserJson['followersCount']} - Following: ${followingUserJson['followingCount']}');
+          final user = User.fromJson(followingUserJson);
+          following.add(user);
+          print('✅ Seguido agregado: ${user.username} - FollowersCount: ${user.followersCount}');
+        } catch (e) {
+          print('❌ Error procesando seguido: $e');
+          print('📄 Datos del seguido: $followingUserJson');
+        }
       }
-    } catch (e) {
-      _error = 'Error de conexión: $e';
-      print('Error al obtener siguiendo: $e');
-    }
 
-    _isLoading = false;
-    notifyListeners();
-    return [];
+      print('🎯 Total seguidos procesados: ${following.length}');
+      _isLoading = false;
+      notifyListeners();
+      return following;
+    } else {
+      final errorData = json.decode(response.body);
+      _error = errorData['message'] ?? 'Error al obtener siguiendo';
+    }
+  } catch (e) {
+    _error = 'Error de conexión: $e';
+    print(' Error al obtener siguiendo: $e');
   }
+
+  _isLoading = false;
+  notifyListeners();
+  return [];
+}
 
   /// Verificar estado de seguimiento entre dos usuarios
   Future<Map<String, bool>> checkFollowStatus(String currentUserId, String targetUserId, String? token) async {
@@ -241,43 +264,51 @@ class FollowService with ChangeNotifier {
 
   /// CORREGIDO: Buscar usuarios por nombre
   Future<List<User>> searchUsers(String query, String? token) async {
-    if (query.trim().isEmpty || query.length < 2) return [];
+  if (query.trim().isEmpty || query.length < 2) return [];
 
-    try {
-      print('🔍 Buscando usuarios: $query');
+  try {
+    print(' Buscando usuarios: $query');
+    
+    final response = await http.get(
+      Uri.parse('${ApiConstants.searchUsers}?search=${Uri.encodeComponent(query)}'),
+      headers: _getHeaders(token),
+    );
+
+    print(' Respuesta búsqueda: ${response.statusCode}');
+    print(' Body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
       
-      // CORRECTED: Usar parámetro 'search' en lugar de 'query'
-      final response = await http.get(
-        Uri.parse('${ApiConstants.searchUsers}?search=${Uri.encodeComponent(query)}'),
-        headers: _getHeaders(token),
-      );
-
-      print(' Respuesta búsqueda: ${response.statusCode}');
-      print('Body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        
-        // BACKEND devuelve: { "users": [...] }
-        final List<dynamic> usersJson = data['users'] ?? [];
-        final List<User> users = usersJson.map((json) => User.fromJson(json)).toList();
-        
-        print('Usuarios encontrados: ${users.length}');
-        return users;
-        
-      } else if (response.statusCode == 404) {
-        // No se encontraron usuarios - esto es normal
-        print(' No se encontraron usuarios para: $query');
-        return [];
-      } else {
-        print('Error en búsqueda: ${response.statusCode} - ${response.body}');
-        return [];
+      // BACKEND devuelve: { "users": [...] }
+      final List<dynamic> usersJson = data['users'] ?? [];
+      
+      print('👥 Usuarios encontrados: ${usersJson.length}');
+      
+      final List<User> users = [];
+      for (var userJson in usersJson) {
+        try {
+          print('Procesando usuario: ${userJson['username']} - Followers: ${userJson['followersCount']} - Following: ${userJson['followingCount']}');
+          final user = User.fromJson(userJson);
+          users.add(user);
+          print(' Usuario agregado: ${user.username} - FollowersCount: ${user.followersCount}');
+        } catch (e) {
+          print(' Error procesando usuario: $e');
+          print('Datos del usuario: $userJson');
+        }
       }
-    } catch (e) {
-      print('Error buscando usuarios: $e');
-      return [];
+      
+      print(' Total usuarios procesados correctamente: ${users.length}');
+      return users;
     }
+    
+    print(' Error en respuesta: ${response.statusCode} - ${response.body}');
+    return [];
+  } catch (e) {
+    print(' Error en searchUsers: $e');
+    return [];
   }
+}
 
   void clearError() {
     _error = '';

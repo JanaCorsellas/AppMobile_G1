@@ -1,5 +1,6 @@
 // lib/screens/user/followers_screen.dart - Pantalla de seguidores
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/config/routes.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/models/user.dart';
 import 'package:flutter_application_1/services/follow_service.dart';
@@ -194,23 +195,31 @@ class _FollowersScreenState extends State<FollowersScreen> {
         ),
         
         // Lista de seguidores
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: _followers.length,
-            itemBuilder: (context, index) {
-              final follower = _followers[index];
-              return UserListTile(
-                user: follower,
-                showFollowButton: true,
-                onUserTap: () {
-                  // TODO: Navegar al perfil del usuario
-                  print('Navegar al perfil de ${follower.username}');
-                },
-              );
-            },
-          ),
-        ),
+       Expanded(
+  child: ListView.builder(
+    padding: const EdgeInsets.symmetric(vertical: 8),
+    itemCount: _followers.length,
+    itemBuilder: (context, index) {
+      final follower = _followers[index];
+      return UserListTile(
+        user: follower,
+        showFollowButton: true,
+        onUserTap: () {
+          // ✅ CORREGIDO: Navegar al perfil del usuario
+          Navigator.pushNamed(
+            context,
+            AppRoutes.userProfile,
+            arguments: {'userId': follower.id},
+          );
+        },
+        onFollowChanged: () {
+          // Opcional: Recargar lista después de seguir/no seguir
+          print('Usuario ${follower.username} seguido/no seguido');
+        },
+      );
+    },
+  ),
+),
       ],
     );
   }
