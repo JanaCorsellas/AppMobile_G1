@@ -76,10 +76,6 @@ class AuthService with ChangeNotifier {
     _isLoading = false;
     notifyListeners();
   }
-
-  // =========================================================================
-  // GOOGLE OAUTH - MÉTODOS AÑADIDOS
-  // =========================================================================
   Future<bool> loginWithGoogle() async {
     _isLoading = true;
     _error = '';
@@ -187,9 +183,6 @@ class AuthService with ChangeNotifier {
       return false;
     }
   }
-  // =========================================================================
-  // FIN MÉTODOS GOOGLE OAUTH
-  // =========================================================================
 
   Future<User?> login(String username, String password, SocketService socketService) async {
     _isLoading = true;
@@ -283,53 +276,84 @@ class AuthService with ChangeNotifier {
   }
 
   Future<bool> register(String username, String email, String password) async {
-    _isLoading = true;
-    _error = '';
-    notifyListeners();
+  _isLoading = true;
+  _error = '';
+  notifyListeners();
+  
+  try {
+    print("Register request URL: ${ApiConstants.register}");
+    print("Register request body: ${json.encode({
+      'username': username,
+      'email': email,
+      'password': password
+    })}");
     
-    try {
-      print("Register request URL: ${ApiConstants.register}");
-      print("Register request body: ${json.encode({
+    final response = await http.post(
+      Uri.parse(ApiConstants.register),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
         'username': username,
         'email': email,
         'password': password
-      })}");
+      }),
+    );
+
+    print("Server response (register): ${response.statusCode}");
+    print("Server response body: ${response.body}");
+    
+    _isLoading = false;
+    notifyListeners();
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      print("Registro exitoso - código ${response.statusCode}");
       
-      final response = await http.post(
-        Uri.parse(ApiConstants.register),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'username': username,
-          'email': email,
-          'password': password
-        }),
-      );
 
-      print("Server response (register): ${response.statusCode}");
-      print("Server response body: ${response.body}");
+      try {
+        final responseData = json.decode(response.body);
+        
+        if (responseData.containsKey('token') && 
+            responseData.containsKey('refreshToken') && 
+            responseData.containsKey('user')) {
+          
+          print("Procesando tokens del registro...");
+          
+          _accessToken = responseData['token'];
+          _refreshToken = responseData['refreshToken'];
+          _currentUser = User.fromJson(responseData['user']);
+          _isLoggedIn = true;
 
-      if (response.statusCode == 201) {
-        _isLoading = false;
-        notifyListeners();
-        return true;
-      } else {
-        try {
-          final data = json.decode(response.body);
-          _error = data['message'] ?? 'Error en el registro';
-        } catch (e) {
-          _error = 'Error en el registro';
+          // Guardar en SharedPreferences
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('access_token', _accessToken!);
+          await prefs.setString('refresh_token', _refreshToken!);
+          await prefs.setString('user', json.encode(responseData['user']));
+
+          print('Usuario registrado y autenticado: ${_currentUser!.username}');
+          notifyListeners();
         }
-        _isLoading = false;
-        notifyListeners();
-        return false;
+      } catch (e) {
+        print("No se pudieron procesar tokens automáticamente: $e");
       }
-    } catch (e) {
-      _error = 'Error de registro: $e';
-      _isLoading = false;
-      notifyListeners();
+      
+      return true; 
+      
+    } else {
+      print(" Error del servidor: ${response.statusCode}");
+      try {
+        final errorData = json.decode(response.body);
+        _error = errorData['message'] ?? 'Error en el registro';
+      } catch (e) {
+        _error = 'Error en el registro - código ${response.statusCode}';
+      }
       return false;
     }
+  } catch (e) {
+    print(' Error de registro: $e');
+    _error = 'Error de conexión. Verifica tu internet e inténtalo de nuevo.';
+    _isLoading = false;
+    notifyListeners();
+    return false;
   }
+}
 
   Future<bool> refreshAuthToken() async {
     if (_refreshToken == null) {

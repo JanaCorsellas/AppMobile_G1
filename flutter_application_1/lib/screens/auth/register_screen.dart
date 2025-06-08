@@ -1,8 +1,9 @@
-// lib/screens/auth/register_screen.dart
+// lib/screens/auth/register_screen.dart - VERSIÓN CORREGIDA
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/config/routes.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
+import 'package:flutter_application_1/services/socket_service.dart'; // ✅ AGREGADO
 import 'package:flutter_application_1/extensions/string_extensions.dart';
 
 enum PasswordStrength { weak, medium, strong }
@@ -152,6 +153,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return requirements;
   }
 
+  // ✅ MÉTODO _register() COMPLETAMENTE CORREGIDO
   void _register() async {
     if (_formKey.currentState!.validate()) {
       // Validación adicional para contraseñas
@@ -177,45 +179,87 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       try {
         final authService = Provider.of<AuthService>(context, listen: false);
+        final socketService = Provider.of<SocketService>(context, listen: false);
+        
+        print('🚀 Iniciando registro para: ${_usernameController.text}');
+        
+        // ✅ LLAMAR AL REGISTRO Y MANEJAR LA RESPUESTA CORRECTAMENTE
         final success = await authService.register(
           _usernameController.text,
           _emailController.text,
           _passwordController.text,
         );
 
-        if (success) {
-          setState(() {
-            _successMessage = 'register_success'.tr(context);
-          });
-          
-          // Clear the form
-          _usernameController.clear();
-          _emailController.clear();
-          _passwordController.clear();
-          _confirmPasswordController.clear();
-          
-          // Navigate directly to user home
-          Future.delayed(const Duration(seconds: 1), () {
-            if (mounted) {
-              Navigator.pushReplacementNamed(context, AppRoutes.userHome);
-            }
-          });
-        } else {
-          setState(() {
-            _errorMessage = authService.error.isNotEmpty 
-                ? authService.error 
-                : 'register_failed'.tr(context);
-          });
-        }
-      } catch (e) {
-        setState(() {
-          _errorMessage = 'register_error'.tr(context);
-        });
-        print('Registration error: $e');
-      } finally {
         if (mounted) {
           setState(() {
             _isLoading = false;
+          });
+
+          // ✅ VERIFICAR SI EL REGISTRO FUE EXITOSO
+          if (success) {
+            print('✅ Registro exitoso, verificando autenticación...');
+            
+            // ✅ VERIFICAR SI EL USUARIO ESTÁ AUTENTICADO
+            if (authService.isLoggedIn && authService.currentUser != null) {
+              print('✅ Usuario autenticado automáticamente: ${authService.currentUser!.username}');
+              
+              // ✅ CONECTAR SOCKET SI NO ESTÁ CONECTADO
+              if (!socketService.isConnected()) {
+                print('🔌 Conectando socket...');
+                socketService.connect(authService.currentUser!, accessToken: authService.accessToken);
+              }
+              
+              // ✅ MOSTRAR MENSAJE DE ÉXITO
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('¡Bienvenido ${authService.currentUser!.username}! Registro exitoso.'),
+                  backgroundColor: Colors.green,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+              
+              // ✅ LIMPIAR FORMULARIO
+              _usernameController.clear();
+              _emailController.clear();
+              _passwordController.clear();
+              _confirmPasswordController.clear();
+              
+              // ✅ NAVEGAR DIRECTAMENTE A USER-HOME
+              Navigator.pushReplacementNamed(context, AppRoutes.userHome);
+              
+            } else {
+              // ✅ REGISTRO EXITOSO PERO NO AUTENTICADO - MANEJO ALTERNATIVO
+              print('⚠️ Registro exitoso pero usuario no autenticado automáticamente');
+              
+              setState(() {
+                _successMessage = '¡Registro exitoso! Por favor inicia sesión.';
+              });
+              
+              // Navegar al login después de un delay
+              Future.delayed(const Duration(seconds: 2), () {
+                if (mounted) {
+                  Navigator.pushReplacementNamed(context, AppRoutes.login);
+                }
+              });
+            }
+            
+          } else {
+            // ✅ REGISTRO FALLÓ - MOSTRAR ERROR ESPECÍFICO
+            print('❌ Registro falló: ${authService.error}');
+            setState(() {
+              _errorMessage = authService.error.isNotEmpty 
+                  ? authService.error 
+                  : 'Error en el registro. Verifica tus datos e inténtalo de nuevo.';
+            });
+          }
+        }
+      } catch (e) {
+        // ✅ MANEJAR EXCEPCIONES
+        print('❌ Error inesperado en registro: $e');
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = 'Error inesperado. Por favor inténtalo de nuevo.';
           });
         }
       }
@@ -437,23 +481,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ],
                     
-                    // Mensajes de error y éxito
+                    // ✅ MENSAJES DE ERROR Y ÉXITO MEJORADOS
                     if (_errorMessage.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 16.0),
                         child: Container(
-                          padding: const EdgeInsets.all(8.0),
+                          padding: const EdgeInsets.all(12.0),
                           decoration: BoxDecoration(
                             color: Colors.red[50],
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: Colors.red[200]!),
                           ),
-                          child: Text(
-                            _errorMessage,
-                            style: const TextStyle(
-                              color: Colors.red,
-                              fontSize: 14.0,
-                            ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.error_outline, color: Colors.red[700], size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _errorMessage,
+                                  style: TextStyle(
+                                    color: Colors.red[700],
+                                    fontSize: 14.0,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -461,18 +513,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 16.0),
                         child: Container(
-                          padding: const EdgeInsets.all(8.0),
+                          padding: const EdgeInsets.all(12.0),
                           decoration: BoxDecoration(
                             color: Colors.green[50],
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: Colors.green[200]!),
                           ),
-                          child: Text(
-                            _successMessage,
-                            style: const TextStyle(
-                              color: Colors.green,
-                              fontSize: 14.0,
-                            ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.check_circle_outline, color: Colors.green[700], size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _successMessage,
+                                  style: TextStyle(
+                                    color: Colors.green[700],
+                                    fontSize: 14.0,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
