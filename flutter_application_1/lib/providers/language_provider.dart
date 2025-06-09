@@ -575,6 +575,7 @@ class LanguageProvider with ChangeNotifier {
       'es': 'Error al eliminar el chat',
       'ca': 'Error en eliminar el xat',
     },
+
     // User profile screen
     'my_profile': {
       'en': 'My Profile',
@@ -662,9 +663,54 @@ class LanguageProvider with ChangeNotifier {
       'ca': 'El nom ha de tenir almenys 4 caràcters',
     },
 
-    // NUEVAS TRADUCCIONES QUE FALTABAN (las que encontré en tu código):
+    // Profile picture management
+    'profile_picture_updated': {
+      'en': 'Profile picture updated successfully',
+      'es': 'Imagen de perfil actualizada con éxito',
+      'ca': 'Imatge de perfil actualitzada amb èxit',
+    },
+    'profile_picture_upload_error': {
+      'en': 'Error uploading profile picture',
+      'es': 'Error al subir imagen de perfil',
+      'ca': 'Error en pujar imatge de perfil',
+    },
+    'select_image_source': {
+      'en': 'Select image source',
+      'es': 'Selecciona fuente de imagen',
+      'ca': 'Selecciona font d\'imatge',
+    },
+    'camera': {
+      'en': 'Camera',
+      'es': 'Cámara',
+      'ca': 'Càmera',
+    },
+    'gallery': {
+      'en': 'Gallery',
+      'es': 'Galería',
+      'ca': 'Galeria',
+    },
+    'delete_profile_picture': {
+      'en': 'Delete profile picture',
+      'es': 'Eliminar imagen de perfil',
+      'ca': 'Eliminar imatge de perfil',
+    },
+    'delete_profile_picture_confirmation': {
+      'en': 'Are you sure you want to delete your profile picture?',
+      'es': '¿Estás seguro de que quieres eliminar tu imagen de perfil?',
+      'ca': 'Estàs segur que vols eliminar la teva imatge de perfil?',
+    },
+    'profile_picture_deleted': {
+      'en': 'Profile picture deleted successfully',
+      'es': 'Imagen de perfil eliminada con éxito',
+      'ca': 'Imatge de perfil eliminada amb èxit',
+    },
+    'profile_picture_delete_error': {
+      'en': 'Error deleting profile picture',
+      'es': 'Error al eliminar imagen de perfil',
+      'ca': 'Error en eliminar imatge de perfil',
+    },
 
-    // Seguimiento (Follow system)
+    // Follow system
     'follow': {
       'en': 'Follow',
       'es': 'Seguir',
@@ -684,6 +730,46 @@ class LanguageProvider with ChangeNotifier {
       'en': 'Following',
       'es': 'Siguiendo',
       'ca': 'Seguint',
+    },
+    'following_of': {
+      'en': 'Following of',
+      'es': 'Siguiendo de',
+      'ca': 'Seguint de',
+    },
+    'followers_of': {
+      'en': 'Followers of',
+      'es': 'Seguidores de',
+      'ca': 'Seguidors de',
+    },
+    'not_following_anyone': {
+      'en': 'Not following anyone yet',
+      'es': 'Aún no sigues a nadie',
+      'ca': 'Encara no segueixes ningú',
+    },
+    'not_following_description': {
+      'en': 'Start following people to see their activities in your feed',
+      'es': 'Comienza a seguir gente para ver sus actividades en tu feed',
+      'ca': 'Comença a seguir gent per veure les seves activitats al teu feed',
+    },
+    'no_followers': {
+      'en': 'No followers yet',
+      'es': 'Aún no tienes seguidores',
+      'ca': 'Encara no tens seguidors',
+    },
+    'no_followers_description': {
+      'en': 'Share your activities and connect with other users to gain followers',
+      'es': 'Comparte tus actividades y conecta con otros usuarios para ganar seguidores',
+      'ca': 'Comparteix les teves activitats i connecta amb altres usuaris per guanyar seguidors',
+    },
+    'user_followed_successfully': {
+      'en': 'User followed successfully',
+      'es': 'Usuario seguido con éxito',
+      'ca': 'Usuari seguit amb èxit',
+    },
+    'user_unfollowed_successfully': {
+      'en': 'User unfollowed successfully',
+      'es': 'Dejaste de seguir al usuario con éxito',
+      'ca': 'Has deixat de seguir l\'usuari amb èxit',
     },
     'following_activities': {
       'en': 'Following Activities',
@@ -725,6 +811,267 @@ class LanguageProvider with ChangeNotifier {
       'es': 'Buscando usuarios...',
       'ca': 'Cercant usuaris...',
     },
+
+    // Activity list screen
+    'all_activities': {
+      'en': 'All',
+      'es': 'Todas',
+      'ca': 'Totes',
+    },
+    'filter_by': {
+      'en': 'Filter by',
+      'es': 'Filtrar por',
+      'ca': 'Filtrar per',
+    },
+    'sort_by': {
+      'en': 'Sort by',
+      'es': 'Ordenar por',
+      'ca': 'Ordenar per',
+    },
+    'date': {
+      'en': 'Date',
+      'es': 'Fecha',
+      'ca': 'Data',
+    },
+    'name': {
+      'en': 'Name',
+      'es': 'Nombre',
+      'ca': 'Nom',
+    },
+    'ascending': {
+      'en': 'Ascending',
+      'es': 'Ascendente',
+      'ca': 'Ascendent',
+    },
+    'descending': {
+      'en': 'Descending',
+      'es': 'Descendente',
+      'ca': 'Descendent',
+    },
+    'search_activities': {
+      'en': 'Search activities...',
+      'es': 'Buscar actividades...',
+      'ca': 'Cercar activitats...',
+    },
+    'clear_search': {
+      'en': 'Clear search',
+      'es': 'Limpiar búsqueda',
+      'ca': 'Netejar cerca',
+    },
+    'no_activities_found': {
+      'en': 'No activities found',
+      'es': 'No se encontraron actividades',
+      'ca': 'No s\'han trobat activitats',
+    },
+    'activity_count': {
+      'en': '{count} activities',
+      'es': '{count} actividades',
+      'ca': '{count} activitats',
+    },
+    'general_stats': {
+      'en': 'General Statistics',
+      'es': 'Estadísticas Generales',
+      'ca': 'Estadístiques Generals',
+    },
+    'total_activities': {
+      'en': 'Activities',
+      'es': 'Actividades',
+      'ca': 'Activitats',
+    },
+    'average': {
+      'en': 'Average',
+      'es': 'Promedio',
+      'ca': 'Promig',
+    },
+    'total_time_label': {
+      'en': 'Total Time',
+      'es': 'Tiempo Total',
+      'ca': 'Temps Total',
+    },
+    'filters_and_sorting': {
+      'en': 'Filters and Sorting',
+      'es': 'Filtros y Ordenamiento',
+      'ca': 'Filtres i Ordenació',
+    },
+    'results': {
+      'en': 'results',
+      'es': 'resultados',
+      'ca': 'resultats',
+    },
+    'result': {
+      'en': 'result',
+      'es': 'resultado',
+      'ca': 'resultat',
+    },
+
+    // Achievements screen
+    'unlocked_achievements': {
+      'en': 'Unlocked',
+      'es': 'Desbloqueados',
+      'ca': 'Desbloquejats',
+    },
+    'locked_achievements': {
+      'en': 'Locked',
+      'es': 'Bloqueados',
+      'ca': 'Bloquejats',
+    },
+    'achievement_stats': {
+      'en': 'Achievement Statistics',
+      'es': 'Estadísticas de Logros',
+      'ca': 'Estadístiques d\'Assoliments',
+    },
+    'unlocked_achievements_label': {
+      'en': 'Unlocked\nAchievements',
+      'es': 'Logros\nDesbloqueados',
+      'ca': 'Assoliments\nDesbloquejats',
+    },
+    'total_achievements': {
+      'en': 'Total\nAchievements',
+      'es': 'Total de\nLogros',
+      'ca': 'Total\nd\'Assoliments',
+    },
+    'total_progress': {
+      'en': 'Total\nProgress',
+      'es': 'Progreso\nTotal',
+      'ca': 'Progrés\nTotal',
+    },
+    'total_points': {
+      'en': 'Total\nPoints',
+      'es': 'Puntos\nTotales',
+      'ca': 'Punts\nTotals',
+    },
+    'difficulty': {
+      'en': 'Difficulty',
+      'es': 'Dificultad',
+      'ca': 'Dificultat',
+    },
+    'type': {
+      'en': 'Type',
+      'es': 'Tipo',
+      'ca': 'Tipus',
+    },
+    'all_difficulties': {
+      'en': 'All',
+      'es': 'Todas',
+      'ca': 'Totes',
+    },
+    'bronze': {
+      'en': 'Bronze',
+      'es': 'Bronce',
+      'ca': 'Bronze',
+    },
+    'silver': {
+      'en': 'Silver',
+      'es': 'Plata',
+      'ca': 'Plata',
+    },
+    'gold': {
+      'en': 'Gold',
+      'es': 'Oro',
+      'ca': 'Or',
+    },
+    'diamond': {
+      'en': 'Diamond',
+      'es': 'Diamante',
+      'ca': 'Diamant',
+    },
+    'all_types': {
+      'en': 'All',
+      'es': 'Todos',
+      'ca': 'Tots',
+    },
+    'distance_type': {
+      'en': 'Distance',
+      'es': 'Distancia',
+      'ca': 'Distància',
+    },
+    'time_type': {
+      'en': 'Time',
+      'es': 'Tiempo',
+      'ca': 'Temps',
+    },
+    'activity_type': {
+      'en': 'Activities',
+      'es': 'Actividades',
+      'ca': 'Activitats',
+    },
+    'speed_type': {
+      'en': 'Speed',
+      'es': 'Velocidad',
+      'ca': 'Velocitat',
+    },
+    'elevation_type': {
+      'en': 'Elevation',
+      'es': 'Elevación',
+      'ca': 'Elevació',
+    },
+    'consecutive_type': {
+      'en': 'Consecutive',
+      'es': 'Consecutivos',
+      'ca': 'Consecutius',
+    },
+    'no_unlocked_achievements': {
+      'en': 'No unlocked achievements with these filters yet',
+      'es': 'Aún no has desbloqueado logros con estos filtros',
+      'ca': 'Encara no has desbloquejat assoliments amb aquests filtres',
+    },
+    'no_locked_achievements': {
+      'en': 'No locked achievements with these filters',
+      'es': 'No hay logros bloqueados con estos filtros',
+      'ca': 'No hi ha assoliments bloquejats amb aquests filtres',
+    },
+    'points': {
+      'en': 'pts',
+      'es': 'pts',
+      'ca': 'pts',
+    },
+    'objective': {
+      'en': 'Objective',
+      'es': 'Objetivo',
+      'ca': 'Objectiu',
+    },
+    'activity_type_label': {
+      'en': 'Activity Type',
+      'es': 'Tipo de Actividad',
+      'ca': 'Tipus d\'Activitat',
+    },
+    'unlocked': {
+      'en': 'Unlocked',
+      'es': 'Desbloqueado',
+      'ca': 'Desbloquejat',
+    },
+    'not_unlocked_yet': {
+      'en': 'Not unlocked yet',
+      'es': 'Aún no desbloqueado',
+      'ca': 'Encara no desbloquejat',
+    },
+    'close': {
+      'en': 'Close',
+      'es': 'Cerrar',
+      'ca': 'Tancar',
+    },
+    'new_achievements': {
+      'en': 'New Achievements',
+      'es': 'Nuevos Logros',
+      'ca': 'Nous Assoliments',
+    },
+    'achievement_unlocked_single': {
+      'en': 'You have unlocked a new achievement:',
+      'es': 'Has desbloqueado un nuevo logro:',
+      'ca': 'Has desbloquejat un nou assoliment:',
+    },
+    'achievement_unlocked_multiple': {
+      'en': 'You have unlocked {count} new achievements:',
+      'es': 'Has desbloqueado {count} nuevos logros:',
+      'ca': 'Has desbloquejat {count} nous assoliments:',
+    },
+    'great': {
+      'en': 'Great',
+      'es': 'Genial',
+      'ca': 'Genial',
+    },
+
+    // General actions
     'expand': {
       'en': 'Expand',
       'es': 'Expandir',
@@ -735,13 +1082,6 @@ class LanguageProvider with ChangeNotifier {
       'es': 'Contraer',
       'ca': 'Contraure',
     },
-    'clear_search': {
-      'en': 'Clear search',
-      'es': 'Limpiar búsqueda',
-      'ca': 'Netejar cerca',
-    },
-
-    // Acciones básicas
     'edit': {
       'en': 'Edit',
       'es': 'Editar',
@@ -783,7 +1123,7 @@ class LanguageProvider with ChangeNotifier {
       'ca': 'Confirmar',
     },
 
-    // Métricas adicionales
+    // Metrics
     'calories': {
       'en': 'Calories',
       'es': 'Calorías',
@@ -820,7 +1160,7 @@ class LanguageProvider with ChangeNotifier {
       'ca': 'Velocitat màxima',
     },
 
-    // Tracking y actividades
+    // Tracking
     'start_tracking': {
       'en': 'Start Tracking',
       'es': 'Iniciar Seguimiento',
@@ -872,7 +1212,7 @@ class LanguageProvider with ChangeNotifier {
       'ca': 'Activitat descartada',
     },
 
-    // Estados de conexión
+    // Connection states
     'online': {
       'en': 'Online',
       'es': 'En línea',
@@ -884,7 +1224,7 @@ class LanguageProvider with ChangeNotifier {
       'ca': 'Desconnectat',
     },
 
-    // Fechas y tiempo
+    // Time and dates
     'today': {
       'en': 'Today',
       'es': 'Hoy',
@@ -911,7 +1251,7 @@ class LanguageProvider with ChangeNotifier {
       'ca': 'Mes passat',
     },
 
-    // Errores y validaciones
+    // Errors and validations
     'invalid_data': {
       'en': 'Invalid data',
       'es': 'Datos inválidos',
@@ -943,7 +1283,7 @@ class LanguageProvider with ChangeNotifier {
       'ca': 'Permís de càmera',
     },
 
-    // Confirmaciones adicionales
+    // Confirmations
     'are_you_sure': {
       'en': 'Are you sure?',
       'es': '¿Estás seguro?',
@@ -970,7 +1310,7 @@ class LanguageProvider with ChangeNotifier {
       'ca': 'Acceptar',
     },
 
-    // Estados adicionales
+    // Additional states
     'no_data': {
       'en': 'No data available',
       'es': 'No hay datos disponibles',
@@ -997,7 +1337,7 @@ class LanguageProvider with ChangeNotifier {
       'ca': 'Mode sense connexió',
     },
 
-    // Logros y objetivos
+    // Achievements and goals
     'achievement_unlocked': {
       'en': 'Achievement unlocked',
       'es': 'Logro desbloqueado',
@@ -1049,7 +1389,7 @@ class LanguageProvider with ChangeNotifier {
       'ca': 'Bloquejat',
     },
 
-    // Chat adicionales
+    // Chat additional
     'send_message': {
       'en': 'Send message',
       'es': 'Enviar mensaje',
@@ -1069,6 +1409,482 @@ class LanguageProvider with ChangeNotifier {
       'en': 'typing...',
       'es': 'escribiendo...',
       'ca': 'escrivint...',
+    },
+
+    // USER HOME SCREEN SPECIFIC
+    'welcome_back': {
+      'en': 'Welcome back!',
+      'es': '¡Bienvenido de nuevo!',
+      'ca': 'Benvingut de nou!',
+    },
+    'quick_summary': {
+      'en': 'Quick Summary',
+      'es': 'Resumen Rápido',
+      'ca': 'Resum Ràpid',
+    },
+    'next': {
+      'en': 'Next',
+      'es': 'Próximo',
+      'ca': 'Següent',
+    },
+    'goal': {
+      'en': 'Goal',
+      'es': 'Meta',
+      'ca': 'Meta',
+    },
+    'weekly_activity': {
+      'en': '📈 Weekly Activity',
+      'es': '📈 Actividad Semanal',
+      'ca': '📈 Activitat Setmanal',
+    },
+    'last_7_days_km': {
+      'en': '🏃‍♂️ Last 7 Days (km)',
+      'es': '🏃‍♂️ Últimos 7 Días (km)',
+      'ca': '🏃‍♂️ Últims 7 Dies (km)',
+    },
+    'activity_types': {
+      'en': ' Activity Types',
+      'es': ' Tipos de Actividad',
+      'ca': ' Tipus d\'Activitat',
+    },
+    'achievements_section': {
+      'en': '🏆 Achievements',
+      'es': '🏆 Logros',
+      'ca': '🏆 Assoliments',
+    },
+    'view_all_achievements': {
+      'en': 'View all',
+      'es': 'Ver todos',
+      'ca': 'Veure tots',
+    },
+    'recent_activities_section': {
+      'en': ' Recent Activities',
+      'es': ' Actividades Recientes',
+      'ca': ' Activitats Recents',
+    },
+    'no_activities_yet': {
+      'en': 'No activities yet',
+      'es': 'No hay actividades aún',
+      'ca': 'Encara no hi ha activitats',
+    },
+    'start_first_activity': {
+      'en': 'Start your first activity!',
+      'es': '¡Comienza tu primera actividad!',
+      'ca': 'Comença la teva primera activitat!',
+    },
+    'online_users_section': {
+      'en': ' Online Users',
+      'es': ' Usuarios Conectados',
+      'ca': ' Usuaris Connectats',
+    },
+    'search_users_section': {
+      'en': '🔍 Search Users',
+      'es': '🔍 Buscar Usuarios',
+      'ca': '🔍 Cercar Usuaris',
+    },
+    'search_by_username': {
+      'en': 'Search by username...',
+      'es': 'Buscar por nombre de usuario...',
+      'ca': 'Cercar per nom d\'usuari...',
+    },
+    'searching_users_loading': {
+      'en': 'Searching users...',
+      'es': 'Buscando usuarios...',
+      'ca': 'Cercant usuaris...',
+    },
+    'no_users_found_search': {
+      'en': 'No users found',
+      'es': 'No se encontraron usuarios',
+      'ca': 'No s\'han trobat usuaris',
+    },
+    'hours': {
+      'en': 'h',
+      'es': 'h',
+      'ca': 'h',
+    },
+    'minutes_short': {
+      'en': 'm',
+      'es': 'm',
+      'ca': 'm',
+    },
+    'ago': {
+      'en': 'ago',
+      'es': 'hace',
+      'ca': 'fa',
+    },
+    'days': {
+      'en': 'days',
+      'es': 'días',
+      'ca': 'dies',
+    },
+    'now': {
+      'en': 'Now',
+      'es': 'Ahora',
+      'ca': 'Ara',
+    },
+    'min': {
+      'en': 'min',
+      'es': 'min',
+      'ca': 'min',
+    },
+
+    // FOLLOWING ACTIVITIES SCREEN SPECIFIC
+    'friends_activities': {
+      'en': 'Activities from your friends',
+      'es': 'Actividades de tus amigos',
+      'ca': 'Activitats dels teus amics',
+    },
+    'following_people_count': {
+      'en': 'Following {count} people',
+      'es': 'Siguiendo a {count} personas',
+      'ca': 'Seguint {count} persones',
+    },
+    'activities_found': {
+      'en': '{count} activities found',
+      'es': '{count} actividades encontradas',
+      'ca': '{count} activitats trobades',
+    },
+    'feed_empty': {
+      'en': 'Your feed is empty!',
+      'es': '¡Tu feed está vacío!',
+      'ca': 'El teu feed està buit!',
+    },
+    'not_following_anyone_yet': {
+      'en': 'You\'re not following anyone yet.\nFind friends to see their activities!',
+      'es': 'Aún no sigues a nadie.\n¡Encuentra amigos para ver sus actividades!',
+      'ca': 'Encara no segueixes ningú.\nTroba amics per veure les seves activitats!',
+    },
+    'people_no_activities': {
+      'en': 'People you follow haven\'t\nposted activities yet.',
+      'es': 'Las personas que sigues aún no han\npublicado actividades.',
+      'ca': 'Les persones que segueixes encara no han\npublicat activitats.',
+    },
+    'find_users': {
+      'en': 'Find Users',
+      'es': 'Buscar Usuarios',
+      'ca': 'Trobar Usuaris',
+    },
+    'error_loading_activities': {
+      'en': 'Error loading activities',
+      'es': 'Error al cargar actividades',
+      'ca': 'Error en carregar activitats',
+    },
+    'running_caps': {
+      'en': 'RUNNING',
+      'es': 'CORRER',
+      'ca': 'CÓRRER',
+    },
+    'cycling_caps': {
+      'en': 'CYCLING',
+      'es': 'CICLISMO',
+      'ca': 'CICLISME',
+    },
+    'hiking_caps': {
+      'en': 'HIKING',
+      'es': 'SENDERISMO',
+      'ca': 'SENDERISME',
+    },
+    'walking_caps': {
+      'en': 'WALKING',
+      'es': 'CAMINAR',
+      'ca': 'CAMINAR',
+    },
+    'activity_caps': {
+      'en': 'ACTIVITY',
+      'es': 'ACTIVIDAD',
+      'ca': 'ACTIVITAT',
+    },
+
+    // ACHIEVEMENTS SCREEN SPECIFIC
+    'achievements_statistics': {
+      'en': 'Achievement Statistics',
+      'es': 'Estadísticas de Logros',
+      'ca': 'Estadístiques d\'Assoliments',
+    },
+    'unlocked_achievements_stats': {
+      'en': 'Unlocked\nAchievements',
+      'es': 'Logros\nDesbloqueados',
+      'ca': 'Assoliments\nDesbloquejats',
+    },
+    'total_achievements_stats': {
+      'en': 'Total\nAchievements',
+      'es': 'Total de\nLogros',
+      'ca': 'Total\nd\'Assoliments',
+    },
+    'total_progress_stats': {
+      'en': 'Total\nProgress',
+      'es': 'Progreso\nTotal',
+      'ca': 'Progrés\nTotal',
+    },
+    'total_points_stats': {
+      'en': 'Total\nPoints',
+      'es': 'Puntos\nTotales',
+      'ca': 'Punts\nTotals',
+    },
+    'all_difficulties': {
+      'en': 'All',
+      'es': 'Todas',
+      'ca': 'Totes',
+    },
+    'all_types_achievements': {
+      'en': 'All',
+      'es': 'Todos',
+      'ca': 'Tots',
+    },
+    'distance_achievements': {
+      'en': 'Distance',
+      'es': 'Distancia',
+      'ca': 'Distància',
+    },
+    'time_achievements': {
+      'en': 'Time',
+      'es': 'Tiempo',
+      'ca': 'Temps',
+    },
+    'activities_achievements': {
+      'en': 'Activities',
+      'es': 'Actividades',
+      'ca': 'Activitats',
+    },
+    'speed_achievements': {
+      'en': 'Speed',
+      'es': 'Velocidad',
+      'ca': 'Velocitat',
+    },
+    'elevation_achievements': {
+      'en': 'Elevation',
+      'es': 'Elevación',
+      'ca': 'Elevació',
+    },
+    'consecutive_achievements': {
+      'en': 'Consecutive',
+      'es': 'Consecutivos',
+      'ca': 'Consecutius',
+    },
+    'no_unlocked_filtered': {
+      'en': 'No unlocked achievements with these filters yet',
+      'es': 'Aún no has desbloqueado logros con estos filtros',
+      'ca': 'Encara no has desbloquejat assoliments amb aquests filtres',
+    },
+    'no_locked_filtered': {
+      'en': 'No locked achievements with these filters',
+      'es': 'No hay logros bloqueados con estos filtros',
+      'ca': 'No hi ha assoliments bloquejats amb aquests filtres',
+    },
+    'new_achievements_dialog': {
+      'en': 'New Achievements',
+      'es': 'Nuevos Logros',
+      'ca': 'Nous Assoliments',
+    },
+    'unlocked_one_achievement': {
+      'en': 'You have unlocked a new achievement:',
+      'es': 'Has desbloqueado un nuevo logro:',
+      'ca': 'Has desbloquejat un nou assoliment:',
+    },
+    'unlocked_multiple_achievements': {
+      'en': 'You have unlocked {count} new achievements:',
+      'es': 'Has desbloqueado {count} nuevos logros:',
+      'ca': 'Has desbloquejat {count} nous assoliments:',
+    },
+    'great_button': {
+      'en': 'Great',
+      'es': 'Genial',
+      'ca': 'Genial',
+    },
+    'achievement_target': {
+      'en': 'Target',
+      'es': 'Objetivo',
+      'ca': 'Objectiu',
+    },
+    'points_label': {
+      'en': 'Points',
+      'es': 'Puntos',
+      'ca': 'Punts',
+    },
+    'activity_type_achievement': {
+      'en': 'Activity Type',
+      'es': 'Tipo de Actividad',
+      'ca': 'Tipus d\'Activitat',
+    },
+    'unlocked_status': {
+      'en': 'Unlocked',
+      'es': 'Desbloqueado',
+      'ca': 'Desbloquejat',
+    },
+    'not_unlocked_status': {
+      'en': 'Not unlocked yet',
+      'es': 'Aún no desbloqueado',
+      'ca': 'Encara no desbloquejat',
+    },
+
+    // WEEK DAYS
+    'monday': {
+      'en': 'Mon',
+      'es': 'Lun',
+      'ca': 'Dil',
+    },
+    'tuesday': {
+      'en': 'Tue',
+      'es': 'Mar',
+      'ca': 'Dim',
+    },
+    'wednesday': {
+      'en': 'Wed',
+      'es': 'Mié',
+      'ca': 'Dic',
+    },
+    'thursday': {
+      'en': 'Thu',
+      'es': 'Jue',
+      'ca': 'Dij',
+    },
+    'friday': {
+      'en': 'Fri',
+      'es': 'Vie',
+      'ca': 'Div',
+    },
+    'saturday': {
+      'en': 'Sat',
+      'es': 'Sáb',
+      'ca': 'Dis',
+    },
+    'sunday': {
+      'en': 'Sun',
+      'es': 'Dom',
+      'ca': 'Diu',
+    },
+
+    // ADDITIONAL METRICS LABELS  
+    'elevation_gain': {
+      'en': 'Elevation',
+      'es': 'Elevación',
+      'ca': 'Elevació',
+    },
+    'average_pace': {
+      'en': 'Average Pace',
+      'es': 'Ritmo Medio',
+      'ca': 'Ritme Mitjà',
+    },
+    'start_activity_button': {
+      'en': 'Start Activity',
+      'es': 'Iniciar Actividad',
+      'ca': 'Iniciar Activitat',
+    },
+    'begin_activity_button': {
+      'en': 'Start Activity',
+      'es': 'Comenzar Actividad',
+      'ca': 'Començar Activitat',
+    },
+
+    // ACTIVITY LIST SPECIFIC
+    'time_it_takes': {
+      'en': 'Start your first adventure!',
+      'es': '¡Comienza tu primera aventura!',
+      'ca': 'Comença la teva primera aventura!',
+    },
+    'move_time': {
+      'en': 'Time to move!',
+      'es': '¡Hora de moverte!',
+      'ca': 'Hora de moure\'s!',
+    },
+    'no_registered_activities': {
+      'en': 'You don\'t have any registered activities yet.\nStart your first adventure!',
+      'es': 'Aún no tienes actividades registradas.\n¡Comienza tu primera aventura!',
+      'ca': 'Encara no tens activitats registrades.\nComença la teva primera aventura!',
+    },
+    'complete_training_history': {
+      'en': 'Complete training history',
+      'es': 'Historial completo de entrenamientos',
+      'ca': 'Historial complet d\'entrenaments',
+    },
+    'my_activities_title': {
+      'en': ' My Activities',
+      'es': ' Mis Actividades',
+      'ca': ' Les Meves Activitats',
+    },
+
+    // ADDITIONAL TIME REFERENCES
+    'ago_time': {
+      'en': 'ago',
+      'es': 'hace',
+      'ca': 'fa',
+    },
+    'yesterday_time': {
+      'en': 'Yesterday',
+      'es': 'Ayer',
+      'ca': 'Ahir',
+    },
+    'days_ago': {
+      'en': 'days ago',
+      'es': 'días',
+      'ca': 'dies',
+    },
+
+    // ACTIVITY LIST SCREEN SPECIFIC
+    'complete_training_history': {
+      'en': 'Complete training history',
+      'es': 'Historial completo de entrenamientos',
+      'ca': 'Historial complet d\'entrenaments',
+    },
+    'general_stats': {
+      'en': 'General Statistics',
+      'es': 'Estadísticas Generales',
+      'ca': 'Estadístiques Generals',
+    },
+    'total_activities': {
+      'en': 'Activities',
+      'es': 'Actividades',
+      'ca': 'Activitats',
+    },
+    'total_time_label': {
+      'en': 'Total Time',
+      'es': 'Tiempo Total',
+      'ca': 'Temps Total',
+    },
+    'average': {
+      'en': 'Average',
+      'es': 'Promedio',
+      'ca': 'Promig',
+    },
+    'filters_and_sorting': {
+      'en': 'Filters and Sorting',
+      'es': 'Filtros y Ordenamiento',
+      'ca': 'Filtres i Ordenació',
+    },
+    'all_activities': {
+      'en': 'All',
+      'es': 'Todas',
+      'ca': 'Totes',
+    },
+    'move_time': {
+      'en': 'Time to move!',
+      'es': '¡Hora de moverte!',
+      'ca': 'Hora de moure\'s!',
+    },
+    'no_registered_activities': {
+      'en': 'You don\'t have any registered activities yet.\nStart your first adventure!',
+      'es': 'Aún no tienes actividades registradas.\n¡Comienza tu primera aventura!',
+      'ca': 'Encara no tens activitats registrades.\nComença la teva primera aventura!',
+    },
+    'begin_activity_button': {
+      'en': 'Start Activity',
+      'es': 'Comenzar Actividad',
+      'ca': 'Començar Activitat',
+    },
+    'load_activities_error_title': {
+      'en': 'Error loading',
+      'es': 'Error al cargar',
+      'ca': 'Error en carregar',
+    },
+    'results': {
+      'en': 'results',
+      'es': 'resultados',
+      'ca': 'resultats',
+    },
+    'result': {
+      'en': 'result',
+      'es': 'resultado',
+      'ca': 'resultat',
     },
   };
   
@@ -1100,7 +1916,6 @@ class LanguageProvider with ChangeNotifier {
         return const Locale('es', 'ES');
     }
   }
-  
   
   // Método para obtener traducciones
   String translate(String key) {

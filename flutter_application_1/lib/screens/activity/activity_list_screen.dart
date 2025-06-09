@@ -276,9 +276,9 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen>
                         const SizedBox(height: 20),
                         FadeTransition(
                           opacity: _fadeAnimation,
-                          child: const Text(
-                            ' Mis Actividades',
-                            style: TextStyle(
+                          child: Text(
+                            'my_activities_title'.tr(context),
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -289,7 +289,7 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen>
                         FadeTransition(
                           opacity: _fadeAnimation,
                           child: Text(
-                            'Historial completo de entrenamientos',
+                            'complete_training_history'.tr(context),
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.9),
                               fontSize: 14,
@@ -359,9 +359,9 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen>
           Navigator.pushNamed(context, AppRoutes.activitySelection);
         },
         icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text(
-          'Nueva Actividad',
-          style: TextStyle(
+        label: Text(
+          'new_activity'.tr(context),
+          style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
@@ -392,9 +392,9 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Estadísticas Generales',
-            style: TextStyle(
+          Text(
+            'general_stats'.tr(context),
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
@@ -406,7 +406,7 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen>
                 child: _buildStatItem(
                   icon: Icons.fitness_center,
                   value: '${_stats['totalActivities'] ?? 0}',
-                  label: 'Actividades',
+                  label: 'total_activities'.tr(context),
                   color: const Color(0xFF667eea),
                 ),
               ),
@@ -414,7 +414,7 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen>
                 child: _buildStatItem(
                   icon: Icons.straighten,
                   value: '${(_stats['totalDistance'] ?? 0).toStringAsFixed(1)} km',
-                  label: 'Distancia',
+                  label: 'distance'.tr(context),
                   color: Colors.green,
                 ),
               ),
@@ -426,8 +426,8 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen>
               Expanded(
                 child: _buildStatItem(
                   icon: Icons.timer,
-                  value: '${(_stats['totalDuration'] ?? 0)} min',
-                  label: 'Tiempo Total',
+                  value: '${(_stats['totalDuration'] ?? 0)} ${'min'.tr(context)}',
+                  label: 'total_time_label'.tr(context),
                   color: Colors.orange,
                 ),
               ),
@@ -435,7 +435,7 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen>
                 child: _buildStatItem(
                   icon: Icons.trending_up,
                   value: '${(_stats['averageDistance'] ?? 0).toStringAsFixed(1)} km',
-                  label: 'Promedio',
+                  label: 'average'.tr(context),
                   color: Colors.purple,
                 ),
               ),
@@ -501,7 +501,7 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen>
       child: TextField(
         controller: _searchController,
         decoration: InputDecoration(
-          hintText: 'Buscar actividades...',
+          hintText: 'search_activities'.tr(context),
           prefixIcon: const Icon(Icons.search, color: Color(0xFF667eea)),
           suffixIcon: _searchController.text.isNotEmpty
               ? IconButton(
@@ -550,16 +550,16 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen>
         children: [
           Row(
             children: [
-              const Text(
-                'Filtros y Ordenamiento',
-                style: TextStyle(
+              Text(
+                'filters_and_sorting'.tr(context),
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const Spacer(),
               Text(
-                '${_filteredActivities.length} resultado${_filteredActivities.length != 1 ? 's' : ''}',
+                '${_filteredActivities.length} ${_filteredActivities.length != 1 ? 'results'.tr(context) : 'result'.tr(context)}',
                 style: TextStyle(
                   color: Colors.grey[600],
                   fontSize: 14,
@@ -579,23 +579,23 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen>
               
               switch (filter) {
                 case FilterOption.all:
-                  label = 'Todas';
+                  label = 'all_activities'.tr(context);
                   icon = Icons.apps;
                   break;
                 case FilterOption.running:
-                  label = 'Correr';
+                  label = 'running'.tr(context);
                   icon = Icons.directions_run;
                   break;
                 case FilterOption.cycling:
-                  label = 'Ciclismo';
+                  label = 'cycling'.tr(context);
                   icon = Icons.directions_bike;
                   break;
                 case FilterOption.walking:
-                  label = 'Caminar';
+                  label = 'walking'.tr(context);
                   icon = Icons.directions_walk;
                   break;
                 case FilterOption.hiking:
-                  label = 'Senderismo';
+                  label = 'hiking'.tr(context);
                   icon = Icons.terrain;
                   break;
               }
@@ -627,7 +627,7 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen>
           // Ordenamiento
           Row(
             children: [
-              const Text('Ordenar por: '),
+              Text('${'sort_by'.tr(context)}: '),
               Expanded(
                 child: DropdownButton<SortOption>(
                   value: _currentSort,
@@ -641,21 +641,21 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen>
                     }
                   },
                   items: [
-                    const DropdownMenuItem(
+                    DropdownMenuItem(
                       value: SortOption.date,
-                      child: Text('Fecha'),
+                      child: Text('date'.tr(context)),
                     ),
-                    const DropdownMenuItem(
+                    DropdownMenuItem(
                       value: SortOption.distance,
-                      child: Text('Distancia'),
+                      child: Text('distance'.tr(context)),
                     ),
-                    const DropdownMenuItem(
+                    DropdownMenuItem(
                       value: SortOption.duration,
-                      child: Text('Duración'),
+                      child: Text('duration'.tr(context)),
                     ),
-                    const DropdownMenuItem(
+                    DropdownMenuItem(
                       value: SortOption.name,
-                      child: Text('Nombre'),
+                      child: Text('name'.tr(context)),
                     ),
                   ],
                 ),
@@ -671,7 +671,7 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen>
                   });
                   _applyFiltersAndSort();
                 },
-                tooltip: _isAscending ? 'Ascendente' : 'Descendente',
+                tooltip: _isAscending ? 'ascending'.tr(context) : 'descending'.tr(context),
               ),
             ],
           ),
@@ -700,16 +700,16 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen>
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
-            '¡Hora de moverte!',
-            style: TextStyle(
+          Text(
+            'move_time'.tr(context),
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 12),
           Text(
-            'Aún no tienes actividades registradas.\n¡Comienza tu primera aventura!',
+            'no_registered_activities'.tr(context),
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.grey[600],
@@ -745,9 +745,9 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen>
                 ),
               ),
               icon: const Icon(Icons.add, color: Colors.white),
-              label: const Text(
-                'Comenzar Actividad',
-                style: TextStyle(
+              label: Text(
+                'begin_activity_button'.tr(context),
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -780,9 +780,9 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen>
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'Error al cargar',
-            style: TextStyle(
+          Text(
+            'load_activities_error_title'.tr(context),
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Colors.red,
@@ -800,7 +800,7 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen>
           ElevatedButton.icon(
             onPressed: _loadActivities,
             icon: const Icon(Icons.refresh),
-            label: const Text('Reintentar'),
+            label: Text('retry'.tr(context)),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
@@ -957,7 +957,7 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen>
                       Expanded(
                         child: _buildMetric(
                           Icons.timer,
-                          'Duración',
+                          'duration'.tr(context),
                           activity.formatDuration(),
                         ),
                       ),
@@ -969,7 +969,7 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen>
                       Expanded(
                         child: _buildMetric(
                           Icons.speed,
-                          'Velocidad',
+                          'speed'.tr(context),
                           '${(activity.averageSpeed * 3.6).toStringAsFixed(1)} km/h',
                         ),
                       ),
@@ -981,7 +981,7 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen>
                       Expanded(
                         child: _buildMetric(
                           Icons.local_fire_department,
-                          'Calorías',
+                          'calories'.tr(context),
                           '${(activity.distance ?? 0 * 0.05).toInt()}', // Estimación simple
                         ),
                       ),
@@ -1024,11 +1024,11 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen>
     final difference = now.difference(date);
     
     if (difference.inDays == 0) {
-      return 'Hoy, ${DateFormat('HH:mm').format(date)}';
+      return '${'today'.tr(context)}, ${DateFormat('HH:mm').format(date)}';
     } else if (difference.inDays == 1) {
-      return 'Ayer, ${DateFormat('HH:mm').format(date)}';
+      return '${'yesterday_time'.tr(context)}, ${DateFormat('HH:mm').format(date)}';
     } else if (difference.inDays < 7) {
-      return 'Hace ${difference.inDays} días';
+      return '${difference.inDays} ${'days_ago'.tr(context)}';
     } else {
       return DateFormat('dd/MM/yyyy').format(date);
     }

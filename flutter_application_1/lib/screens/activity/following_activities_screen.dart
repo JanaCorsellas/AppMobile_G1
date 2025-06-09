@@ -106,7 +106,7 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
       final currentUser = authService.currentUser;
 
       if (currentUser == null) {
-        throw Exception('Usuario no autenticado');
+        throw Exception('no_auth_user'.tr(context));
       }
 
       final result = await _activityService.getFollowingActivities(
@@ -200,9 +200,9 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
     final minutes = durationMinutes % 60;
     
     if (hours > 0) {
-      return '${hours}h ${minutes}m';
+      return '${hours}${'hours'.tr(context)} ${minutes}${'min'.tr(context)}';
     } else {
-      return '${minutes}m';
+      return '${minutes}${'min'.tr(context)}';
     }
   }
 
@@ -247,15 +247,15 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
   String _getActivityTypeString(ActivityType type) {
     switch (type) {
       case ActivityType.running:
-        return 'CORRER';
+        return 'running_caps'.tr(context);
       case ActivityType.cycling:
-        return 'CICLISMO';
+        return 'cycling_caps'.tr(context);
       case ActivityType.hiking:
-        return 'SENDERISMO';
+        return 'hiking_caps'.tr(context);
       case ActivityType.walking:
-        return 'CAMINAR';
+        return 'walking_caps'.tr(context);
       default:
-        return 'ACTIVIDAD';
+        return 'activity_caps'.tr(context);
     }
   }
 
@@ -264,7 +264,7 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
     if (userData != null && userData['username'] != null) {
       return userData['username'] as String;
     }
-    return activity.authorName ?? 'Usuario Desconocido';
+    return activity.authorName ?? 'user'.tr(context);
   }
 
   String? _getUserProfilePicture(Activity activity) {
@@ -433,9 +433,9 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
                         const SizedBox(height: 20),
                         FadeTransition(
                           opacity: _fadeAnimation,
-                          child: const Text(
-                            'Actividades de tus amigos',
-                            style: TextStyle(
+                          child: Text(
+                            'friends_activities'.tr(context),
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -566,7 +566,7 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Siguiendo a $_followingCount personas',
+                  'following_people_count'.trParams(context, {'count': _followingCount.toString()}),
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -574,7 +574,7 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${_activities.length} actividades encontradas',
+                  'activities_found'.trParams(context, {'count': _activities.length.toString()}),
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[600],
@@ -635,9 +635,9 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
-            '¡Tu feed está vacío!',
-            style: TextStyle(
+          Text(
+            'feed_empty'.tr(context),
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
@@ -645,8 +645,8 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
           const SizedBox(height: 12),
           Text(
             _followingCount == 0 
-                ? 'Aún no sigues a nadie.\n¡Encuentra amigos para ver sus actividades!'
-                : 'Las personas que sigues aún no han\npublicado actividades.',
+                ? 'not_following_anyone_yet'.tr(context)
+                : 'people_no_activities'.tr(context),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
@@ -682,9 +682,9 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
                 ),
               ),
               icon: const Icon(Icons.person_add, color: Colors.white),
-              label: const Text(
-                'Buscar Usuarios',
-                style: TextStyle(
+              label: Text(
+                'find_users'.tr(context),
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -717,9 +717,9 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'Error al cargar actividades',
-            style: TextStyle(
+          Text(
+            'error_loading_activities'.tr(context),
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Colors.red,
@@ -737,7 +737,7 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
           ElevatedButton.icon(
             onPressed: _refreshActivities,
             icon: const Icon(Icons.refresh),
-            label: const Text('Reintentar'),
+            label: Text('retry'.tr(context)),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
@@ -908,7 +908,7 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
                       Expanded(
                         child: _buildEnhancedStatChip(
                           Icons.straighten,
-                          'Distancia',
+                          'distance'.tr(context),
                           _formatDistance(activity.distance),
                           const Color(0xFF667eea),
                         ),
@@ -922,7 +922,7 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
                       Expanded(
                         child: _buildEnhancedStatChip(
                           Icons.timer,
-                          'Tiempo',
+                          'time'.tr(context),
                           _formatDuration(activity.duration),
                           const Color(0xFF764ba2),
                         ),
@@ -937,7 +937,7 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
                         Expanded(
                           child: _buildEnhancedStatChip(
                             Icons.speed,
-                            'Velocidad',
+                            'speed'.tr(context),
                             '${activity.averageSpeed.toStringAsFixed(1)} km/h',
                             Colors.green,
                           ),
@@ -995,18 +995,18 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
     
     if (difference.inDays > 0) {
       if (difference.inDays == 1) {
-        return 'Ayer';
+        return 'yesterday'.tr(context);
       } else if (difference.inDays < 7) {
-        return 'Hace ${difference.inDays} días';
+        return '${difference.inDays} ${'days_ago'.tr(context)}';
       } else {
         return DateFormat('dd/MM/yyyy').format(dateTime);
       }
     } else if (difference.inHours > 0) {
-      return 'Hace ${difference.inHours}h';
+      return '${difference.inHours}${'hours'.tr(context)} ${'ago'.tr(context)}';
     } else if (difference.inMinutes > 0) {
-      return 'Hace ${difference.inMinutes}m';
+      return '${difference.inMinutes}${'min'.tr(context)} ${'ago'.tr(context)}';
     } else {
-      return 'Ahora';
+      return 'now'.tr(context);
     }
   }
 }

@@ -280,8 +280,16 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
   }
   
   String _getDayName(int weekday) {
-    const days = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-    return days[weekday - 1];
+    switch (weekday) {
+      case 1: return 'monday'.tr(context);
+      case 2: return 'tuesday'.tr(context);
+      case 3: return 'wednesday'.tr(context);
+      case 4: return 'thursday'.tr(context);
+      case 5: return 'friday'.tr(context);
+      case 6: return 'saturday'.tr(context);
+      case 7: return 'sunday'.tr(context);
+      default: return 'monday'.tr(context);
+    }
   }
 
   @override
@@ -322,7 +330,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
                         FadeTransition(
                           opacity: _fadeAnimation,
                           child: Text(
-                            ' ${user?.username ?? 'Usuario'}',
+                            'welcome_user'.trParams(context, {'username': user?.username ?? 'user'.tr(context)}),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 24,
@@ -334,8 +342,8 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
                         FadeTransition(
                           opacity: _fadeAnimation,
                           child: Text(
-                            '¡Bienvenido de nuevo!',
-                            style: TextStyle(
+                            'welcome_back'.tr(context),
+                            style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 16,
                             ),
@@ -437,17 +445,17 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
     switch (socketService.socketStatus) {
       case SocketStatus.connected:
         color = Colors.green;
-        status = 'Conectado';
+        status = 'connected'.tr(context);
         icon = Icons.wifi;
         break;
       case SocketStatus.connecting:
         color = Colors.amber;
-        status = 'Conectando';
+        status = 'connecting'.tr(context);
         icon = Icons.wifi_protected_setup;
         break;
       case SocketStatus.disconnected:
         color = Colors.red;
-        status = 'Desconectado';
+        status = 'disconnected'.tr(context);
         icon = Icons.wifi_off;
         break;
     }
@@ -489,9 +497,9 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Resumen Rápido',
-          style: TextStyle(
+        Text(
+          'quick_summary'.tr(context),
+          style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -501,36 +509,36 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
           children: [
             Expanded(
               child: _buildEnhancedStatCard(
-                title: 'Nivel',
+                title: 'level'.tr(context),
                 value: '${user?.level ?? 1}',
                 icon: Icons.star,
                 color: Colors.amber,
                 progress: ((user?.level ?? 1) % 10) / 10,
-                subtitle: 'Próximo: ${((user?.level ?? 1) + 1)}',
+                subtitle: '${'next'.tr(context)}: ${((user?.level ?? 1) + 1)}',
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: _buildEnhancedStatCard(
-                title: 'Distancia',
+                title: 'distance'.tr(context),
                 value: '${((user?.totalDistance ?? 0) / 1000).toStringAsFixed(1)}',
                 unit: 'km',
                 icon: Icons.directions_run,
                 color: Colors.green,
                 progress: math.min(((user?.totalDistance ?? 0) / 1000) / 100, 1.0),
-                subtitle: 'Meta: 100km',
+                subtitle: '${'goal'.tr(context)}: 100km',
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: _buildEnhancedStatCard(
-                title: 'Tiempo',
+                title: 'time'.tr(context),
                 value: '${user?.totalTime ?? 0}',
-                unit: 'min',
+                unit: 'min'.tr(context),
                 icon: Icons.timer,
                 color: Colors.blue,
                 progress: math.min((user?.totalTime ?? 0) / 1000, 1.0),
-                subtitle: 'Meta: 1000min',
+                subtitle: '${'goal'.tr(context)}: 1000${'min'.tr(context)}',
               ),
             ),
           ],
@@ -662,11 +670,11 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
               Text(
-                '📈 Actividad Semanal',
-                style: TextStyle(
+                'weekly_activity'.tr(context),
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -740,9 +748,9 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '🏃‍♂️ Últimos 7 Días (km)',
-            style: TextStyle(
+          Text(
+            'last_7_days_km'.tr(context),
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
@@ -796,18 +804,15 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            ' Tipos de Actividad',
-            style: TextStyle(
+          Text(
+            'activity_types'.tr(context),
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 16),
           ..._activityTypeDistribution.entries.map((entry) {
-           
-
-            
             IconData icon;
             Color color;
             String name;
@@ -816,22 +821,22 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
               case ActivityType.running:
                 icon = Icons.directions_run;
                 color = Colors.green;
-                name = 'Correr';
+                name = 'running'.tr(context);
                 break;
               case ActivityType.cycling:
                 icon = Icons.directions_bike;
                 color = Colors.blue;
-                name = 'Ciclismo';
+                name = 'cycling'.tr(context);
                 break;
               case ActivityType.walking:
                 icon = Icons.directions_walk;
                 color = Colors.purple;
-                name = 'Caminar';
+                name = 'walking'.tr(context);
                 break;
               case ActivityType.hiking:
                 icon = Icons.terrain;
                 color = Colors.orange;
-                name = 'Senderismo';
+                name = 'hiking'.tr(context);
                 break;
             }
             
@@ -902,18 +907,18 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                '🏆 Logros',
-                style: TextStyle(
+              Text(
+                'achievements_section'.tr(context),
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               TextButton(
                 onPressed: () {
-                  // Navegar a pantalla de logros
+                  Navigator.pushNamed(context, AppRoutes.achievements);
                 },
-                child: const Text('Ver todos'),
+                child: Text('view_all_achievements'.tr(context)),
               ),
             ],
           ),
@@ -945,9 +950,9 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                ' Actividades Recientes',
-                style: TextStyle(
+              Text(
+                'recent_activities_section'.tr(context),
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -958,7 +963,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
                     _showAllActivities = !_showAllActivities;
                   });
                 },
-                child: Text(_showAllActivities ? 'Ver menos' : 'Ver todas'),
+                child: Text(_showAllActivities ? 'view_less'.tr(context) : 'view_all'.tr(context)),
               ),
             ],
           ),
@@ -999,7 +1004,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
           ),
           const SizedBox(height: 16),
           Text(
-            'No hay actividades aún',
+            'no_activities_yet'.tr(context),
             style: TextStyle(
               color: Colors.grey[600],
               fontSize: 16,
@@ -1008,7 +1013,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
           ),
           const SizedBox(height: 8),
           Text(
-            '¡Comienza tu primera actividad!',
+            'start_first_activity'.tr(context),
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.grey[500],
@@ -1050,11 +1055,11 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
     String timeAgo;
     
     if (difference.inDays > 0) {
-      timeAgo = 'Hace ${difference.inDays} día${difference.inDays > 1 ? 's' : ''}';
+      timeAgo = '${difference.inDays} ${'days'.tr(context)} ${'ago'.tr(context)}';
     } else if (difference.inHours > 0) {
-      timeAgo = 'Hace ${difference.inHours} hora${difference.inHours > 1 ? 's' : ''}';
+      timeAgo = '${difference.inHours} ${'hours'.tr(context)} ${'ago'.tr(context)}';
     } else {
-      timeAgo = 'Hace ${difference.inMinutes} min';
+      timeAgo = '${difference.inMinutes} ${'min'.tr(context)} ${'ago'.tr(context)}';
     }
 
     return Container(
@@ -1122,7 +1127,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
                   ),
                 ),
                 Text(
-                  '${activity.duration ?? 0} min',
+                  '${activity.duration ?? 0} ${'min'.tr(context)}',
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontSize: 12,
@@ -1156,9 +1161,9 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
         children: [
           Row(
             children: [
-              const Text(
-                ' Usuarios Conectados',
-                style: TextStyle(
+              Text(
+                'online_users_section'.tr(context),
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -1185,7 +1190,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
           
           socketService.onlineUsers.isEmpty
               ? Text(
-                  'No hay usuarios conectados',
+                  'no_users_online'.tr(context),
                   style: TextStyle(
                     color: Colors.grey[500],
                     fontStyle: FontStyle.italic,
@@ -1195,7 +1200,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
                   spacing: 8,
                   runSpacing: 8,
                   children: socketService.onlineUsers.map((userInfo) {
-                    final username = userInfo['username'] ?? 'Usuario';
+                    final username = userInfo['username'] ?? 'user'.tr(context);
                     return Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
@@ -1251,9 +1256,9 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
         children: [
           Row(
             children: [
-              const Text(
-                '🔍 Buscar Usuarios',
-                style: TextStyle(
+              Text(
+                'search_users_section'.tr(context),
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -1282,7 +1287,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
                   controller: _searchController,
                   focusNode: _searchFocusNode,
                   decoration: InputDecoration(
-                    hintText: 'Buscar por nombre de usuario...',
+                    hintText: 'search_by_username'.tr(context),
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
@@ -1323,13 +1328,13 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
           color: Colors.grey[50],
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Center(
+        child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 8),
-              Text('Buscando usuarios...'),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 8),
+              Text('searching_users_loading'.tr(context)),
             ],
           ),
         ),
@@ -1355,7 +1360,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
               ),
               const SizedBox(height: 8),
               Text(
-                'No se encontraron usuarios',
+                'no_users_found_search'.tr(context),
                 style: TextStyle(
                   color: Colors.grey[600],
                   fontSize: 14,

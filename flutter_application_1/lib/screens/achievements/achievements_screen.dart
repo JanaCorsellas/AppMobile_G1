@@ -83,7 +83,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
           _isLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al cargar logros: $e')),
+          SnackBar(content: Text('${'error_loading_activities'.tr(context)}: $e')),
         );
       }
       print('Error loading achievements: $e');
@@ -99,7 +99,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
           children: [
             Icon(Icons.celebration, color: Colors.amber, size: 28),
             const SizedBox(width: 8),
-            const Text('Nuevos Logros'),
+            Text('new_achievements_dialog'.tr(context)),
           ],
         ),
         content: Column(
@@ -107,8 +107,8 @@ class _AchievementsScreenState extends State<AchievementsScreen>
           children: [
             Text(
               newAchievements.length == 1
-                  ? 'Has desbloqueado un nuevo logro:'
-                  : 'Has desbloqueado ${newAchievements.length} nuevos logros:',
+                  ? 'unlocked_one_achievement'.tr(context)
+                  : 'unlocked_multiple_achievements'.trParams(context, {'count': newAchievements.length.toString()}),
               style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 16),
@@ -134,7 +134,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                           ),
                         ),
                         Text(
-                          '+${achievement.points} puntos',
+                          '+${achievement.points} ${'points_label'.tr(context)}',
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 12,
@@ -151,7 +151,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Genial'),
+            child: Text('great_button'.tr(context)),
           ),
         ],
         shape: RoundedRectangleBorder(
@@ -184,7 +184,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadAchievements,
-            tooltip: 'Refrescar',
+            tooltip: 'refresh'.tr(context),
           ),
         ],
         bottom: TabBar(
@@ -194,11 +194,11 @@ class _AchievementsScreenState extends State<AchievementsScreen>
           unselectedLabelColor: Colors.white70,
           tabs: [
             Tab(
-              text: 'Desbloqueados (${_unlockedCount})',
+              text: '${'unlocked_achievements'.tr(context)} ($_unlockedCount)',
               icon: const Icon(Icons.verified),
             ),
             Tab(
-              text: 'Bloqueados (${_totalCount - _unlockedCount})',
+              text: '${'locked_achievements'.tr(context)} (${_totalCount - _unlockedCount})',
               icon: const Icon(Icons.lock),
             ),
           ],
@@ -224,7 +224,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                   child: Column(
                     children: [
                       Text(
-                        'Estadísticas de Logros',
+                        'achievements_statistics'.tr(context),
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -237,22 +237,22 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                         children: [
                           _buildStatCard(
                             '$_unlockedCount',
-                            'Logros\nDesbloqueados',
+                            'unlocked_achievements_stats'.tr(context),
                             Icons.verified,
                           ),
                           _buildStatCard(
                             '$_totalCount',
-                            'Total de\nLogros',
+                            'total_achievements_stats'.tr(context),
                             Icons.stars,
                           ),
                           _buildStatCard(
                             '${_totalCount == 0 ? 0 : ((_unlockedCount / _totalCount) * 100).toStringAsFixed(0)}%',
-                            'Progreso\nTotal',
+                            'total_progress_stats'.tr(context),
                             Icons.analytics,
                           ),
                           _buildStatCard(
                             '${_unlockedAchievements.fold(0, (sum, a) => sum + a.points)}',
-                            'Puntos\nTotales',
+                            'total_points_stats'.tr(context),
                             Icons.grade,
                           ),
                         ],
@@ -269,17 +269,17 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                       Expanded(
                         child: DropdownButtonFormField<String>(
                           value: _selectedDifficulty,
-                          decoration: const InputDecoration(
-                            labelText: 'Dificultad',
+                          decoration: InputDecoration(
+                            labelText: 'difficulty'.tr(context),
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           ),
                           items: [
-                            const DropdownMenuItem(value: 'all', child: Text('Todas')),
-                            const DropdownMenuItem(value: 'bronze', child: Text('Bronce')),
-                            const DropdownMenuItem(value: 'silver', child: Text('Plata')),
-                            const DropdownMenuItem(value: 'gold', child: Text('Oro')),
-                            const DropdownMenuItem(value: 'diamond', child: Text('Diamante')),
+                            DropdownMenuItem(value: 'all', child: Text('all_difficulties'.tr(context))),
+                            DropdownMenuItem(value: 'bronze', child: Text('bronze'.tr(context))),
+                            DropdownMenuItem(value: 'silver', child: Text('silver'.tr(context))),
+                            DropdownMenuItem(value: 'gold', child: Text('gold'.tr(context))),
+                            DropdownMenuItem(value: 'diamond', child: Text('diamond'.tr(context))),
                           ],
                           onChanged: (value) {
                             setState(() {
@@ -292,19 +292,19 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                       Expanded(
                         child: DropdownButtonFormField<String>(
                           value: _selectedType,
-                          decoration: const InputDecoration(
-                            labelText: 'Tipo',
+                          decoration: InputDecoration(
+                            labelText: 'type'.tr(context),
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           ),
                           items: [
-                            const DropdownMenuItem(value: 'all', child: Text('Todos')),
-                            const DropdownMenuItem(value: 'distance', child: Text('Distancia')),
-                            const DropdownMenuItem(value: 'time', child: Text('Tiempo')),
-                            const DropdownMenuItem(value: 'activity', child: Text('Actividades')),
-                            const DropdownMenuItem(value: 'speed', child: Text('Velocidad')),
-                            const DropdownMenuItem(value: 'elevation', child: Text('Elevación')),
-                            const DropdownMenuItem(value: 'consecutive', child: Text('Consecutivos')),
+                            DropdownMenuItem(value: 'all', child: Text('all_types_achievements'.tr(context))),
+                            DropdownMenuItem(value: 'distance', child: Text('distance_achievements'.tr(context))),
+                            DropdownMenuItem(value: 'time', child: Text('time_achievements'.tr(context))),
+                            DropdownMenuItem(value: 'activity', child: Text('activities_achievements'.tr(context))),
+                            DropdownMenuItem(value: 'speed', child: Text('speed_achievements'.tr(context))),
+                            DropdownMenuItem(value: 'elevation', child: Text('elevation_achievements'.tr(context))),
+                            DropdownMenuItem(value: 'consecutive', child: Text('consecutive_achievements'.tr(context))),
                           ],
                           onChanged: (value) {
                             setState(() {
@@ -388,8 +388,8 @@ class _AchievementsScreenState extends State<AchievementsScreen>
             const SizedBox(height: 16),
             Text(
               isUnlocked
-                  ? 'Aún no has desbloqueado logros con estos filtros'
-                  : 'No hay logros bloqueados con estos filtros',
+                  ? 'no_unlocked_filtered'.tr(context)
+                  : 'no_locked_filtered'.tr(context),
               style: TextStyle(
                 color: Colors.grey[600],
                 fontSize: 16,
@@ -496,7 +496,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Text(
-                                    '${achievement.points} pts',
+                                    '${achievement.points} ${'points'.tr(context)}',
                                     style: TextStyle(
                                       color: difficultyColor,
                                       fontWeight: FontWeight.bold,
@@ -655,7 +655,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                 children: [
                   Expanded(
                     child: _buildDetailCard(
-                      'Dificultad',
+                      'difficulty'.tr(context),
                       achievement.difficulty.toUpperCase(),
                       difficultyColor,
                     ),
@@ -663,7 +663,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                   const SizedBox(width: 8),
                   Expanded(
                     child: _buildDetailCard(
-                      'Puntos',
+                      'points_label'.tr(context),
                       '${achievement.points}',
                       Colors.amber,
                     ),
@@ -672,7 +672,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
               ),
               const SizedBox(height: 8),
               _buildDetailCard(
-                'Objetivo',
+                'achievement_target'.tr(context),
                 achievement.getFormattedTargetValue(),
                 Colors.blue,
               ),
@@ -681,7 +681,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                   children: [
                     const SizedBox(height: 8),
                     _buildDetailCard(
-                      'Tipo de Actividad',
+                      'activity_type_achievement'.tr(context),
                       achievement.activityType!.toUpperCase(),
                       const Color(0xFF667eea),
                     ),
@@ -711,7 +711,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      isUnlocked ? 'Desbloqueado' : 'Aún no desbloqueado',
+                      isUnlocked ? 'unlocked_status'.tr(context) : 'not_unlocked_status'.tr(context),
                       style: TextStyle(
                         color: isUnlocked ? const Color(0xFF667eea) : Colors.grey,
                         fontWeight: FontWeight.bold,
@@ -727,7 +727,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cerrar'),
+            child: Text('close'.tr(context)),
           ),
         ],
         shape: RoundedRectangleBorder(
