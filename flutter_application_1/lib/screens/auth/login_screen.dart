@@ -8,9 +8,33 @@ import 'package:flutter_application_1/services/socket_service.dart';
 import 'package:flutter_application_1/extensions/string_extensions.dart';
 import 'dart:html' as html;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:math' as math;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
+
+  Widget _buildGoogleIcon() {
+    // Primero intentar cargar la imagen local
+    return Image.asset(
+      'assets/images/google_logo.png',
+      width: 24,
+      height: 24,
+      errorBuilder: (context, error, stackTrace) {
+        // Si no puede cargar la imagen, crear el logo de Google con widgets
+        return Container(
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: CustomPaint(
+            painter: GoogleLogoPainter(),
+            size: const Size(24, 24),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -570,27 +594,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                                           borderRadius: BorderRadius.circular(12.0),
                                         ),
                                       ),
-                                      icon: _isGoogleLoading
-                                          ? const SizedBox(
-                                              width: 20,
-                                              height: 20,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
-                                              ),
-                                            )
-                                          : Image.asset(
-                                              'assets/images/google_logo.png',
-                                              width: 24,
-                                              height: 24,
-                                              errorBuilder: (context, error, stackTrace) {
-                                                return const Icon(
-                                                  Icons.login,
-                                                  color: Colors.red,
-                                                  size: 24,
-                                                );
-                                              },
-                                            ),
+                                      
                                       label: Text(
                                         _isGoogleLoading 
                                             ? 'Conectando con Google...' 
@@ -651,4 +655,60 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       ],
     );
   }
+}
+
+// Custom Painter para dibujar el logo de Google
+class GoogleLogoPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..style = PaintingStyle.fill;
+    
+    // Fondo blanco
+    paint.color = Colors.white;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(0, 0, size.width, size.height),
+        const Radius.circular(4),
+      ),
+      paint,
+    );
+    
+    // Letra "G" de Google simplificada
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width * 0.35;
+    
+    // Círculo azul (parte de la G)
+    paint.color = const Color(0xFF4285F4);
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -math.pi / 2, // Comenzar desde arriba
+      math.pi, // Medio círculo
+      false,
+      paint..strokeWidth = size.width * 0.15..style = PaintingStyle.stroke,
+    );
+    
+    // Línea horizontal roja
+    paint.color = const Color(0xFFEA4335);
+    paint.style = PaintingStyle.fill;
+    canvas.drawRect(
+      Rect.fromLTWH(
+        center.dx - radius * 0.3,
+        center.dy - size.height * 0.08,
+        radius * 0.8,
+        size.height * 0.16,
+      ),
+      paint,
+    );
+    
+    // Punto verde
+    paint.color = const Color(0xFF34A853);
+    canvas.drawCircle(
+      Offset(center.dx + radius * 0.5, center.dy),
+      size.width * 0.08,
+      paint,
+    );
+  }
+  
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

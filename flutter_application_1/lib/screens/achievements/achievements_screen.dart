@@ -97,9 +97,9 @@ class _AchievementsScreenState extends State<AchievementsScreen>
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            Icon(Icons.emoji_events, color: Colors.amber, size: 28),
+            Icon(Icons.celebration, color: Colors.amber, size: 28),
             const SizedBox(width: 8),
-            const Text('¡Nuevos Logros!'),
+            const Text('Nuevos Logros'),
           ],
         ),
         content: Column(
@@ -151,7 +151,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('¡Genial!'),
+            child: const Text('Genial'),
           ),
         ],
         shape: RoundedRectangleBorder(
@@ -177,7 +177,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
       drawer: const CustomDrawer(currentRoute: AppRoutes.achievements),
       appBar: AppBar(
         title: Text('achievements'.tr(context)),
-        backgroundColor: const Color.fromARGB(255, 21, 95, 51),
+        backgroundColor: const Color(0xFF667eea),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -211,7 +211,16 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                 // Encabezado con estadísticas
                 Container(
                   padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-                  color: const Color.fromARGB(255, 21, 95, 51),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF667eea),
+                        Color(0xFF764ba2),
+                      ],
+                    ),
+                  ),
                   child: Column(
                     children: [
                       Text(
@@ -229,7 +238,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                           _buildStatCard(
                             '$_unlockedCount',
                             'Logros\nDesbloqueados',
-                            Icons.emoji_events,
+                            Icons.verified,
                           ),
                           _buildStatCard(
                             '$_totalCount',
@@ -372,7 +381,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              isUnlocked ? Icons.emoji_events_outlined : Icons.lock_outline,
+              isUnlocked ? Icons.verified_outlined : Icons.lock_outline,
               size: 48,
               color: Colors.grey[400],
             ),
@@ -674,7 +683,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                     _buildDetailCard(
                       'Tipo de Actividad',
                       achievement.activityType!.toUpperCase(),
-                      Colors.green,
+                      const Color(0xFF667eea),
                     ),
                   ],
                 ),
@@ -686,10 +695,10 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: isUnlocked ? Colors.green[50] : Colors.grey[100],
+                  color: isUnlocked ? const Color(0xFF667eea).withOpacity(0.1) : Colors.grey[100],
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isUnlocked ? Colors.green : Colors.grey,
+                    color: isUnlocked ? const Color(0xFF667eea) : Colors.grey,
                     width: 1,
                   ),
                 ),
@@ -698,13 +707,13 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                   children: [
                     Icon(
                       isUnlocked ? Icons.verified : Icons.lock_outline,
-                      color: isUnlocked ? Colors.green : Colors.grey,
+                      color: isUnlocked ? const Color(0xFF667eea) : Colors.grey,
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      isUnlocked ? '¡Desbloqueado!' : 'Aún no desbloqueado',
+                      isUnlocked ? 'Desbloqueado' : 'Aún no desbloqueado',
                       style: TextStyle(
-                        color: isUnlocked ? Colors.green : Colors.grey,
+                        color: isUnlocked ? const Color(0xFF667eea) : Colors.grey,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
