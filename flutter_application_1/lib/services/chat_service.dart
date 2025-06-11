@@ -1,8 +1,12 @@
 // flutter_application_1/lib/services/chat_service.dart
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_application_1/models/chat_room_model.dart';
 import 'package:flutter_application_1/models/message.dart';
@@ -601,6 +605,116 @@ class ChatService with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<String?> uploadGroupPicture(String roomId, dynamic imageFile) async {
+  try {
+    print('Uploading group picture for room: $roomId');
+    print('Platform: ${kIsWeb ? "Web" : "Mobile"}');
+    
+    // CORREGIDO: Usar la URL correcta y método PATCH
+    final uri = Uri.parse(ApiConstants.uploadGroupPicture(roomId));
+    final request = http.MultipartRequest('PATCH', uri); // ⚠️ PATCH, no POST
+    
+    // Add headers
+    request.headers.addAll({
+      'Accept': 'application/json',
+      // No añadir Content-Type para multipart, se añade automáticamente
+    });
+
+    http.Response response;
+
+    if (kIsWeb) {
+      // Para Web: imageFile es XFile
+      final XFile xFile = imageFile as XFile;
+      final bytes = await xFile.readAsBytes();
+      
+      // Detectar MIME type
+      String mimeType = 'image/jpeg'; // Default
+      if (xFile.mimeType != null && xFile.mimeType!.isNotEmpty) {
+        mimeType = xFile.mimeType!;
+      } else {
+        // Detectar por extensión
+        final extension = xFile.name.split('.').last.toLowerCase();
+        switch (extension) {
+          case 'png':
+            mimeType = 'image/png';
+            break;
+          case 'gif':
+            mimeType = 'image/gif';
+            break;
+          case 'webp':
+            mimeType = 'image/webp';
+            break;
+          default:
+            mimeType = 'image/jpeg';
+        }
+      }
+      
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'groupPicture', // Nombre del campo debe coincidir con el backend
+          bytes,
+          filename: xFile.name.isNotEmpty ? xFile.name : 'group_picture.jpg',
+          contentType: MediaType.parse(mimeType),
+        ),
+      );
+      
+      print('Web: Uploading ${xFile.name} (${bytes.length} bytes, $mimeType)');
+    } else {
+      // Para Móvil: imageFile es una ruta de archivo
+      final String filePath = imageFile as String;
+      
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'groupPicture', // Nombre del campo debe coincidir con el backend
+          filePath,
+        ),
+      );
+      
+      print('Mobile: Uploading $filePath');
+    }
+
+    print('Request URL: ${request.url}');
+    print('Request method: ${request.method}');
+    print('Request headers: ${request.headers}');
+
+    // Enviar la petición
+    final streamedResponse = await request.send();
+    response = await http.Response.fromStream(streamedResponse);
+
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final imageUrl = data['groupPictureUrl'];
+      
+      if (imageUrl != null) {
+        // Actualizar la sala localmente
+        final roomIndex = _chatRooms.indexWhere((room) => room.id == roomId);
+        if (roomIndex != -1) {
+          _chatRooms[roomIndex] = _chatRooms[roomIndex].copyWith(
+            groupPictureUrl: imageUrl,
+          );
+        }
+        
+        await _saveRooms();
+        notifyListeners();
+        
+        print('Group picture uploaded successfully: $imageUrl');
+        return imageUrl;
+      }
+    } else {
+      print('Error uploading group picture: ${response.statusCode}');
+      print('Response: ${response.body}');
+    }
+    
+    return null;
+  } catch (e) {
+    print('Exception uploading group picture: $e');
+    return null;
+  }
+}
 
   @override
   void dispose() {

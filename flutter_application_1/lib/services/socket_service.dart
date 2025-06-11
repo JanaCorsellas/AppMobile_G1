@@ -138,7 +138,7 @@ class SocketService with ChangeNotifier {
       }
     });
 
-    _socket.onConnectTimeout((_) {
+    _socket.on('connect_timeout', (_) {
       print('Socket.IO connection timeout');
       _socketStatus = SocketStatus.disconnected;
       notifyListeners();

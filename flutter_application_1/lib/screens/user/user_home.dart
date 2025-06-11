@@ -3,14 +3,19 @@ import 'package:provider/provider.dart';
 import 'package:flutter_application_1/config/routes.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
 import 'package:flutter_application_1/services/socket_service.dart';
+import 'package:flutter_application_1/services/follow_service.dart'; // ✅ NUEVA IMPORTACIÓN
 import 'package:flutter_application_1/providers/activity_provider_tracking.dart';
 import 'package:flutter_application_1/models/activity.dart';
+import 'package:flutter_application_1/models/user.dart'; // ✅ NUEVA IMPORTACIÓN
 import 'package:flutter_application_1/services/activity_service.dart';
 import 'package:flutter_application_1/services/http_service.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_application_1/screens/activity/activity_detail_screen.dart';
 import 'package:flutter_application_1/widgets/custom_drawer.dart';
+import 'package:flutter_application_1/widgets/user_list_title.dart'; // ✅ NUEVA IMPORTACIÓN
 import 'package:flutter_application_1/extensions/string_extensions.dart';
+import 'package:flutter_application_1/widgets/achievement_progress_widget.dart';
+import 'dart:async'; // ✅ NUEVA IMPORTACIÓN para debouncing
 
 class UserHomeScreen extends StatefulWidget {
   const UserHomeScreen({Key? key}) : super(key: key);
@@ -25,15 +30,283 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
   List<Activity> _userActivities = [];
   bool _showAllActivities = false;
   
+  // ✅ NUEVAS VARIABLES PARA BÚSQUEDA
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  List<User> _searchResults = [];
+  bool _isSearching = false;
+  bool _isSearchExpanded = false;
+  Timer? _debounceTimer;
+  
   @override
   void initState() {
     super.initState();
+    
+    // ✅ NUEVO: Listener para búsqueda con debouncing
+    _searchController.addListener(_onSearchChanged);
     
     // Verificar si hay actividades de tracking activas cuando se carga la pantalla
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkActiveTrackings();
       _loadUserActivities();
     });
+  }
+
+  // ✅ NUEVO: Limpiar recursos en dispose
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    _debounceTimer?.cancel();
+    super.dispose();
+  }
+
+  // ✅ NUEVO: Manejo de cambios en búsqueda con debouncing
+  void _onSearchChanged() {
+    if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
+    
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      final query = _searchController.text.trim();
+      if (query.isNotEmpty) {
+        _searchUsers(query);
+      } else {
+        setState(() {
+          _searchResults = [];
+          _isSearching = false;
+        });
+      }
+    });
+  }
+
+  // ✅ NUEVO: Búsqueda de usuarios
+  Future<void> _searchUsers(String query) async {
+    if (query.isEmpty) return;
+
+    setState(() {
+      _isSearching = true;
+    });
+
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final followService = Provider.of<FollowService>(context, listen: false);
+      
+      final results = await followService.searchUsers(query, authService.accessToken);
+      
+      // Filtrar usuario actual de los resultados
+      final currentUserId = authService.currentUser?.id;
+      final filteredResults = results.where((user) => user.id != currentUserId).toList();
+      
+      if (mounted) {
+        setState(() {
+          _searchResults = filteredResults;
+          _isSearching = false;
+        });
+      }
+    } catch (e) {
+      print('Error buscando usuarios: $e');
+      if (mounted) {
+        setState(() {
+          _searchResults = [];
+          _isSearching = false;
+        });
+      }
+    }
+  }
+
+  // ✅ NUEVO: Expandir/contraer búsqueda
+  void _toggleSearchExpansion() {
+    setState(() {
+      _isSearchExpanded = !_isSearchExpanded;
+      if (!_isSearchExpanded) {
+        _searchController.clear();
+        _searchResults = [];
+        _searchFocusNode.unfocus();
+      } else {
+        Future.delayed(const Duration(milliseconds: 100), () {
+          _searchFocusNode.requestFocus();
+        });
+      }
+    });
+  }
+
+  // ✅ NUEVO: Navegar al perfil de usuario
+  void _navigateToUserProfile(User user) {
+    Navigator.pushNamed(
+      context,
+      AppRoutes.userProfile,
+      arguments: {'userId': user.id},
+    );
+  }
+
+  // ✅ NUEVO: Widget de búsqueda
+  Widget _buildUserSearch() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16.0),
+      ),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header con botón expandir/contraer
+            Row(
+              children: [
+                Icon(
+                  Icons.search,
+                  color: Colors.blue[600],
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'search_users'.tr(context),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    _isSearchExpanded ? Icons.expand_less : Icons.expand_more,
+                    color: Colors.grey[600],
+                  ),
+                  onPressed: _toggleSearchExpansion,
+                  tooltip: _isSearchExpanded ? 'Contraer' : 'Expandir',
+                ),
+              ],
+            ),
+            
+            // Campo de búsqueda (expandible)
+            AnimatedCrossFade(
+              duration: const Duration(milliseconds: 300),
+              crossFadeState: _isSearchExpanded 
+                  ? CrossFadeState.showSecond 
+                  : CrossFadeState.showFirst,
+              firstChild: const SizedBox.shrink(),
+              secondChild: Column(
+                children: [
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _searchController,
+                    focusNode: _searchFocusNode,
+                    decoration: InputDecoration(
+                      hintText: 'search_users_hint'.tr(context),
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() {
+                                  _searchResults = [];
+                                });
+                              },
+                            )
+                          : null,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                    ),
+                  ),
+                  
+                  // Resultados de búsqueda
+                  if (_isSearching || _searchResults.isNotEmpty || (_searchController.text.isNotEmpty && _searchResults.isEmpty)) ...[
+                    const SizedBox(height: 16),
+                    _buildSearchResults(),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ✅ NUEVO: Widget de resultados de búsqueda
+  Widget _buildSearchResults() {
+    if (_isSearching) {
+      return Container(
+        height: 100,
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 8),
+              Text('Buscando usuarios...'),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_searchController.text.isNotEmpty && _searchResults.isEmpty) {
+      return Container(
+        height: 100,
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.search_off,
+                size: 32,
+                color: Colors.grey[400],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'no_users_found'.tr(context),
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 300),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: ListView.separated(
+        shrinkWrap: true,
+        padding: const EdgeInsets.all(8),
+        itemCount: _searchResults.length,
+        separatorBuilder: (context, index) => const Divider(height: 1),
+        itemBuilder: (context, index) {
+          final user = _searchResults[index];
+          return UserListTile(
+            user: user,
+            showFollowButton: true,
+            onUserTap: () => _navigateToUserProfile(user),
+            onFollowChanged: () {
+              print('Usuario ${user.username} seguido/no seguido');
+            },
+          );
+        },
+      ),
+    );
   }
 
   // Verificar si hay actividades de tracking activas
@@ -171,7 +444,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
     return Scaffold(
       drawer: const CustomDrawer(currentRoute: AppRoutes.userHome),
       appBar: AppBar(
-        title: const Text('EA Grup 1'),
+        title: const Text('Trazer'),
         actions: [
           // Indicador de notificaciones
           
@@ -257,9 +530,15 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 32.0),
+                const SizedBox(height: 24.0), // ✅ CAMBIO MENOR: reducido de 32 a 24
+                
+                // ✅ NUEVO: Buscador de usuarios - INSERTADO AQUÍ
+                _buildUserSearch(),
+                const SizedBox(height: 24.0),
+                
                 _buildQuickStats(context, user),
                 const SizedBox(height: 32.0),
+                const AchievementProgressWidget(),
                 _buildRecentActivities(context),
                 
                 // Usuarios conectados (Updated section)

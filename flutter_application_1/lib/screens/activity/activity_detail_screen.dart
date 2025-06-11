@@ -447,7 +447,7 @@ class _ActivityDetailScreenState extends State<ActivityDetailScreen> {
                 point: _routePoints.first,
                 width: 20,
                 height: 20,
-                builder: (context) => Container(
+                child: Container(
                   decoration: BoxDecoration(
                     color: Colors.green,
                     shape: BoxShape.circle,
@@ -460,7 +460,7 @@ class _ActivityDetailScreenState extends State<ActivityDetailScreen> {
                 point: _routePoints.last,
                 width: 20,
                 height: 20,
-                builder: (context) => Container(
+                child: Container(
                   decoration: BoxDecoration(
                     color: Colors.red,
                     shape: BoxShape.circle,

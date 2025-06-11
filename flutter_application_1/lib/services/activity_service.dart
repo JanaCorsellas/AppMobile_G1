@@ -1,3 +1,4 @@
+// lib/services/activity_service.dart - COMPLETO Y CORREGIDO
 import 'dart:convert';
 import 'package:flutter_application_1/services/http_service.dart';
 import 'package:flutter_application_1/config/api_constants.dart';
@@ -55,50 +56,106 @@ class ActivityService {
           'activities': activities,
           'totalActivities': data['total'] ?? data['totalActivities'] ?? activities.length,
           'totalPages': data['pages'] ?? data['totalPages'] ?? 1,
-          'currentPage': data['page'] ?? data['currentPage'] ?? 1,
+          'currentPage': data['page'] ?? data['currentPage'] ?? page,
         };
+      } else {
+        throw Exception('Unexpected response format');
+      }
+      
+    } catch (e) {
+      print('Error in getActivities: $e');
+      throw Exception('Failed to load activities: $e');
+    }
+  }
+
+  // ✅ NUEVO: Obtener actividades de usuarios seguidos (feed)
+  Future<Map<String, dynamic>> getFollowingActivities(
+    String userId, {
+    int page = 1,
+    int limit = 10,
+  }) async {
+    try {
+      final uri = ApiConstants.followingActivities(userId) + "?page=${page}&limit=${limit}";
+      print('🔍 Fetching following activities from: $uri');
+      
+      final response = await _httpService.get(uri);
+      final data = await _httpService.parseJsonResponse(response);
+      
+      print('📱 Following activities response: $data');
+      
+      // Parse activities list y mantener datos de usuario adicionales
+      final List<Activity> activities = [];
+      final Map<String, Map<String, dynamic>> userDataMap = {}; // ✅ NUEVO: Mapa para datos de usuario
+      
+      if (data['activities'] != null) {
+        for (var item in data['activities']) {
+          try {
+            final activity = Activity.fromJson(item);
+            activities.add(activity);
+            
+            // ✅ NUEVO: Guardar datos adicionales del usuario
+            if (item['userProfilePicture'] != null || 
+                item['author'] != null || 
+                item['user'] != null) {
+              
+              final userData = <String, dynamic>{};
+              
+              // Extraer imagen de perfil de diferentes fuentes posibles
+              userData['profilePicture'] = item['userProfilePicture'] ?? 
+                                         item['author']?['profilePicture'] ?? 
+                                         item['author']?['profilePictureUrl'] ??
+                                         item['user']?['profilePicture'] ??
+                                         item['user']?['profilePictureUrl'];
+              
+              userData['username'] = item['userUsername'] ?? 
+                                   item['author']?['username'] ?? 
+                                   item['user']?['username'] ??
+                                   activity.authorName;
+              
+              userData['userId'] = item['userId'] ?? 
+                                 item['author']?['_id'] ?? 
+                                 item['user']?['_id'] ??
+                                 activity.author;
+              
+              userData['level'] = item['author']?['level'] ?? 
+                                item['user']?['level'] ?? 1;
+              
+              // Usar el ID de la actividad como clave
+              userDataMap[activity.id] = userData;
+            }
+          } catch (e) {
+            print('Error parsing following activity: $e');
+            // Continue with next item
+          }
+        }
       }
       
       return {
         'activities': activities,
-        'totalActivities': 0,
-        'totalPages': 1,
-        'currentPage': 1,
+        'userDataMap': userDataMap, // ✅ NUEVO: Incluir mapa de datos de usuario
+        'totalActivities': data['totalActivities'] ?? 0,
+        'totalPages': data['totalPages'] ?? 1,
+        'currentPage': data['currentPage'] ?? page,
+        'hasMore': data['hasMore'] ?? false,
+        'followingCount': data['followingCount'] ?? 0,
       };
+      
     } catch (e) {
-      print('Error getting activities: $e');
-      throw Exception('Failed to load activities');
+      print('Error in getFollowingActivities: $e');
+      throw Exception('Failed to load following activities: $e');
     }
   }
 
-  // Get activity by ID
-  Future<Activity> getActivityById(String id) async {
-    try {
-      print('Fetching activity by ID: $id');
-      final response = await _httpService.get(ApiConstants.activity(id));
-      final data = await _httpService.parseJsonResponse(response);
-      return Activity.fromJson(data);
-    } catch (e) {
-      print('Error getting activity: $e');
-      throw Exception('Failed to load activity');
-    }
-  }
-
-  // Get activities by user ID - with enhanced debugging
+  // Get activities by user ID
   Future<List<Activity>> getActivitiesByUserId(String userId) async {
     try {
-      print('Fetching activities for user: $userId');
+      print('Requesting activities for user: $userId');
+      print('Request URL: ${ApiConstants.userActivities(userId)}');
+      
       final response = await _httpService.get(ApiConstants.userActivities(userId));
-      
-      // Print the raw response for debugging
-      print('Raw response status code: ${response.statusCode}');
-      print('Raw response body type: ${response.body.runtimeType}');
-      print('Raw response length: ${response.body.length}');
-      // Print a snippet of the response to avoid flooding the console
-      print('Raw response snippet: ${response.body.substring(0, min(200, response.body.length))}...');
-      
       final data = await _httpService.parseJsonResponse(response);
-      print('Parsed data type: ${data.runtimeType}');
+      
+      print('Raw response data type: ${data.runtimeType}');
       
       List<Activity> activities = [];
       
@@ -142,60 +199,65 @@ class ActivityService {
         }
       }
       
-      print('Unexpected response format: $data');
+      print('Unexpected response format, returning empty list');
       return [];
+      
     } catch (e) {
-      print('Error getting user activities with details: $e');
-      print('Stack trace: ${StackTrace.current}');
-      throw Exception('Failed to load user activities');
+      print('Error in getActivitiesByUserId: $e');
+      throw Exception('Failed to load user activities: $e');
     }
   }
 
-  // Create activity
-  Future<Activity> createActivity(Map<String, dynamic> activityData) async {
+  // Get activity by ID
+  Future<Activity?> getActivityById(String activityId) async {
+    try {
+      final response = await _httpService.get(ApiConstants.activity(activityId));
+      final data = await _httpService.parseJsonResponse(response);
+      return Activity.fromJson(data);
+    } catch (e) {
+      print('Error in getActivityById: $e');
+      return null;
+    }
+  }
+
+  // Create a new activity
+  Future<Activity?> createActivity(Map<String, dynamic> activityData) async {
     try {
       final response = await _httpService.post(
         ApiConstants.activities,
         body: activityData,
       );
-
       final data = await _httpService.parseJsonResponse(response);
       return Activity.fromJson(data);
     } catch (e) {
-      print('Error creating activity: $e');
-      throw Exception('Failed to create activity');
+      print('Error in createActivity: $e');
+      throw Exception('Failed to create activity: $e');
     }
   }
 
-  // Update activity
-  Future<Activity> updateActivity(String id, Map<String, dynamic> activityData) async {
+  // Update an activity
+  Future<Activity?> updateActivity(String activityId, Map<String, dynamic> activityData) async {
     try {
       final response = await _httpService.put(
-        ApiConstants.activity(id),
+        ApiConstants.activity(activityId),
         body: activityData,
       );
-
       final data = await _httpService.parseJsonResponse(response);
       return Activity.fromJson(data);
     } catch (e) {
-      print('Error updating activity: $e');
-      throw Exception('Failed to update activity');
+      print('Error in updateActivity: $e');
+      throw Exception('Failed to update activity: $e');
     }
   }
 
-  // Delete activity
-  Future<bool> deleteActivity(String id) async {
+  // Delete an activity
+  Future<bool> deleteActivity(String activityId) async {
     try {
-      final response = await _httpService.delete(ApiConstants.activity(id));
+      final response = await _httpService.delete(ApiConstants.activity(activityId));
       return response.statusCode == 200;
     } catch (e) {
-      print('Error deleting activity: $e');
+      print('Error in deleteActivity: $e');
       return false;
     }
   }
-}
-
-// Helper function to avoid importing dart:math
-int min(int a, int b) {
-  return a < b ? a : b;
 }

@@ -1,9 +1,9 @@
-// lib/models/user.dart
+// lib/models/user.dart - Versión corregida
 class User {
   final String id;
   final String username;
   final String email;
-  final String? profilePicture;
+  final String? profilePicture; // Ahora almacena la ruta del archivo
   final String? bio;
   final int level;
   final double totalDistance;
@@ -15,6 +15,10 @@ class User {
   final String role;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final List<String> followers;
+  final List<String> following;
+  final int followersCount;
+  final int followingCount;
 
   User({
     required this.id,
@@ -32,8 +36,40 @@ class User {
     required this.role,
     required this.createdAt,
     required this.updatedAt,
+    this.followers = const [],
+    this.following = const [],
+    this.followersCount = 0,
+    this.followingCount = 0,
   });
 
+  // ✅ MEJORADO: Get full profile picture URL con validación más estricta
+  String? get profilePictureUrl {
+    if (profilePicture == null || profilePicture!.isEmpty) {
+      return null;
+    }
+    
+    // If it's already a full URL, return as is
+    if (profilePicture!.startsWith('http')) {
+      return profilePicture;
+    }
+    
+    // ✅ NUEVO: Agregar timestamp para evitar caché del navegador
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    
+    // Otherwise, construct the full URL
+    // Cambiar localhost por tu IP o dominio en producción
+    return 'http://localhost:3000/$profilePicture?t=$timestamp';
+  }
+
+  // ✅ MEJORADO: Check if user has profile picture con validación más estricta
+  bool get hasProfilePicture {
+    return profilePicture != null && 
+           profilePicture!.isNotEmpty && 
+           profilePicture != 'null' && 
+           profilePicture != 'undefined';
+  }
+
+  // ✅ MEJORADO: fromJson con mejor manejo de profilePicture
   factory User.fromJson(Map<String, dynamic> json) {
     // Mejorado: Manejo más robusto del ID
     String userId = '';
@@ -51,12 +87,44 @@ class User {
       username = json['name'];
     }
     
+    // ✅ NUEVO: Manejo mejorado y más estricto del profilePicture
+    String? profilePicture;
+    
+    // Verificar múltiples campos posibles
+    if (json.containsKey('profilePicture')) {
+      final value = json['profilePicture'];
+      // Solo asignar si no es null, undefined, o string vacío
+      if (value != null && 
+          value.toString().isNotEmpty && 
+          value.toString() != 'null' && 
+          value.toString() != 'undefined') {
+        profilePicture = value.toString();
+      }
+    }
+    
+    // También verificar si viene con el campo virtual profilePictureUrl
+    if (profilePicture == null && json.containsKey('profilePictureUrl')) {
+      final value = json['profilePictureUrl'];
+      if (value != null && 
+          value.toString().isNotEmpty && 
+          value.toString() != 'null' && 
+          value.toString() != 'undefined') {
+        profilePicture = value.toString();
+      }
+    }
+    
+    // Debug logging
+    print('User.fromJson - profilePicture processing:');
+    print('  Raw profilePicture: ${json['profilePicture']}');
+    print('  Raw profilePictureUrl: ${json['profilePictureUrl']}');
+    print('  Final profilePicture: $profilePicture');
+    
     // Arreglo: Convertir todos los campos a los tipos correctos
     return User(
       id: userId,
       username: username,
       email: json['email'] ?? '',
-      profilePicture: json['profilePicture'],
+      profilePicture: profilePicture, // ✅ Valor ya filtrado
       bio: json['bio'],
       level: json['level'] != null ? int.tryParse(json['level'].toString()) ?? 1 : 1,
       totalDistance: json['totalDistance'] != null 
@@ -82,6 +150,14 @@ class User {
       updatedAt: json['updatedAt'] != null 
           ? DateTime.parse(json['updatedAt'].toString())
           : DateTime.now(),
+           followers: json['followers'] != null 
+          ? List<String>.from(json['followers'].map((e) => e.toString()))
+          : [],
+      following: json['following'] != null 
+          ? List<String>.from(json['following'].map((e) => e.toString()))
+          : [],
+      followersCount: json['followersCount'] ?? json['followers']?.length ?? 0,
+      followingCount: json['followingCount'] ?? json['following']?.length ?? 0,
     );
   }
 
@@ -102,14 +178,21 @@ class User {
       'role': role,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'followers': followers,
+      'following': following,
+      'followersCount': followersCount,
+      'followingCount': followingCount,
+      
     };
   }
 
+  // ✅ MEJORADO: copyWith con mejor manejo de profilePicture null
   User copyWith({
     String? id,
     String? username,
     String? email,
     String? profilePicture,
+    bool clearProfilePicture = false, // ✅ NUEVO: flag explícito para limpiar
     String? bio,
     int? level,
     double? totalDistance,
@@ -121,12 +204,26 @@ class User {
     String? role,
     DateTime? createdAt,
     DateTime? updatedAt,
+    List<String>? followers,
+    List<String>? following,
+    int? followersCount,
+    int? followingCount,
   }) {
+    // ✅ NUEVO: Manejar explícitamente la limpieza de profilePicture
+    String? newProfilePicture;
+    if (clearProfilePicture) {
+      newProfilePicture = null;
+    } else if (profilePicture != null) {
+      newProfilePicture = profilePicture;
+    } else {
+      newProfilePicture = this.profilePicture;
+    }
+    
     return User(
       id: id ?? this.id,
       username: username ?? this.username,
       email: email ?? this.email,
-      profilePicture: profilePicture ?? this.profilePicture,
+      profilePicture: newProfilePicture,
       bio: bio ?? this.bio,
       level: level ?? this.level,
       totalDistance: totalDistance ?? this.totalDistance,
@@ -138,6 +235,20 @@ class User {
       role: role ?? this.role,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      followers: followers ?? this.followers,
+      following: following ?? this.following,
+      followersCount: followersCount ?? this.followersCount,
+      followingCount: followingCount ?? this.followingCount,
     );
   }
+  bool isFollowing(String userId) {
+    return following.contains(userId);
+  }
+
+  bool isFollowedBy(String userId) {
+    return followers.contains(userId);
+  }
+
+  bool get hasFollowers => followersCount > 0;
+  bool get hasFollowing => followingCount > 0;
 }

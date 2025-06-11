@@ -12,6 +12,7 @@ analyzer:
     avoid_print: ignore
     deprecated_member_use: ignore
     unnecessary_brace_in_string_interps: ignore
+    unused_element: ignore
 include: package:flutter_lints/flutter.yaml
 
 linter:

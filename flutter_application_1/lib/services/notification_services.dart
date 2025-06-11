@@ -5,6 +5,7 @@ import 'package:flutter_application_1/config/api_constants.dart';
 import 'package:flutter_application_1/models/notification_models.dart';
 import 'package:flutter_application_1/services/http_service.dart';
 import 'package:flutter_application_1/services/socket_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class NotificationService with ChangeNotifier {
   final HttpService _httpService;
@@ -14,20 +15,166 @@ class NotificationService with ChangeNotifier {
   bool _isLoading = false;
   int _unreadCount = 0;
   bool _isInitialized = false;
+
+  String? _fcmToken;
+  String? get fcmToken => _fcmToken;
   
-  NotificationService(this._httpService, this._socketService) {
-    _setupSocketListeners();
-  }
+  NotificationService(this._httpService, this._socketService);
   
   List<NotificationModel> get notifications => _notifications;
   bool get isLoading => _isLoading;
   int get unreadCount => _unreadCount;
-  
-  void _setupSocketListeners() {
-    _socketService.socket.on('new_notification', (data) {
-      print('New notification received via Socket.IO: $data');
-      _handleNewNotification(data);
+
+  static GlobalKey<ScaffoldMessengerState>? _scaffoldMessengerKey;
+  static GlobalKey<NavigatorState>? _navigatorKey;
+
+  static void setScaffoldMessengerKey(GlobalKey<ScaffoldMessengerState> key) {
+    _scaffoldMessengerKey = key;
+  }
+  static void setNavigatorKey(GlobalKey<NavigatorState> key) {
+    _navigatorKey = key;
+  }
+
+  Future<void> setupFirebaseMessaging() async {
+  // Obtener el token FCM
+    try {
+      _fcmToken = await FirebaseMessaging.instance.getToken();
+      print('FCM Token: $_fcmToken');
+    
+      // Aquí deberías enviar el token a tu servidor
+      if (_fcmToken != null) {
+        await _sendTokenToServer(_fcmToken!);
+      }
+    } catch (e) {
+      print('Error obteniendo FCM token: $e');
+    }
+
+    // Listeners existentes
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print('Received a foreground FCM message: ${message.notification?.title}');
+      _handleFirebaseFCM(message);
     });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print('FCM notification clicked!');
+      _handleFirebaseFCM(message);
+    });
+
+    // Listener para cuando el token se actualiza
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+      print('FCM Token refreshed: $newToken');
+      _fcmToken = newToken;
+      _sendTokenToServer(newToken);
+    });
+  }
+
+  void _handleFirebaseFCM(RemoteMessage message) {
+    final data = message.data;
+    final notificationData = {
+      'id': data['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      'type': data['type'] ?? 'chat_message',
+      'title': data['title'] ?? message.notification?.title ?? 'Nuevo mensaje',
+      'message': data['body'] ?? message.notification?.body ?? '',
+      'data': data,
+      'read': false,
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+
+    _handleNewNotification(notificationData);
+
+    _showInAppNotification(
+      title: notificationData['title']!,
+      message: notificationData['message']!,
+      type: notificationData['type']!,
+    );
+  }
+  void _showInAppNotification({
+    required String title,
+    required String message,
+    required String type,
+  }) {
+    if (_scaffoldMessengerKey?.currentState == null) {
+      print('ScaffoldMessenger no disponible, mostrando en consola:');
+      print('$title: $message');
+      return;
+    }
+
+    _scaffoldMessengerKey!.currentState!.showSnackBar(
+      SnackBar(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                fontSize: 16,
+              ),
+            ),
+            if (message.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                message,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ],
+        ),
+        backgroundColor: _getColorForType(type),
+        duration: const Duration(seconds: 5),
+        action: SnackBarAction(
+          label: 'Ver',
+          textColor: Colors.white,
+          onPressed: () {
+            if (_navigatorKey?.currentState != null) {
+              _navigatorKey!.currentState!.pushNamed('/notifications');
+            } else {
+              print('Navigator no disponible');
+            }
+          },
+        ),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+    );
+  }
+
+  Color _getColorForType(String type) {
+    switch (type) {
+      case 'chat_message':
+        return Colors.teal;
+      case 'friend_request':
+        return Colors.blue;
+      case 'achievement_unlocked':
+        return Colors.amber;
+      case 'challenge_completed':
+        return Colors.green;
+      default:
+        return Colors.deepPurple;
+    }
+  }
+
+  IconData _getIconForType(String type) {
+    switch (type) {
+      case 'chat_message':
+        return Icons.chat;
+      case 'friend_request':
+        return Icons.person_add;
+      case 'achievement_unlocked':
+        return Icons.emoji_events;
+      case 'challenge_completed':
+        return Icons.flag;
+      default:
+        return Icons.notifications;
+    }
   }
   
   Future<void> initialize(String userId) async {
@@ -61,14 +208,14 @@ class NotificationService with ChangeNotifier {
         _notifications = [];
       }
       
-      if (data['notifications'] != null && data['notifications'] is List) {
-        for (var item in data['notifications']) {
+      if (data is List) {
+        for (var item in data) {
           final notification = NotificationModel.fromJson(item);
           _notifications.add(notification);
         }
       }
       
-      _unreadCount = data['unread'] ?? 0;
+      //_unreadCount = data['unread'] ?? 0;
       await _saveNotificationsToCache();
       
     } catch (e) {
@@ -248,6 +395,32 @@ class NotificationService with ChangeNotifier {
     return notification.type == 'friend_request' || 
            notification.type == 'challenge_invitation';
   }
+
+  Future<void> _sendTokenToServer(String token) async {
+  try {
+    // Por ahora solo imprimir, luego configurar la ruta del servidor
+    print('Enviando FCM token al servidor: $token');
+    
+    // TODO: Descomentar cuando tengas la ruta en tu API
+    /*
+    final response = await _httpService.post(
+      ApiConstants.updateFcmToken, // Crear esta ruta en api_constants.dart
+      body: {
+        'fcmToken': token,
+        'platform': 'web',
+      },
+    );
+    
+    if (response.statusCode == 200) {
+      print('FCM Token enviado al servidor exitosamente');
+    } else {
+      print('Error enviando FCM token al servidor: ${response.statusCode}');
+    }
+    */
+  } catch (e) {
+    print('Error enviando FCM token: $e');
+  }
+}
   
   @override
   void dispose() {
