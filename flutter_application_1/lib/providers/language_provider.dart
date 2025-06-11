@@ -1846,6 +1846,86 @@ class LanguageProvider with ChangeNotifier {
       'es': 'Promedio',
       'ca': 'Promig',
     },
+'current_password_incorrect': {
+  'en': 'Current password is incorrect',
+  'es': 'La contraseña actual es incorrecta',
+  'ca': 'La contrasenya actual és incorrecta',
+},
+'change_password': {
+  'en': 'Change Password',
+  'es': 'Cambiar Contraseña',
+  'ca': 'Canviar Contrasenya',
+},
+'change_password_subtitle': {
+  'en': 'Enter your current password and choose a new one',
+  'es': 'Introduce tu contraseña actual y elige una nueva',
+  'ca': 'Introdueix la teva contrasenya actual i tria una de nova',
+},
+'current_password': {
+  'en': 'Current Password',
+  'es': 'Contraseña Actual',
+  'ca': 'Contrasenya Actual',
+},
+'current_password_hint': {
+  'en': 'Enter your current password',
+  'es': 'Introduce tu contraseña actual',
+  'ca': 'Introdueix la teva contrasenya actual',
+},
+'current_password_required': {
+  'en': 'Please enter your current password',
+  'es': 'Por favor introduce tu contraseña actual',
+  'ca': 'Si us plau, introdueix la teva contrasenya actual',
+},
+'new_password': {
+  'en': 'New Password',
+  'es': 'Nueva Contraseña',
+  'ca': 'Nova Contrasenya',
+},
+'new_password_hint': {
+  'en': 'Enter your new password',
+  'es': 'Introduce tu nueva contraseña',
+  'ca': 'Introdueix la teva nova contrasenya',
+},
+'new_password_required': {
+  'en': 'Please enter a new password',
+  'es': 'Por favor introduce una nueva contraseña',
+  'ca': 'Si us plau, introdueix una nova contrasenya',
+},
+'confirm_new_password': {
+  'en': 'Confirm New Password',
+  'es': 'Confirmar Nueva Contraseña',
+  'ca': 'Confirmar Nova Contrasenya',
+},
+'confirm_new_password_hint': {
+  'en': 'Confirm your new password',
+  'es': 'Confirma tu nueva contraseña',
+  'ca': 'Confirma la teva nova contrasenya',
+},
+'confirm_password_required': {
+  'en': 'Please confirm your new password',
+  'es': 'Por favor confirma tu nueva contraseña',
+  'ca': 'Si us plau, confirma la teva nova contrasenya',
+},
+'passwords_dont_match': {
+  'en': 'Passwords do not match',
+  'es': 'Las contraseñas no coinciden',
+  'ca': 'Les contrasenyes no coincideixen',
+},
+'password_changed_success': {
+  'en': 'Password changed successfully',
+  'es': 'Contraseña cambiada con éxito',
+  'ca': 'Contrasenya canviada amb èxit',
+},
+'password_change_error': {
+  'en': 'Error changing password',
+  'es': 'Error al cambiar la contraseña',
+  'ca': 'Error en canviar la contrasenya',
+},
+'change_password_button': {
+  'en': 'Change Password',
+  'es': 'Cambiar Contraseña',
+  'ca': 'Canviar Contrasenya',
+},
     'filters_and_sorting': {
       'en': 'Filters and Sorting',
       'es': 'Filtros y Ordenamiento',

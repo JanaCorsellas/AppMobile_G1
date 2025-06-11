@@ -311,7 +311,13 @@ class CustomDrawer extends StatelessWidget {
                       route: AppRoutes.notifications,
                       currentRoute: currentRoute,
                     ),
-                    
+                    _buildMenuItem(
+                      context,
+                      icon: Icons.lock_outline_rounded,
+                      title: 'change_password'.tr(context),
+                      route: AppRoutes.changePassword,
+                      currentRoute: currentRoute,
+                    ),
                     _buildMenuItem(
                       context,
                       icon: Icons.settings_rounded,
@@ -319,6 +325,9 @@ class CustomDrawer extends StatelessWidget {
                       route: AppRoutes.settingsRoute,
                       currentRoute: currentRoute,
                     ),
+                    
+                    // Nueva opción para cambiar contraseña
+                    
                     
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
