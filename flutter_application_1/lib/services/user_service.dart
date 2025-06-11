@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 class UserService {
   final HttpService _httpService;
@@ -21,62 +22,44 @@ class UserService {
   // ✅ MEJORADO: Upload compatible con Web y Móvil + limpieza de caché
   Future<Map<String, dynamic>> uploadProfilePicture(String userId, dynamic imageFile) async {
     try {
-      print('Uploading profile picture for user: $userId');
-      print('Platform: ${kIsWeb ? "Web" : "Mobile"}');
+      print('📸 Uploading profile picture for user: $userId');
       
-      // Create multipart request
+      // ✅ PASO 1: Limpiar cache ANTES del upload
+      await _clearUserProfileCache(userId);
+      
+      // Crear request
       final uri = Uri.parse('${ApiConstants.baseUrl}/api/users/$userId/profile-picture');
       final request = http.MultipartRequest('POST', uri);
       
-      // Add authentication headers if available
-      final headers = _httpService.getAuthHeadersForMultipart();
+      // Add auth headers
+      final headers = await _httpService.getAuthHeaders();
       request.headers.addAll(headers);
       
-      // ✅ Manejo mejorado según plataforma
       http.MultipartFile multipartFile;
       
       if (kIsWeb) {
-        // ✅ Para Web: imageFile es XFile
-        final XFile xFile = imageFile as XFile;
-        final bytes = await xFile.readAsBytes();
+        // ✅ Para Web: imageFile es XFile o Uint8List
+        late Uint8List bytes;
+        String filename = 'profile_image_${DateTime.now().millisecondsSinceEpoch}';
+        String? mimeType = 'image/jpeg';
         
-        // ✅ MEJORADO: Detectar MIME type y filename correctamente
-        String? mimeType;
-        String filename = xFile.name;
-        
-        // Intentar detectar MIME type por extensión si no está disponible
-        if (xFile.mimeType != null && xFile.mimeType!.isNotEmpty) {
-          mimeType = xFile.mimeType;
+        if (imageFile is XFile) {
+          bytes = await imageFile.readAsBytes();
+          filename = imageFile.name;
+          mimeType = imageFile.mimeType;
+        } else if (imageFile is Uint8List) {
+          bytes = imageFile;
         } else {
-          // Detectar por extensión
-          final extension = filename.split('.').last.toLowerCase();
-          switch (extension) {
-            case 'jpg':
-            case 'jpeg':
-              mimeType = 'image/jpeg';
-              break;
-            case 'png':
-              mimeType = 'image/png';
-              break;
-            case 'gif':
-              mimeType = 'image/gif';
-              break;
-            case 'webp':
-              mimeType = 'image/webp';
-              break;
-            default:
-              mimeType = 'image/jpeg'; // Default fallback
-          }
+          throw Exception('Tipo de archivo no soportado en web: ${imageFile.runtimeType}');
         }
         
-        // Asegurar que el filename tenga extensión
-        if (!filename.contains('.')) {
-          final extension = mimeType?.split('/').last ?? 'jpg';
+        if (mimeType != null && mimeType.contains('/')) {
+          final extension = mimeType.split('/').last;
           filename = '$filename.$extension';
         }
         
         multipartFile = http.MultipartFile.fromBytes(
-          'profilePicture', // ✅ IMPORTANTE: Nombre del campo debe coincidir
+          'profilePicture',
           bytes,
           filename: filename,
           contentType: MediaType.parse(mimeType ?? 'image/jpeg'),
@@ -89,7 +72,7 @@ class UserService {
         final File file = imageFile as File;
         
         multipartFile = await http.MultipartFile.fromPath(
-          'profilePicture', // ✅ IMPORTANTE: Nombre del campo debe coincidir
+          'profilePicture',
           file.path,
         );
         
@@ -112,18 +95,28 @@ class UserService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         
-        // ✅ NUEVO: Limpiar caché del usuario anterior
-        await _clearUserImageCache(userId);
+        // ✅ PASO 2: Limpiar cache DESPUÉS del upload exitoso
+        await Future.delayed(const Duration(milliseconds: 200));
+        await _clearUserProfileCache(userId);
+        
+        // ✅ PASO 3: Crear URL con cache-busting para forzar recarga
+        final newImageUrl = data['user']?['profilePicture'] ?? data['profilePicture'];
+        if (newImageUrl != null) {
+          final cacheBustingUrl = _addCacheBustingToUrl(newImageUrl);
+          data['profilePicture'] = cacheBustingUrl;
+          data['user']?['profilePicture'] = cacheBustingUrl;
+        }
         
         // Update user cache with new profile picture
         if (_userCache.containsKey(userId)) {
           final cachedUser = _userCache[userId]!;
           final updatedUser = cachedUser.copyWith(
-            profilePicture: data['profilePicture'],
+            profilePicture: newImageUrl,
           );
           _userCache[userId] = updatedUser;
         }
         
+        print('✅ Upload successful with cache clearing');
         return data;
       } else {
         final errorData = json.decode(response.body);
@@ -344,13 +337,12 @@ class UserService {
     }
   }
 
-  // ✅ MEJORADO: Delete profile picture con limpieza de caché
-  Future<bool> deleteProfilePicture(String userId) async {
+ Future<bool> deleteProfilePicture(String userId) async {
     try {
-      print('Deleting profile picture for user: $userId');
+      print('🗑️ Deleting profile picture for user: $userId');
       
-      // ✅ NUEVO: Limpiar caché de la imagen ANTES de eliminar
-      await _clearUserImageCache(userId);
+      // ✅ PASO 1: Limpiar cache ANTES del delete
+      await _clearUserProfileCache(userId);
       
       final response = await _httpService.delete(
         '${ApiConstants.baseUrl}/api/users/$userId/profile-picture'
@@ -360,19 +352,26 @@ class UserService {
       print('Delete response body: ${response.body}');
       
       if (response.statusCode == 200) {
+        // ✅ PASO 2: Limpiar cache DESPUÉS del delete exitoso
+        await Future.delayed(const Duration(milliseconds: 200));
+        await _clearUserProfileCache(userId);
+        
+        // ✅ PASO 3: Limpiar cache general para asegurar
+        await _clearAllProfilePictureCache();
+        
         // Update user cache to remove profile picture
         if (_userCache.containsKey(userId)) {
           final cachedUser = _userCache[userId]!;
-          final updatedUser = cachedUser.copyWith(profilePicture: null);
+          final updatedUser = cachedUser.copyWith(
+            profilePicture: null,
+            clearProfilePicture: true,
+          );
           _userCache[userId] = updatedUser;
           
           print('User cache updated: profilePicture = ${updatedUser.profilePicture}');
         }
         
-        // ✅ NUEVO: Forzar limpieza adicional del caché después de la eliminación
-        await Future.delayed(const Duration(milliseconds: 100));
-        await _clearUserImageCache(userId);
-        
+        print('✅ Delete successful with cache clearing');
         return true;
       } else {
         print('Failed to delete profile picture: ${response.statusCode}');
@@ -384,20 +383,117 @@ class UserService {
     }
   }
 
-  // ✅ Get profile picture URL
-  String? getProfilePictureUrl(String? profilePicturePath) {
+   Future<void> _clearUserProfileCache(String userId) async {
+    try {
+      print('🧹 Clearing cache for user: $userId');
+      
+      // Obtener usuario del cache para las URLs
+      final cachedUser = _userCache[userId];
+      final urlsToClean = <String>[];
+      
+      if (cachedUser?.profilePictureUrl != null) {
+        urlsToClean.add(cachedUser!.profilePictureUrl!);
+      }
+      
+      if (cachedUser?.profilePicture != null) {
+        urlsToClean.add(cachedUser!.profilePicture!);
+      }
+      
+      // URLs comunes para este usuario
+      urlsToClean.addAll([
+        '${ApiConstants.baseUrl}/uploads/profile-pictures/${userId}',
+        '${ApiConstants.baseUrl}/uploads/profile-pictures/${userId}.jpg',
+        '${ApiConstants.baseUrl}/uploads/profile-pictures/${userId}.png',
+      ]);
+      
+      // Limpiar cada URL y sus variaciones
+      for (final url in urlsToClean) {
+        await _clearUrlAndVariations(url);
+      }
+      
+      print('✅ User cache cleared for: $userId');
+    } catch (e) {
+      print('❌ Error clearing user cache: $e');
+    }
+  }
+
+  /// ✅ MÉTODO NUEVO: Limpiar URL y todas sus variaciones
+  Future<void> _clearUrlAndVariations(String baseUrl) async {
+    try {
+      // Lista de variaciones comunes
+      final urlsToClean = [
+        baseUrl,
+        baseUrl.split('?')[0], // Sin parámetros
+        '$baseUrl?t=${DateTime.now().millisecondsSinceEpoch}',
+        '${baseUrl.split('?')[0]}?t=${DateTime.now().millisecondsSinceEpoch}',
+      ];
+      
+      for (final url in urlsToClean) {
+        // Limpiar de CachedNetworkImage
+        await CachedNetworkImage.evictFromCache(url);
+        
+        // Limpiar de DefaultCacheManager
+        try {
+          await DefaultCacheManager().removeFile(url);
+        } catch (e) {
+          // Ignorar errores de archivos no encontrados
+        }
+      }
+      
+      print('🧹 Cleared variations for: $baseUrl');
+    } catch (e) {
+      print('❌ Error clearing URL variations: $e');
+    }
+  }
+
+  /// ✅ MÉTODO NUEVO: Limpiar todo el cache de profile pictures
+  Future<void> _clearAllProfilePictureCache() async {
+    try {
+      print('🧹 Clearing ALL profile picture cache...');
+      
+      // Método agresivo: limpiar todo el cache de imágenes
+      await CachedNetworkImage.evictFromCache('');
+      await DefaultCacheManager().emptyCache();
+      
+      print('✅ All profile picture cache cleared');
+    } catch (e) {
+      print('❌ Error clearing all cache: $e');
+    }
+  }
+
+  /// ✅ MÉTODO NUEVO: Agregar cache-busting a URL
+  String _addCacheBustingToUrl(String originalUrl) {
+    if (originalUrl.isEmpty) return originalUrl;
+    
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final separator = originalUrl.contains('?') ? '&' : '?';
+    return '$originalUrl${separator}cb=$timestamp';
+  }
+
+  /// ✅ MÉTODO MEJORADO: Get profile picture URL con cache-busting automático
+  String? getProfilePictureUrl(String? profilePicturePath, {bool forceFresh = false}) {
     if (profilePicturePath == null || profilePicturePath.isEmpty) {
       return null;
     }
     
-    // If it's already a full URL, return as is
+    String url;
+    
+    // If it's already a full URL, use as base
     if (profilePicturePath.startsWith('http')) {
-      return profilePicturePath;
+      url = profilePicturePath;
+    } else {
+      // Otherwise, construct the full URL
+      url = '${ApiConstants.baseUrl}/$profilePicturePath';
     }
     
-    // Otherwise, construct the full URL
-    return '${ApiConstants.baseUrl}/$profilePicturePath';
+    // Si se fuerza fresh o es una nueva carga, agregar cache-busting
+    if (forceFresh) {
+      url = _addCacheBustingToUrl(url);
+    }
+    
+    return url;
   }
+
 
   Future<void> saveUserToCache(User user) async {
     if (user.id.isNotEmpty) {

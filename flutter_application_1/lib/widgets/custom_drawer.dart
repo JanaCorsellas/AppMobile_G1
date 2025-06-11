@@ -27,12 +27,12 @@ class CustomDrawer extends StatelessWidget {
           Container(
             height: 200,
             decoration: const BoxDecoration(
-              color: Color.fromARGB(255, 21, 95, 51),
+              color: Color.fromARGB(255, 177, 136, 242),
               image: DecorationImage(
                 image: AssetImage('assets/images/background2.png'),
                 fit: BoxFit.cover,
                 colorFilter: ColorFilter.mode(
-                  Color.fromARGB(180, 21, 95, 51),
+                  Color.fromARGB(180, 81, 23, 189),
                   BlendMode.srcOver,
                 ),
               ),
@@ -145,13 +145,7 @@ class CustomDrawer extends StatelessWidget {
                     route: AppRoutes.userHome,
                     currentRoute: currentRoute,
                   ),
-                  _buildMenuItem(
-                    context,
-                    icon: Icons.dynamic_feed,
-                    title: 'feed'.tr(context),
-                    route: AppRoutes.userFeed,
-                    currentRoute: currentRoute,
-                  ),
+              
                   _buildMenuItem(
                     context,
                     icon: Icons.person_outline,
@@ -164,6 +158,14 @@ class CustomDrawer extends StatelessWidget {
                     icon: Icons.history,
                     title: 'my_activities'.tr(context),
                     route: AppRoutes.activities,
+                    currentRoute: currentRoute,
+                  ),
+                  // ✅ NUEVO: Actividades de seguidos
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.people_alt_outlined,
+                    title: 'following_activities'.tr(context),
+                    route: AppRoutes.followingActivities,
                     currentRoute: currentRoute,
                   ),
                   _buildMenuItem(
@@ -277,7 +279,7 @@ class CustomDrawer extends StatelessWidget {
     VoidCallback? onTap,
   }) {
     final isSelected = route == currentRoute;
-    final primaryColor = const Color.fromARGB(255, 21, 95, 51);
+    final primaryColor = const Color.fromARGB(255, 103, 85, 209);
 
     return ListTile(
       leading: Icon(
@@ -300,7 +302,7 @@ class CustomDrawer extends StatelessWidget {
           Navigator.pop(context);
         }
       },
-      tileColor: isSelected ? Colors.green.withOpacity(0.1) : null,
+      tileColor: isSelected ? const Color.fromARGB(255, 76, 86, 175).withOpacity(0.1) : null,
       shape: isSelected
           ? const RoundedRectangleBorder(
               borderRadius: BorderRadius.only(
