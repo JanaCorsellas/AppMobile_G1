@@ -67,6 +67,7 @@ class _MyAppState extends State<MyApp> {
   late final ThemeProvider _themeProvider;
   late final LanguageProvider _languageProvider;
   late final AchievementService _achievementService;
+  final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
   
   bool _initialized = false;
 
@@ -136,6 +137,7 @@ class _MyAppState extends State<MyApp> {
         ),
       );
     }
+    NotificationService.setScaffoldMessengerKey(_scaffoldMessengerKey);
 
     return MultiProvider(
       providers: [
@@ -155,6 +157,7 @@ class _MyAppState extends State<MyApp> {
         builder: (context, themeProvider, languageProvider, _) {
           return MaterialApp(
             navigatorKey: _navigatorKey,
+            scaffoldMessengerKey: _scaffoldMessengerKey,
             title: 'app_title'.tr(context),
             theme: themeProvider.theme,
             locale: languageProvider.locale,

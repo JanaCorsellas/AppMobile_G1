@@ -24,7 +24,13 @@ class NotificationService with ChangeNotifier {
   List<NotificationModel> get notifications => _notifications;
   bool get isLoading => _isLoading;
   int get unreadCount => _unreadCount;
-  
+
+  static GlobalKey<ScaffoldMessengerState>? _scaffoldMessengerKey;
+
+  static void setScaffoldMessengerKey(GlobalKey<ScaffoldMessengerState> key) {
+    _scaffoldMessengerKey = key;
+  }
+
   Future<void> setupFirebaseMessaging() async {
   // Obtener el token FCM
     try {
@@ -60,7 +66,7 @@ class NotificationService with ChangeNotifier {
 
   void _handleFirebaseFCM(RemoteMessage message) {
     final data = message.data;
-    _handleNewNotification({
+    final notificationData = {
       'id': data['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
       'type': data['type'] ?? 'chat_message',
       'title': data['title'] ?? message.notification?.title ?? 'Nuevo mensaje',
@@ -68,7 +74,100 @@ class NotificationService with ChangeNotifier {
       'data': data,
       'read': false,
       'createdAt': DateTime.now().toIso8601String(),
-    });
+    };
+
+    _handleNewNotification(notificationData);
+
+    _showInAppNotification(
+      title: notificationData['title']!,
+      message: notificationData['message']!,
+      type: notificationData['type']!,
+    );
+  }
+  void _showInAppNotification({
+    required String title,
+    required String message,
+    required String type,
+  }) {
+    if (_scaffoldMessengerKey?.currentState == null) {
+      print('ScaffoldMessenger no disponible, mostrando en consola:');
+      print('$title: $message');
+      return;
+    }
+
+    _scaffoldMessengerKey!.currentState!.showSnackBar(
+      SnackBar(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                fontSize: 16,
+              ),
+            ),
+            if (message.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                message,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ],
+        ),
+        backgroundColor: _getColorForType(type),
+        duration: const Duration(seconds: 5),
+        action: SnackBarAction(
+          label: 'Ver',
+          textColor: Colors.white,
+          onPressed: () {
+            // Navegar a notificaciones - puedes ajustar esto
+            print('Navegar a notificaciones');
+          },
+        ),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+    );
+  }
+
+  Color _getColorForType(String type) {
+    switch (type) {
+      case 'chat_message':
+        return Colors.teal;
+      case 'friend_request':
+        return Colors.blue;
+      case 'achievement_unlocked':
+        return Colors.amber;
+      case 'challenge_completed':
+        return Colors.green;
+      default:
+        return Colors.deepPurple;
+    }
+  }
+
+  IconData _getIconForType(String type) {
+    switch (type) {
+      case 'chat_message':
+        return Icons.chat;
+      case 'friend_request':
+        return Icons.person_add;
+      case 'achievement_unlocked':
+        return Icons.emoji_events;
+      case 'challenge_completed':
+        return Icons.flag;
+      default:
+        return Icons.notifications;
+    }
   }
   
   Future<void> initialize(String userId) async {
