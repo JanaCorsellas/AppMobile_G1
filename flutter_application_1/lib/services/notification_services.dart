@@ -26,9 +26,13 @@ class NotificationService with ChangeNotifier {
   int get unreadCount => _unreadCount;
 
   static GlobalKey<ScaffoldMessengerState>? _scaffoldMessengerKey;
+  static GlobalKey<NavigatorState>? _navigatorKey;
 
   static void setScaffoldMessengerKey(GlobalKey<ScaffoldMessengerState> key) {
     _scaffoldMessengerKey = key;
+  }
+  static void setNavigatorKey(GlobalKey<NavigatorState> key) {
+    _navigatorKey = key;
   }
 
   Future<void> setupFirebaseMessaging() async {
@@ -127,8 +131,11 @@ class NotificationService with ChangeNotifier {
           label: 'Ver',
           textColor: Colors.white,
           onPressed: () {
-            // Navegar a notificaciones - puedes ajustar esto
-            print('Navegar a notificaciones');
+            if (_navigatorKey?.currentState != null) {
+              _navigatorKey!.currentState!.pushNamed('/notifications');
+            } else {
+              print('Navigator no disponible');
+            }
           },
         ),
         behavior: SnackBarBehavior.floating,

@@ -138,6 +138,7 @@ class _MyAppState extends State<MyApp> {
       );
     }
     NotificationService.setScaffoldMessengerKey(_scaffoldMessengerKey);
+    NotificationService.setNavigatorKey(_navigatorKey);
 
     return MultiProvider(
       providers: [
