@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/services/notification_services.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_application_1/config/api_constants.dart';
@@ -25,6 +26,8 @@ class AuthService with ChangeNotifier {
   String get error => _error;
 
   bool? get isAdmin => _currentUser?.role == 'admin';
+
+  NotificationService? _notificationService;
 
   // Initialize service and check for stored tokens
   Future<void> initialize() async {
@@ -255,6 +258,11 @@ class AuthService with ChangeNotifier {
 
           print("Login exitoso para: ${_currentUser!.email}");
 
+          if (_notificationService != null && _currentUser != null) {
+            print("Inicializando NotificationService después del login...");
+            await _notificationService!.initialize(_currentUser!.id);
+          }
+
           _isLoading = false;
           notifyListeners();
           return _currentUser;
@@ -465,6 +473,10 @@ class AuthService with ChangeNotifier {
       print('Error al verificar expiración del token: $e');
       return true;
     }
+  }
+
+  void setNotificationService(NotificationService notificationService) {
+    _notificationService = notificationService;
   }
 
   Map<String, String> getAuthHeaders() {

@@ -19,33 +19,96 @@ import 'package:flutter_application_1/services/achievementService.dart';
 import 'package:flutter_application_1/services/follow_service.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
+// Handler para mensajes en segundo plano
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Inicializar Firebase para el contexto de segundo plano
+  await Firebase.initializeApp();
+  
+  print("=== Mensaje FCM en segundo plano ===");
+  print("Message ID: ${message.messageId}");
+  print("Título: ${message.notification?.title}");
+  print("Cuerpo: ${message.notification?.body}");
+  print("Datos: ${message.data}");
+  print("===============================");
+}
+
+
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (kIsWeb) {
-    await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: "AIzaSyAVGap3-2Tk9_Y_zW4gA-860n3z4f1i2qU",
-        authDomain: "trazer-e4cb2.firebaseapp.com",
-        projectId: "trazer-e4cb2",
-        storageBucket: "trazer-e4cb2.firebasestorage.app",
-        messagingSenderId: "782085531087",
-        appId: "1:782085531087:web:fbc005500d06279a4f5eba",
-        measurementId: "G-YKZ1SH85QD",
-      ),
-    );
-  } else {
-    await Firebase.initializeApp();
-  }
-
-  await FirebaseMessaging.instance.requestPermission();
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
+  await _initializerFirebase();
+  await _setupFirebaseMessaging();
   runApp(const MyApp());
 }
-// Función para manejar mensajes en segundo plano
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
-  print("Mensaje en segundo plano: ${message.messageId}");
+
+Future<void> _initializerFirebase() async {
+  try {
+    if (kIsWeb) {
+      await Firebase.initializeApp(
+        options: const FirebaseOptions(
+          apiKey: "AIzaSyAVGap3-2Tk9_Y_zW4gA-860n3z4f1i2qU",
+          authDomain: "trazer-e4cb2.firebaseapp.com",
+          projectId: "trazer-e4cb2",
+          storageBucket: "trazer-e4cb2.firebasestorage.app",
+          messagingSenderId: "782085531087",
+          appId: "1:782085531087:web:fbc005500d06279a4f5eba",
+          measurementId: "G-YKZ1SH85QD",
+        ),
+      );
+    } else {
+      await Firebase.initializeApp();
+    }
+    print ("Firebase inicializado correctamente");
+  } catch (e) {
+    print("Error inicializando Firebase: $e");
+  }
+}
+
+Future<void> _setupFirebaseMessaging() async {
+  try {
+    final messaging = FirebaseMessaging.instance;
+    
+    // Solicitar permisos de notificación
+    final NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      provisional: false,
+      sound: true,
+      announcement: false,
+      carPlay: false,
+      criticalAlert: false,
+    );
+
+    print('Estado de permisos: ${settings.authorizationStatus}');
+    
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      print('Usuario otorgó permisos de notificación');
+    } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
+      print('Usuario otorgó permisos provisionales');
+    } else {
+      print('Usuario denegó permisos de notificación');
+    }
+
+    // Configurar el manejador de mensajes en segundo plano
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    
+    // Obtener el token FCM inicial
+    final token = await messaging.getToken();
+    print("Token FCM inicial: $token");
+    
+    // Configurar foreground notification presentation para iOS
+    if (!kIsWeb) {
+      await messaging.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+    }
+    
+  } catch (e) {
+    print("Error configurando Firebase Messaging: $e");
+  }
 }
 
 class MyApp extends StatefulWidget {
@@ -55,7 +118,7 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver{
   final _navigatorKey = GlobalKey<NavigatorState>();
   late final AuthService _authService;
   late final SocketService _socketService;
@@ -75,7 +138,96 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initializeServices();
+    _setupAppLifecycleNotifications();
+  }
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    switch (state) {
+      case AppLifecycleState.resumed:
+        print("App resumed - actualizando notificaciones");
+        _refreshNotificationsWhenAppResumes();
+        break;
+      case AppLifecycleState.paused:
+        print("App paused");
+        break;
+      case AppLifecycleState.detached:
+        print("App detached");
+        break;
+      case AppLifecycleState.inactive:
+        print("App inactive");
+        break;
+      case AppLifecycleState.hidden:
+        print("App hidden");
+        break;
+    }
+  }
+
+  void _setupAppLifecycleNotifications() {
+    // Verificar si la app se abrió desde una notificación
+    FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
+      if (message != null) {
+        print("App abierta desde notificación: ${message.notification?.title}");
+        _handleNotificationTap(message);
+      }
+    });
+
+    // Listener para cuando se toca una notificación mientras la app está en background
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print("Notificación tocada (app en background): ${message.notification?.title}");
+      _handleNotificationTap(message);
+    });
+  }
+
+  /// Maneja cuando el usuario toca una notificación
+  void _handleNotificationTap(RemoteMessage message) {
+    final data = message.data;
+    final type = data['type'] as String?;
+    
+    // Navegar según el tipo de notificación
+    switch (type) {
+      case 'friend_request':
+        _navigateToFriendRequests();
+        break;
+      case 'friend_activity':
+        final activityId = data['activityId'] as String?;
+        if (activityId != null) {
+          _navigateToActivity(activityId);
+        }
+        break;
+      case 'activity_comment':
+      case 'activity_like':
+        final activityId = data['activityId'] as String?;
+        if (activityId != null) {
+          _navigateToActivity(activityId);
+        }
+        break;
+      case 'chat_message':
+        final roomId = data['roomId'] as String?;
+        if (roomId != null) {
+          _navigateToChat(roomId);
+        }
+        break;
+    }
+  }
+
+  /// Actualiza notificaciones cuando la app vuelve al primer plano
+  void _refreshNotificationsWhenAppResumes() {
+    if (_initialized && _authService.isLoggedIn && _authService.currentUser != null) {
+      // Refrescar notificaciones después de un pequeño delay
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _notificationService.fetchNotifications(_authService.currentUser!.id);
+      });
+    }
   }
 
   Future<void> _initializeServices() async {
@@ -102,6 +254,8 @@ class _MyAppState extends State<MyApp> {
     _chatService = ChatService(_socketService);
     _notificationService = NotificationService(_httpService, _socketService);
 
+    _authService.setNotificationService(_notificationService);
+    
     // Establecer referencias cruzadas para gestión del token
     _socketService.setAuthService(_authService);
 
@@ -120,7 +274,7 @@ class _MyAppState extends State<MyApp> {
         await _notificationService.initialize(_authService.currentUser!.id);
       }
     }
-    await _notificationService.setupFirebaseMessaging();
+    _notificationService.setupFirebaseMessaging();
     
     setState(() {
       _initialized = true;
@@ -130,16 +284,26 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     if (!_initialized) {
-      return const MaterialApp(
+      return MaterialApp(
         home: Scaffold(
           body: Center(
-            child: CircularProgressIndicator(),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(
+                  'Inicializando aplicación...',
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              ],
+            ),
           ),
         ),
       );
     }
-    NotificationService.setScaffoldMessengerKey(_scaffoldMessengerKey);
-    NotificationService.setNavigatorKey(_navigatorKey);
+    //NotificationService.setScaffoldMessengerKey(_scaffoldMessengerKey);
+    //NotificationService.setNavigatorKey(_navigatorKey);
 
     return MultiProvider(
       providers: [
@@ -157,7 +321,7 @@ class _MyAppState extends State<MyApp> {
         Provider.value(value: _achievementService),
       ],
       child: Consumer2<ThemeProvider, LanguageProvider>(
-        builder: (context, themeProvider, languageProvider, _) {
+        builder: (context, themeProvider, languageProvider, child) {
           return MaterialApp(
             navigatorKey: _navigatorKey,
             scaffoldMessengerKey: _scaffoldMessengerKey,
@@ -176,19 +340,29 @@ class _MyAppState extends State<MyApp> {
               Locale('es', 'ES'),
               Locale('ca', 'ES'),
             ],
+            debugShowCheckedModeBanner: false,
           );
         },
       ),
     );
   }
-
-  @override
-  void dispose() {
-    _socketService.dispose();
-    _locationService.dispose();
-    _activityTrackingProvider.dispose();
-    _chatService.dispose();
-    _notificationService.dispose();
-    super.dispose();
+  // Métodos de navegación para manejar notificaciones
+  void _navigateToFriendRequests() {
+    if (_navigatorKey.currentState != null) {
+      _navigatorKey.currentState!.pushNamed('/friends');
+    }
   }
+
+  void _navigateToActivity(String activityId) {
+    if (_navigatorKey.currentState != null) {
+      _navigatorKey.currentState!.pushNamed('/activity_detail', arguments: activityId);
+    }
+  }
+
+  void _navigateToChat(String roomId) {
+    if (_navigatorKey.currentState != null) {
+      _navigatorKey.currentState!.pushNamed('/chat', arguments: roomId);
+    }
+  }
+
 }

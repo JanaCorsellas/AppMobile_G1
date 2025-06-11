@@ -6,6 +6,7 @@ import 'package:flutter_application_1/models/notification_models.dart';
 import 'package:flutter_application_1/services/http_service.dart';
 import 'package:flutter_application_1/services/socket_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class NotificationService with ChangeNotifier {
   final HttpService _httpService;
@@ -15,177 +16,311 @@ class NotificationService with ChangeNotifier {
   bool _isLoading = false;
   int _unreadCount = 0;
   bool _isInitialized = false;
-
   String? _fcmToken;
-  String? get fcmToken => _fcmToken;
+  
+  // Plugin para notificaciones locales
+  final FlutterLocalNotificationsPlugin _localNotifications = 
+      FlutterLocalNotificationsPlugin();
   
   NotificationService(this._httpService, this._socketService);
   
   List<NotificationModel> get notifications => _notifications;
   bool get isLoading => _isLoading;
   int get unreadCount => _unreadCount;
+  String? get fcmToken => _fcmToken;
 
-  static GlobalKey<ScaffoldMessengerState>? _scaffoldMessengerKey;
-  static GlobalKey<NavigatorState>? _navigatorKey;
-
-  static void setScaffoldMessengerKey(GlobalKey<ScaffoldMessengerState> key) {
-    _scaffoldMessengerKey = key;
-  }
-  static void setNavigatorKey(GlobalKey<NavigatorState> key) {
-    _navigatorKey = key;
-  }
-
-  Future<void> setupFirebaseMessaging() async {
-  // Obtener el token FCM
-    try {
-      _fcmToken = await FirebaseMessaging.instance.getToken();
-      print('FCM Token: $_fcmToken');
+  /// Inicializa el servicio de notificaciones
+  Future<void> initialize(String userId) async {
+    if (_isInitialized) return;
     
-      // Aquí deberías enviar el token a tu servidor
-      if (_fcmToken != null) {
-        await _sendTokenToServer(_fcmToken!);
-      }
+    try {
+      print("Inicializando NotificationService para usuario: $userId");
+      
+      await _initializeLocalNotifications();
+      await _initializeFirebaseMessaging();
+      await _loadCachedNotifications();
+      await fetchNotifications(userId);
+      await _sendFCMTokenToServer(userId);
+      setupSocketNotifications();
+      
+      _isInitialized = true;
+      print("NotificationService inicializado correctamente");
+      
     } catch (e) {
-      print('Error obteniendo FCM token: $e');
+      print("Error inicializando NotificationService: $e");
+    }
+  }
+
+  /// Configura las notificaciones locales
+  Future<void> _initializeLocalNotifications() async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    
+    const DarwinInitializationSettings initializationSettingsIOS =
+        DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+    
+    const InitializationSettings initializationSettings =
+        InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
+    );
+    
+    await _localNotifications.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: _onNotificationTapped,
+    );
+    
+    print("Notificaciones locales inicializadas");
+  }
+
+  /// Maneja cuando el usuario toca una notificación local
+  void _onNotificationTapped(NotificationResponse response) {
+    final payload = response.payload;
+    if (payload != null) {
+      try {
+        final data = json.decode(payload);
+        print("Notificación tocada: ${data['type']}");
+        // El main.dart ya maneja la navegación
+      } catch (e) {
+        print('Error parsing notification payload: $e');
+      }
+    }
+  }
+
+  /// Configura Firebase Messaging
+  Future<void> _initializeFirebaseMessaging() async {
+    try {
+      // Obtener el token FCM
+      _fcmToken = await FirebaseMessaging.instance.getToken();
+      print("🔑 FCM Token obtenido: $_fcmToken");
+
+      // Configurar listeners para mensajes
+      setupFirebaseMessaging();
+      
+      // Escuchar cambios en el token
+      FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+        _fcmToken = newToken;
+        print("FCM Token actualizado: $newToken");
+        _updateFCMTokenOnServer(newToken);
+      });
+      
+    } catch (e) {
+      print("Error configurando Firebase Messaging: $e");
+    }
+  }
+
+  /// Configura listeners de Firebase Messaging
+  void setupFirebaseMessaging() {
+    // Mensajes cuando la app está en primer plano
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print('Mensaje FCM recibido (foreground): ${message.notification?.title}');
+      _showLocalNotification(message);
+      _handleFirebaseFCM(message);
+    });
+
+    // Mensajes cuando la app se abre desde una notificación
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print('Notificación FCM tocada: ${message.notification?.title}');
+      _handleFirebaseFCM(message);
+    });
+  }
+
+  /// Muestra una notificación local cuando la app está en primer plano
+  Future<void> _showLocalNotification(RemoteMessage message) async {
+    final notification = message.notification;
+    if (notification == null) return;
+
+    final type = message.data['type'] as String?;
+    String channelId = 'general';
+    String channelName = 'Notificaciones generales';
+    String channelDescription = 'Notificaciones generales de la aplicación';
+    
+    // Personalizar canal según el tipo de notificación
+    switch (type) {
+      case 'friend_request':
+        channelId = 'friend_requests';
+        channelName = 'Solicitudes de amistad';
+        channelDescription = 'Notificaciones de solicitudes de amistad';
+        break;
+      case 'friend_activity':
+        channelId = 'friend_activities';
+        channelName = 'Actividades de amigos';
+        channelDescription = 'Notificaciones de actividades de amigos';
+        break;
+      case 'activity_comment':
+        channelId = 'activity_interactions';
+        channelName = 'Interacciones de actividad';
+        channelDescription = 'Comentarios y likes en actividades';
+        break;
+      case 'activity_like':
+        channelId = 'activity_interactions';
+        channelName = 'Interacciones de actividad';
+        channelDescription = 'Comentarios y likes en actividades';
+        break;
+      case 'chat_message':
+        channelId = 'chat_messages';
+        channelName = 'Mensajes de chat';
+        channelDescription = 'Notificaciones de mensajes de chat';
+        break;
     }
 
-    // Listeners existentes
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('Received a foreground FCM message: ${message.notification?.title}');
-      _handleFirebaseFCM(message);
-    });
+    final androidDetails = AndroidNotificationDetails(
+      channelId,
+      channelName,
+      channelDescription: channelDescription,
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+      enableVibration: true,
+      playSound: true,
+    );
 
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('FCM notification clicked!');
-      _handleFirebaseFCM(message);
-    });
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
 
-    // Listener para cuando el token se actualiza
-    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
-      print('FCM Token refreshed: $newToken');
-      _fcmToken = newToken;
-      _sendTokenToServer(newToken);
-    });
+    final details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _localNotifications.show(
+      DateTime.now().millisecondsSinceEpoch.remainder(100000),
+      notification.title,
+      notification.body,
+      details,
+      payload: json.encode(message.data),
+    );
   }
 
+  /// Procesa notificaciones FCM y las agrega a la lista
   void _handleFirebaseFCM(RemoteMessage message) {
     final data = message.data;
-    final notificationData = {
+    _handleNewNotification({
       'id': data['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      'type': data['type'] ?? 'chat_message',
-      'title': data['title'] ?? message.notification?.title ?? 'Nuevo mensaje',
+      'type': data['type'] ?? 'general',
+      'title': data['title'] ?? message.notification?.title ?? 'Nueva notificación',
       'message': data['body'] ?? message.notification?.body ?? '',
       'data': data,
       'read': false,
       'createdAt': DateTime.now().toIso8601String(),
-    };
-
-    _handleNewNotification(notificationData);
-
-    _showInAppNotification(
-      title: notificationData['title']!,
-      message: notificationData['message']!,
-      type: notificationData['type']!,
-    );
+    });
   }
-  void _showInAppNotification({
-    required String title,
-    required String message,
-    required String type,
-  }) {
-    if (_scaffoldMessengerKey?.currentState == null) {
-      print('ScaffoldMessenger no disponible, mostrando en consola:');
-      print('$title: $message');
+
+  /// Envía el token FCM al servidor
+  Future<void> _sendFCMTokenToServer(String userId) async {
+    if (_fcmToken == null) {
+      print("⚠️ No hay token FCM para enviar al servidor");
       return;
     }
 
-    _scaffoldMessengerKey!.currentState!.showSnackBar(
-      SnackBar(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                fontSize: 16,
-              ),
-            ),
-            if (message.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                message,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ],
-        ),
-        backgroundColor: _getColorForType(type),
-        duration: const Duration(seconds: 5),
-        action: SnackBarAction(
-          label: 'Ver',
-          textColor: Colors.white,
-          onPressed: () {
-            if (_navigatorKey?.currentState != null) {
-              _navigatorKey!.currentState!.pushNamed('/notifications');
-            } else {
-              print('Navigator no disponible');
-            }
-          },
-        ),
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ),
-    );
-  }
-
-  Color _getColorForType(String type) {
-    switch (type) {
-      case 'chat_message':
-        return Colors.teal;
-      case 'friend_request':
-        return Colors.blue;
-      case 'achievement_unlocked':
-        return Colors.amber;
-      case 'challenge_completed':
-        return Colors.green;
-      default:
-        return Colors.deepPurple;
+    try {
+      final response = await _httpService.post(
+        '${ApiConstants.baseUrl}/api/users/$userId/fcm-token',
+        body: {
+          'fcmToken': _fcmToken,
+        },
+      );
+      
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        print('Token FCM enviado al servidor correctamente');
+      } else {
+        print('Error enviando token FCM: ${response.statusCode}');
+        print('Respuesta del servidor: ${response.body}');
+      }
+    } catch (e) {
+      print('Error enviando token FCM al servidor: $e');
     }
   }
 
-  IconData _getIconForType(String type) {
-    switch (type) {
-      case 'chat_message':
-        return Icons.chat;
-      case 'friend_request':
-        return Icons.person_add;
-      case 'achievement_unlocked':
-        return Icons.emoji_events;
-      case 'challenge_completed':
-        return Icons.flag;
-      default:
-        return Icons.notifications;
+  /// Actualiza el token FCM en el servidor cuando se renueva
+  Future<void> _updateFCMTokenOnServer(String newToken) async {
+    try {
+      final response = await _httpService.put(
+        '${ApiConstants.baseUrl}/api/users/fcm-token',
+        body: {
+          'fcmToken': newToken,
+        },
+      );
+      
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        print('Token FCM actualizado en servidor');
+      } else {
+        print('Error actualizando token FCM: ${response.statusCode}');
+        print('Respuesta del servidor: ${response.body}');
+      }
+    } catch (e) {
+      print('Error actualizando token FCM en servidor: $e');
     }
   }
-  
-  Future<void> initialize(String userId) async {
-    if (_isInitialized) return;
-    
-    await _loadCachedNotifications();
-    await fetchNotifications(userId);
-    
-    _isInitialized = true;
+
+  /// Envía una notificación de prueba (para testing)
+  Future<bool> sendTestNotification(String userId) async {
+    try {
+      final response = await _httpService.post(
+        '${ApiConstants.baseUrl}/api/users/$userId/test-notification',
+        body: {
+          'title': 'Notificación de prueba',
+          'body': 'Esta es una notificación de prueba desde la app',
+          'type': 'test'
+        },
+      );
+      
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        print('Notificación de prueba enviada correctamente');
+        return true;
+      } else {
+        print('Error enviando notificación de prueba: ${response.statusCode}');
+        print('Respuesta: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Error enviando notificación de prueba: $e');
+      return false;
+    }
   }
-  
+
+  /// Maneja nuevas notificaciones y las agrega a la lista
+  void _handleNewNotification(Map<String, dynamic> notificationData) {
+    try {
+      final notification = NotificationModel.fromJson(notificationData);
+      
+      // Verificar si ya existe para evitar duplicados
+      final existingIndex = _notifications.indexWhere((n) => n.id == notification.id);
+      if (existingIndex != -1) {
+        print("Notificación duplicada ignorada: ${notification.id}");
+        return;
+      }
+      
+      // Agregar al inicio de la lista
+      _notifications.insert(0, notification);
+      
+      // Incrementar contador de no leídas
+      if (!notification.read) {
+        _unreadCount++;
+      }
+      
+      // Limitar el número de notificaciones en memoria
+      if (_notifications.length > 100) {
+        _notifications = _notifications.take(100).toList();
+      }
+      
+      _saveNotificationsToCache();
+      notifyListeners();
+      
+      print("Nueva notificación agregada: ${notification.title}");
+    } catch (e) {
+      print('Error manejando nueva notificación: $e');
+    }
+  }
+
+  /// Obtiene notificaciones del servidor
   Future<void> fetchNotifications(String userId, {bool onlyUnread = false, int page = 1, int limit = 20}) async {
     if (userId.isEmpty) return;
     
@@ -193,7 +328,7 @@ class NotificationService with ChangeNotifier {
     notifyListeners();
     
     try {
-      final uri = Uri.parse(ApiConstants.notifications(userId)).replace(
+      final uri = Uri.parse('${ApiConstants.baseUrl}/api/notifications/$userId').replace(
         queryParameters: {
           'unread': onlyUnread.toString(),
           'page': page.toString(),
@@ -208,36 +343,78 @@ class NotificationService with ChangeNotifier {
         _notifications = [];
       }
       
-      if (data is List) {
+      if (data is Map && data['notifications'] is List) {
+        final notificationsList = data['notifications'] as List;
+        for (var item in notificationsList) {
+          final notification = NotificationModel.fromJson(item);
+          _notifications.add(notification);
+        }
+        _unreadCount = data['unreadCount'] ?? 0;
+      } else if (data is List) {
         for (var item in data) {
           final notification = NotificationModel.fromJson(item);
           _notifications.add(notification);
         }
+        _unreadCount = _notifications.where((n) => !n.read).length;
       }
       
-      //_unreadCount = data['unread'] ?? 0;
       await _saveNotificationsToCache();
+      print("${_notifications.length} notificaciones cargadas del servidor");
       
     } catch (e) {
-      print('Error fetching notifications: $e');
+      print('Error obteniendo notificaciones: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
-  
+
+  /// Marca una notificación como leída
   Future<bool> markAsRead(String notificationId) async {
     try {
       final response = await _httpService.put(
-        ApiConstants.markNotificationRead(notificationId)
+        '${ApiConstants.baseUrl}/api/notifications/$notificationId/read'
       );
       
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final index = _notifications.indexWhere((n) => n.id == notificationId);
-        if (index != -1) {
+        if (index != -1 && !_notifications[index].read) {
           final notification = _notifications[index];
-          if (!notification.read) {
-            final updatedNotification = NotificationModel(
+          _notifications[index] = NotificationModel(
+            id: notification.id,
+            type: notification.type,
+            title: notification.title,
+            message: notification.message,
+            data: notification.data,
+            read: true,
+            createdAt: notification.createdAt,
+          );
+          
+          _unreadCount = (_unreadCount - 1).clamp(0, double.infinity).toInt();
+          await _saveNotificationsToCache();
+          notifyListeners();
+        }
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('Error marcando notificación como leída: $e');
+      return false;
+    }
+  }
+
+  /// Marca todas las notificaciones como leídas
+  Future<bool> markAllAsRead(String userId) async {
+    try {
+      final response = await _httpService.put(
+        '${ApiConstants.baseUrl}/api/notifications/$userId/read-all'
+      );
+      
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        for (int i = 0; i < _notifications.length; i++) {
+          if (!_notifications[i].read) {
+            final notification = _notifications[i];
+            _notifications[i] = NotificationModel(
               id: notification.id,
               type: notification.type,
               title: notification.title,
@@ -246,41 +423,8 @@ class NotificationService with ChangeNotifier {
               read: true,
               createdAt: notification.createdAt,
             );
-            
-            _notifications[index] = updatedNotification;
-            _unreadCount = _unreadCount > 0 ? _unreadCount - 1 : 0;
-            await _saveNotificationsToCache();
-            notifyListeners();
           }
         }
-        return true;
-      }
-      return false;
-    } catch (e) {
-      print('Error marking notification as read: $e');
-      return false;
-    }
-  }
-  
-  Future<bool> markAllAsRead(String userId) async {
-    try {
-      final response = await _httpService.put(
-        ApiConstants.markAllNotificationsRead(userId)
-      );
-      
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        _notifications = _notifications.map((notification) => 
-          NotificationModel(
-            id: notification.id,
-            type: notification.type,
-            title: notification.title,
-            message: notification.message,
-            data: notification.data,
-            read: true,
-            createdAt: notification.createdAt,
-          )
-        ).toList();
-        
         _unreadCount = 0;
         await _saveNotificationsToCache();
         notifyListeners();
@@ -288,27 +432,25 @@ class NotificationService with ChangeNotifier {
       }
       return false;
     } catch (e) {
-      print('Error marking all notifications as read: $e');
+      print('Error marcando todas las notificaciones como leídas: $e');
       return false;
     }
   }
-  
+
+  /// Elimina una notificación
   Future<bool> deleteNotification(String notificationId) async {
     try {
       final response = await _httpService.delete(
-        ApiConstants.deleteNotification(notificationId)
+        '${ApiConstants.baseUrl}/api/notifications/$notificationId'
       );
       
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final index = _notifications.indexWhere((n) => n.id == notificationId);
         if (index != -1) {
-          final wasUnread = !_notifications[index].read;
-          _notifications.removeAt(index);
-          
-          if (wasUnread) {
-            _unreadCount = _unreadCount > 0 ? _unreadCount - 1 : 0;
+          if (!_notifications[index].read) {
+            _unreadCount = (_unreadCount - 1).clamp(0, double.infinity).toInt();
           }
-          
+          _notifications.removeAt(index);
           await _saveNotificationsToCache();
           notifyListeners();
         }
@@ -316,73 +458,76 @@ class NotificationService with ChangeNotifier {
       }
       return false;
     } catch (e) {
-      print('Error deleting notification: $e');
+      print('Error eliminando notificación: $e');
       return false;
     }
   }
-  
-  void _handleNewNotification(dynamic data) {
-    try {
-      if (data == null) return;
-      
-      final Map<String, dynamic> notificationData = 
-          data is Map<String, dynamic> ? data : json.decode(json.encode(data));
-      
-      if (!notificationData.containsKey('_id') && !notificationData.containsKey('id')) {
-        notificationData['id'] = DateTime.now().millisecondsSinceEpoch.toString();
-      }
-      
-      final notification = NotificationModel.fromJson(notificationData);
-      _notifications.insert(0, notification);
-      
-      if (!notification.read) {
-        _unreadCount++;
-      }
-      
-      _saveNotificationsToCache();
-      notifyListeners();
-    } catch (e) {
-      print('Error handling new notification: $e');
-    }
-  }
-  
+
+  /// Guarda notificaciones en caché local
   Future<void> _saveNotificationsToCache() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final notificationsJson = json.encode(
-        _notifications.map((notification) => notification.toJson()).toList(),
-      );
-      await prefs.setString('cached_notifications', notificationsJson);
+      final notificationsJson = _notifications.map((n) => n.toJson()).toList();
+      await prefs.setString('cached_notifications', json.encode(notificationsJson));
+      await prefs.setInt('unread_count', _unreadCount);
     } catch (e) {
-      print('Error saving notifications to cache: $e');
+      print('Error guardando notificaciones en caché: $e');
     }
   }
 
+  /// Carga notificaciones desde caché local
   Future<void> _loadCachedNotifications() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final cachedData = prefs.getString('cached_notifications');
+      final cachedUnreadCount = prefs.getInt('unread_count') ?? 0;
       
       if (cachedData != null) {
         final List<dynamic> notificationsJson = json.decode(cachedData);
         _notifications = notificationsJson
-            .map((item) => NotificationModel.fromJson(item))
+            .map((json) => NotificationModel.fromJson(json))
             .toList();
-        _unreadCount = _notifications.where((n) => !n.read).length;
+        _unreadCount = cachedUnreadCount;
         notifyListeners();
+        print("${_notifications.length} notificaciones cargadas desde caché");
       }
     } catch (e) {
-      print('Error loading cached notifications: $e');
+      print('Error cargando notificaciones desde caché: $e');
     }
   }
 
+  /// Configura escucha de notificaciones en tiempo real vía Socket
+  void setupSocketNotifications() {
+    _socketService.socket?.on('new_notification', (data) {
+      print('Notificación recibida vía socket: $data');
+      _handleNewNotification(data);
+    });
+    
+    _socketService.socket?.on('notification_deleted', (data) {
+      if (data['notificationId'] != null) {
+        final notificationId = data['notificationId'].toString();
+        final index = _notifications.indexWhere((n) => n.id == notificationId);
+        if (index != -1) {
+          if (!_notifications[index].read) {
+            _unreadCount = (_unreadCount - 1).clamp(0, double.infinity).toInt();
+          }
+          _notifications.removeAt(index);
+          _saveNotificationsToCache();
+          notifyListeners();
+        }
+      }
+    });
+  }
+
+  /// Limpia todas las notificaciones
   void clearNotifications() {
-    _notifications = [];
+    _notifications.clear();
     _unreadCount = 0;
     _saveNotificationsToCache();
     notifyListeners();
   }
-  
+
+  /// Obtiene una notificación por ID
   NotificationModel? getNotificationById(String id) {
     try {
       return _notifications.firstWhere((n) => n.id == id);
@@ -390,41 +535,18 @@ class NotificationService with ChangeNotifier {
       return null;
     }
   }
-  
+
+  /// Verifica si una notificación requiere acción del usuario
   bool notificationRequiresAction(NotificationModel notification) {
     return notification.type == 'friend_request' || 
            notification.type == 'challenge_invitation';
   }
 
-  Future<void> _sendTokenToServer(String token) async {
-  try {
-    // Por ahora solo imprimir, luego configurar la ruta del servidor
-    print('Enviando FCM token al servidor: $token');
-    
-    // TODO: Descomentar cuando tengas la ruta en tu API
-    /*
-    final response = await _httpService.post(
-      ApiConstants.updateFcmToken, // Crear esta ruta en api_constants.dart
-      body: {
-        'fcmToken': token,
-        'platform': 'web',
-      },
-    );
-    
-    if (response.statusCode == 200) {
-      print('FCM Token enviado al servidor exitosamente');
-    } else {
-      print('Error enviando FCM token al servidor: ${response.statusCode}');
-    }
-    */
-  } catch (e) {
-    print('Error enviando FCM token: $e');
-  }
-}
-  
   @override
   void dispose() {
-    _socketService.socket.off('new_notification');
+    _localNotifications.cancelAll();
+    _socketService.socket?.off('new_notification');
+    _socketService.socket?.off('notification_deleted');
     super.dispose();
   }
 }
