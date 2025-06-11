@@ -15,6 +15,9 @@ class NotificationService with ChangeNotifier {
   bool _isLoading = false;
   int _unreadCount = 0;
   bool _isInitialized = false;
+
+  String? _fcmToken;
+  String? get fcmToken => _fcmToken;
   
   NotificationService(this._httpService, this._socketService);
   
@@ -22,8 +25,21 @@ class NotificationService with ChangeNotifier {
   bool get isLoading => _isLoading;
   int get unreadCount => _unreadCount;
   
+  Future<void> setupFirebaseMessaging() async {
+  // Obtener el token FCM
+    try {
+      _fcmToken = await FirebaseMessaging.instance.getToken();
+      print('FCM Token: $_fcmToken');
+    
+      // Aquí deberías enviar el token a tu servidor
+      if (_fcmToken != null) {
+        await _sendTokenToServer(_fcmToken!);
+      }
+    } catch (e) {
+      print('Error obteniendo FCM token: $e');
+    }
 
-  void setupFirebaseMessaging() {
+    // Listeners existentes
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print('Received a foreground FCM message: ${message.notification?.title}');
       _handleFirebaseFCM(message);
@@ -32,6 +48,13 @@ class NotificationService with ChangeNotifier {
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       print('FCM notification clicked!');
       _handleFirebaseFCM(message);
+    });
+
+    // Listener para cuando el token se actualiza
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+      print('FCM Token refreshed: $newToken');
+      _fcmToken = newToken;
+      _sendTokenToServer(newToken);
     });
   }
 
@@ -266,6 +289,32 @@ class NotificationService with ChangeNotifier {
     return notification.type == 'friend_request' || 
            notification.type == 'challenge_invitation';
   }
+
+  Future<void> _sendTokenToServer(String token) async {
+  try {
+    // Por ahora solo imprimir, luego configurar la ruta del servidor
+    print('Enviando FCM token al servidor: $token');
+    
+    // TODO: Descomentar cuando tengas la ruta en tu API
+    /*
+    final response = await _httpService.post(
+      ApiConstants.updateFcmToken, // Crear esta ruta en api_constants.dart
+      body: {
+        'fcmToken': token,
+        'platform': 'web',
+      },
+    );
+    
+    if (response.statusCode == 200) {
+      print('FCM Token enviado al servidor exitosamente');
+    } else {
+      print('Error enviando FCM token al servidor: ${response.statusCode}');
+    }
+    */
+  } catch (e) {
+    print('Error enviando FCM token: $e');
+  }
+}
   
   @override
   void dispose() {

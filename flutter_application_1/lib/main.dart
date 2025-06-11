@@ -118,7 +118,7 @@ class _MyAppState extends State<MyApp> {
         await _notificationService.initialize(_authService.currentUser!.id);
       }
     }
-    _notificationService.setupFirebaseMessaging();
+    await _notificationService.setupFirebaseMessaging();
     
     setState(() {
       _initialized = true;
