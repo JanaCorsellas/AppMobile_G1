@@ -1,4 +1,4 @@
-// lib/screens/activity/following_activities_screen.dart - CORREGIDO
+// lib/screens/activity/following_activities_screen.dart - VERSIÓN MEJORADA CON BRANDING TRAZER
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/widgets/custom_drawer.dart';
@@ -18,10 +18,11 @@ class FollowingActivitiesScreen extends StatefulWidget {
   _FollowingActivitiesScreenState createState() => _FollowingActivitiesScreenState();
 }
 
-class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen> {
+class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen> 
+    with TickerProviderStateMixin {
   late ActivityService _activityService;
   List<Activity> _activities = [];
-  Map<String, Map<String, dynamic>> _userDataMap = {}; // ✅ NUEVO: Mapa de datos de usuario
+  Map<String, Map<String, dynamic>> _userDataMap = {};
   bool _isLoading = true;
   bool _isLoadingMore = false;
   String _errorMessage = '';
@@ -29,10 +30,43 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen> {
   bool _hasMore = true;
   int _followingCount = 0;
   final ScrollController _scrollController = ScrollController();
+  
+  // Animaciones
+  late AnimationController _fadeController;
+  late AnimationController _listController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
+    
+    // Inicializar animaciones
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _listController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeInOut,
+    ));
+    
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _listController,
+      curve: Curves.easeOutBack,
+    ));
+    
     _activityService = ActivityService(Provider.of<HttpService>(context, listen: false));
     _loadFollowingActivities();
     _scrollController.addListener(_onScroll);
@@ -41,7 +75,16 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _fadeController.dispose();
+    _listController.dispose();
     super.dispose();
+  }
+
+  void _startAnimations() {
+    _fadeController.forward();
+    Future.delayed(const Duration(milliseconds: 200), () {
+      _listController.forward();
+    });
   }
 
   void _onScroll() {
@@ -63,7 +106,7 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen> {
       final currentUser = authService.currentUser;
 
       if (currentUser == null) {
-        throw Exception('Usuario no autenticado');
+        throw Exception('no_auth_user'.tr(context));
       }
 
       final result = await _activityService.getFollowingActivities(
@@ -72,7 +115,6 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen> {
         limit: 10,
       );
 
-      // ✅ DEBUG: Ver qué datos estamos recibiendo
       print('🎯 Received ${result['activities']?.length ?? 0} activities');
       print('🎯 UserDataMap keys: ${result['userDataMap']?.keys.toList() ?? []}');
       if (result['userDataMap'] != null) {
@@ -84,12 +126,13 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen> {
       if (mounted) {
         setState(() {
           _activities = result['activities'] ?? [];
-          _userDataMap = result['userDataMap'] ?? {}; // ✅ NUEVO: Guardar datos de usuario
+          _userDataMap = result['userDataMap'] ?? {};
           _hasMore = result['hasMore'] ?? false;
           _followingCount = result['followingCount'] ?? 0;
           _currentPage = 1;
           _isLoading = false;
         });
+        _startAnimations();
       }
     } catch (e) {
       if (mounted) {
@@ -123,7 +166,6 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen> {
       if (mounted) {
         setState(() {
           _activities.addAll(result['activities'] ?? []);
-          // ✅ NUEVO: Combinar mapas de datos de usuario
           final newUserDataMap = result['userDataMap'] ?? <String, Map<String, dynamic>>{};
           _userDataMap.addAll(newUserDataMap);
           _hasMore = result['hasMore'] ?? false;
@@ -158,9 +200,9 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen> {
     final minutes = durationMinutes % 60;
     
     if (hours > 0) {
-      return '${hours}h ${minutes}m';
+      return '${hours}${'hours'.tr(context)} ${minutes}${'min'.tr(context)}';
     } else {
-      return '${minutes}m';
+      return '${minutes}${'min'.tr(context)}';
     }
   }
 
@@ -175,11 +217,11 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen> {
   Color _getActivityTypeColor(ActivityType type) {
     switch (type) {
       case ActivityType.running:
-        return Colors.orange;
+        return Colors.green;
       case ActivityType.cycling:
         return Colors.blue;
       case ActivityType.hiking:
-        return Colors.green;
+        return Colors.orange;
       case ActivityType.walking:
         return Colors.purple;
       default:
@@ -194,7 +236,7 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen> {
       case ActivityType.cycling:
         return Icons.directions_bike;
       case ActivityType.hiking:
-        return Icons.hiking;
+        return Icons.terrain;
       case ActivityType.walking:
         return Icons.directions_walk;
       default:
@@ -205,31 +247,27 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen> {
   String _getActivityTypeString(ActivityType type) {
     switch (type) {
       case ActivityType.running:
-        return 'RUNNING';
+        return 'running_caps'.tr(context);
       case ActivityType.cycling:
-        return 'CYCLING';
+        return 'cycling_caps'.tr(context);
       case ActivityType.hiking:
-        return 'HIKING';
+        return 'hiking_caps'.tr(context);
       case ActivityType.walking:
-        return 'WALKING';
+        return 'walking_caps'.tr(context);
       default:
-        return 'ACTIVITY';
+        return 'activity_caps'.tr(context);
     }
   }
 
-  // ✅ Helpers para manejar información de usuario con campos existentes
   String _getUserDisplayName(Activity activity) {
-    // Primero intentar obtener el nombre de los datos adicionales
     final userData = _userDataMap[activity.id];
     if (userData != null && userData['username'] != null) {
       return userData['username'] as String;
     }
-    // Fallback al campo original
-    return activity.authorName ?? 'Unknown User';
+    return activity.authorName ?? 'user'.tr(context);
   }
 
   String? _getUserProfilePicture(Activity activity) {
-    // ✅ AHORA SÍ: Obtener la imagen de perfil real de los datos del backend
     final userData = _userDataMap[activity.id];
     if (userData != null && userData['profilePicture'] != null) {
       final profilePicture = userData['profilePicture'] as String?;
@@ -245,28 +283,27 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen> {
     final initial = displayName.isNotEmpty ? displayName.substring(0, 1).toUpperCase() : 'U';
     final profilePicture = _getUserProfilePicture(activity);
     
-    // ✅ DEBUG: Mostrar información sobre la imagen
     print('🖼️ Building avatar for ${displayName}: profilePicture = $profilePicture');
     
     return Container(
-      width: 40,
-      height: 40,
+      width: 48,
+      height: 48,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: Colors.grey[300]!,
-          width: 1.5,
+          color: const Color(0xFF667eea).withOpacity(0.3),
+          width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: const Color(0xFF667eea).withOpacity(0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         child: profilePicture != null && profilePicture.isNotEmpty
             ? Image.network(
                 profilePicture,
@@ -274,15 +311,22 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen> {
                 loadingBuilder: (context, child, loadingProgress) {
                   if (loadingProgress == null) return child;
                   return Container(
-                    color: Colors.grey[200],
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.grey[200]!,
+                          Colors.grey[300]!,
+                        ],
+                      ),
+                    ),
                     child: Center(
                       child: SizedBox(
-                        width: 16,
-                        height: 16,
+                        width: 20,
+                        height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.grey[400]!,
+                            const Color(0xFF667eea),
                           ),
                         ),
                       ),
@@ -292,12 +336,19 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen> {
                 errorBuilder: (context, error, stackTrace) {
                   print('❌ Error loading image $profilePicture: $error');
                   return Container(
-                    color: _getAvatarBackgroundColor(displayName),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          _getAvatarBackgroundColor(displayName),
+                          _getAvatarBackgroundColor(displayName).withOpacity(0.8),
+                        ],
+                      ),
+                    ),
                     child: Center(
                       child: Text(
                         initial,
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
@@ -307,12 +358,19 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen> {
                 },
               )
             : Container(
-                color: _getAvatarBackgroundColor(displayName),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      _getAvatarBackgroundColor(displayName),
+                      _getAvatarBackgroundColor(displayName).withOpacity(0.8),
+                    ],
+                  ),
+                ),
                 child: Center(
                   child: Text(
                     initial,
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -323,19 +381,18 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen> {
     );
   }
 
-  // ✅ Colores de avatar basados en el nombre para mayor variedad visual
   Color _getAvatarBackgroundColor(String name) {
     final colors = [
-      const Color(0xFF6B73FF), // Azul
-      const Color(0xFF9C88FF), // Púrpura
-      const Color(0xFFFF8A80), // Rosa
-      const Color(0xFF81C784), // Verde
-      const Color(0xFFFFB74D), // Naranja
-      const Color(0xFF64B5F6), // Azul claro
-      const Color(0xFFAED581), // Verde claro
-      const Color(0xFFFFD54F), // Amarillo
-      const Color(0xFFE57373), // Rojo claro
-      const Color(0xFFBA68C8), // Púrpura claro
+      const Color(0xFF667eea), // Azul TRAZER
+      const Color(0xFF764ba2), // Púrpura TRAZER
+      const Color(0xFF8b5cf6), // Violeta
+      const Color(0xFF06b6d4), // Cyan
+      const Color(0xFF10b981), // Esmeralda
+      const Color(0xFFf59e0b), // Ámbar
+      const Color(0xFFef4444), // Rojo
+      const Color(0xFFec4899), // Rosa
+      const Color(0xFF8b5cf6), // Violeta
+      const Color(0xFF6366f1), // Índigo
     ];
     
     final hash = name.hashCode.abs();
@@ -345,110 +402,202 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('activities_feed'.tr(context)),
-        backgroundColor: const Color.fromARGB(255, 21, 95, 51),
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _refreshActivities,
+      drawer: CustomDrawer(currentRoute: AppRoutes.followingActivities),
+      body: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          // AppBar moderna con gradiente TRAZER
+          SliverAppBar(
+            expandedHeight: 120,
+            floating: false,
+            pinned: true,
+            elevation: 0,
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF667eea),
+                      Color(0xFF764ba2),
+                    ],
+                  ),
+                ),
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 20),
+                        FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: Text(
+                            'friends_activities'.tr(context),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        FadeTransition(
+                          opacity: _fadeAnimation,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh, color: Colors.white),
+                onPressed: _refreshActivities,
+              ),
+            ],
+          ),
+          
+          // Contenido principal
+          SliverToBoxAdapter(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: _buildBody(),
+            ),
           ),
         ],
       ),
-      drawer: CustomDrawer(currentRoute: AppRoutes.followingActivities),
-      body: _buildBody(),
     );
   }
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
+      return Container(
+        height: 400,
+        child: const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF667eea)),
+          ),
+        ),
       );
     }
 
     if (_errorMessage.isNotEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red[300],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Error: $_errorMessage',
-              style: const TextStyle(fontSize: 16),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _refreshActivities,
-              child: Text('retry'.tr(context)),
-            ),
-          ],
-        ),
-      );
+      return _buildErrorView();
     }
 
     if (_activities.isEmpty) {
       return _buildEmptyState();
     }
 
-    return RefreshIndicator(
-      onRefresh: _refreshActivities,
-      child: Column(
-        children: [
-          // Header con información de seguidos
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            color: Colors.grey[100],
-            child: Row(
-              children: [
-                Icon(Icons.people, color: Colors.blue),
-                const SizedBox(width: 8),
-                Text(
-                  'following_count'.tr(context).replaceFirst('{count}', _followingCount.toString()),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const Spacer(),
-                if (_activities.isNotEmpty)
-                  Text(
-                    'activities_found'.tr(context).replaceFirst('{count}', _activities.length.toString()),
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
+    return Column(
+      children: [
+        // Header con información de seguidos mejorado
+        _buildStatsHeader(),
+        
+        // Lista de actividades
+        SlideTransition(
+          position: _slideAnimation,
+          child: ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+            itemCount: _activities.length + (_isLoadingMore ? 1 : 0),
+            itemBuilder: (context, index) {
+              if (index == _activities.length) {
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF667eea)),
                     ),
                   ),
+                );
+              }
+
+              final activity = _activities[index];
+              return AnimatedContainer(
+                duration: Duration(milliseconds: 300 + (index * 100)),
+                curve: Curves.easeOutBack,
+                child: _buildActivityCard(activity),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatsHeader() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 2,
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF667eea).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.people,
+              color: Color(0xFF667eea),
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'following_people_count'.trParams(context, {'count': _followingCount.toString()}),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'activities_found'.trParams(context, {'count': _activities.length.toString()}),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
               ],
             ),
           ),
-          // Lista de actividades
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(8),
-              itemCount: _activities.length + (_isLoadingMore ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index == _activities.length) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
-                }
-
-                final activity = _activities[index];
-                return _buildActivityCard(activity);
-              },
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+              ),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '${_activities.length}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
           ),
         ],
@@ -457,45 +606,145 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen> {
   }
 
   Widget _buildEmptyState() {
-    return Center(
+    return Container(
+      height: 500,
+      padding: const EdgeInsets.all(32),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.people_outline,
-            size: 64,
-            color: Colors.grey[400],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'no_following_activities'.tr(context),
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+              ),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF667eea).withOpacity(0.3),
+                  spreadRadius: 2,
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ],
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _followingCount == 0 
-                ? 'not_following_anyone'.tr(context)
-                : 'following_no_activities'.tr(context),
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
+            child: const Icon(
+              Icons.people_outline,
+              size: 64,
+              color: Colors.white,
             ),
-            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
+          Text(
+            'feed_empty'.tr(context),
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _followingCount == 0 
+                ? 'not_following_anyone_yet'.tr(context)
+                : 'people_no_activities'.tr(context),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 32),
+          Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+              ),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF667eea).withOpacity(0.3),
+                  spreadRadius: 1,
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pushNamed(context, AppRoutes.userProfile);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+              ),
+              icon: const Icon(Icons.person_add, color: Colors.white),
+              label: Text(
+                'find_users'.tr(context),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorView() {
+    return Container(
+      height: 400,
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.red.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.error_outline,
+              size: 64,
+              color: Colors.red,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'error_loading_activities'.tr(context),
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.red,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _errorMessage,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 32),
           ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pushNamed(context, AppRoutes.userProfile);
-            },
-            icon: const Icon(Icons.person_add),
-            label: Text('find_users'.tr(context)),
+            onPressed: _refreshActivities,
+            icon: const Icon(Icons.refresh),
+            label: Text('retry'.tr(context)),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 21, 95, 51),
+              backgroundColor: Colors.red,
               foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
         ],
@@ -508,38 +757,35 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen> {
     final typeIcon = _getActivityTypeIcon(activity.type);
     final typeString = _getActivityTypeString(activity.type);
     
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      elevation: 3,
-      shadowColor: Colors.black.withOpacity(0.1),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: InkWell(
-        onTap: () => _navigateToActivityDetail(activity),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.white,
-                Colors.grey[50]!,
-              ],
-            ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: typeColor.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _navigateToActivityDetail(activity),
+          borderRadius: BorderRadius.circular(20),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header con usuario
+                // Header con usuario mejorado
                 Row(
                   children: [
                     _buildUserAvatar(activity),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -548,24 +794,24 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen> {
                             _getUserDisplayName(activity),
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 15,
+                              fontSize: 18,
                               color: Color(0xFF2C3E50),
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 4),
                           Row(
                             children: [
                               Icon(
                                 Icons.access_time,
-                                size: 12,
+                                size: 14,
                                 color: Colors.grey[600],
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 6),
                               Text(
-                                DateFormat('MMM d, y • HH:mm').format(activity.startTime),
+                                _formatRelativeTime(activity.startTime),
                                 style: TextStyle(
                                   color: Colors.grey[600],
-                                  fontSize: 12,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -574,84 +820,81 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen> {
                         ],
                       ),
                     ),
-                    // ✅ Agregar un indicador del tipo de actividad en el header
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: _getActivityTypeColor(activity.type).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        color: typeColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
-                        _getActivityTypeIcon(activity.type),
-                        size: 16,
-                        color: _getActivityTypeColor(activity.type),
+                        typeIcon,
+                        size: 20,
+                        color: typeColor,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
                 
-                // Nombre de la actividad con mejor diseño
+                // Nombre de la actividad con diseño mejorado
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: typeColor.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(10),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        typeColor.withOpacity(0.08),
+                        typeColor.withOpacity(0.04),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: typeColor.withOpacity(0.2),
                       width: 1,
                     ),
                   ),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: typeColor.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Icon(
-                          typeIcon, 
-                          color: typeColor, 
-                          size: 16,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: typeColor.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
                               typeString,
                               style: TextStyle(
                                 color: typeColor,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 11,
+                                fontSize: 10,
                                 letterSpacing: 0.5,
                               ),
                             ),
-                            Text(
-                              activity.name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 15,
-                                color: Color(0xFF2C3E50),
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        activity.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: Color(0xFF2C3E50),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
                 
-                // Stats mejoradas con mejor diseño
+                // Estadísticas mejoradas
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.grey[50],
                     borderRadius: BorderRadius.circular(12),
@@ -665,36 +908,36 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen> {
                       Expanded(
                         child: _buildEnhancedStatChip(
                           Icons.straighten,
-                          'Distancia',
+                          'distance'.tr(context),
                           _formatDistance(activity.distance),
-                          Colors.blue,
+                          const Color(0xFF667eea),
                         ),
                       ),
                       Container(
                         width: 1,
-                        height: 30,
+                        height: 40,
                         color: Colors.grey[300],
-                        margin: const EdgeInsets.symmetric(horizontal: 8),
+                        margin: const EdgeInsets.symmetric(horizontal: 12),
                       ),
                       Expanded(
                         child: _buildEnhancedStatChip(
                           Icons.timer,
-                          'Tiempo',
+                          'time'.tr(context),
                           _formatDuration(activity.duration),
-                          Colors.orange,
+                          const Color(0xFF764ba2),
                         ),
                       ),
                       if (activity.averageSpeed > 0) ...[
                         Container(
                           width: 1,
-                          height: 30,
+                          height: 40,
                           color: Colors.grey[300],
-                          margin: const EdgeInsets.symmetric(horizontal: 8),
+                          margin: const EdgeInsets.symmetric(horizontal: 12),
                         ),
                         Expanded(
                           child: _buildEnhancedStatChip(
                             Icons.speed,
-                            'Velocidad',
+                            'speed'.tr(context),
                             '${activity.averageSpeed.toStringAsFixed(1)} km/h',
                             Colors.green,
                           ),
@@ -711,26 +954,33 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen> {
     );
   }
 
-  // ✅ Nuevo widget para estadísticas mejoradas
   Widget _buildEnhancedStatChip(IconData icon, String label, String value, Color color) {
     return Column(
       children: [
-        Icon(icon, color: color, size: 18),
-        const SizedBox(height: 2),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        const SizedBox(height: 8),
         Text(
           value,
           style: TextStyle(
             color: color,
             fontWeight: FontWeight.bold,
-            fontSize: 13,
+            fontSize: 14,
           ),
           textAlign: TextAlign.center,
         ),
+        const SizedBox(height: 2),
         Text(
           label,
           style: TextStyle(
             color: Colors.grey[600],
-            fontSize: 10,
+            fontSize: 11,
             fontWeight: FontWeight.w500,
           ),
           textAlign: TextAlign.center,
@@ -739,28 +989,24 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen> {
     );
   }
 
-  Widget _buildStatChip(IconData icon, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color, size: 14),
-          const SizedBox(width: 4),
-          Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
-    );
+  String _formatRelativeTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+    
+    if (difference.inDays > 0) {
+      if (difference.inDays == 1) {
+        return 'yesterday'.tr(context);
+      } else if (difference.inDays < 7) {
+        return '${difference.inDays} ${'days_ago'.tr(context)}';
+      } else {
+        return DateFormat('dd/MM/yyyy').format(dateTime);
+      }
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}${'hours'.tr(context)} ${'ago'.tr(context)}';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}${'min'.tr(context)} ${'ago'.tr(context)}';
+    } else {
+      return 'now'.tr(context);
+    }
   }
 }
