@@ -162,107 +162,147 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: const CustomDrawer(currentRoute: AppRoutes.notifications),
-      appBar: AppBar(
-        title: Text('notifications_title'.tr(context)),
-         bottom: _isRefreshing 
-        ? const PreferredSize(
-            preferredSize: Size.fromHeight(2.0),
-            child: LinearProgressIndicator(),
-          )
-        : null,
-        actions: [
-          // Mark all as read button
-          Consumer<NotificationService>(
-            builder: (context, notificationService, child) {
-              if (notificationService.unreadCount > 0) {
-                return IconButton(
-                  icon: const Icon(Icons.done_all),
-                  tooltip: 'mark_all_read'.tr(context),
-                  onPressed: _markAllAsRead,
-                );
-              }
-              return const SizedBox.shrink();
-            },
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 120,
+            floating: false,
+            pinned: true,
+            elevation: 0,
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF667eea),
+                      Color(0xFF764ba2),
+                    ],
+                  ),
+                ),
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 20),
+                        Text(
+                          'Notificaciones'.tr(context),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Tus notificaciones'.tr(context),
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            actions: [
+              Consumer<NotificationService>(
+                builder: (context, notificationService, child) {
+                  if (notificationService.unreadCount > 0) {
+                    return IconButton(
+                      icon: const Icon(Icons.done_all, color: Colors.white),
+                      tooltip: 'mark_all_read'.tr(context),
+                      onPressed: _markAllAsRead,
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+            ],
+            bottom: _isRefreshing 
+                ? const PreferredSize(
+                    preferredSize: Size.fromHeight(2.0),
+                    child: LinearProgressIndicator(),
+                  )
+                : null,
           ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _refreshNotifications,
-        child: Consumer<NotificationService>(
-          builder: (context, notificationService, child) {
-            if (_isLoading && _currentPage == 1) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            
-            if (_errorMessage != null) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
-                    const SizedBox(height: 16),
-                    Text(
-                      _errorMessage!,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.red[300]),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: _loadNotifications,
-                      child: Text('retry'.tr(context)),
-                    ),
-                  ],
-                ),
-              );
-            }
-            
-            final notifications = notificationService.notifications;
-            
-            if (notifications.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.notifications_off,
-                      size: 64,
-                      color: Colors.grey[400],
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'no_notifications'.tr(context),
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.grey[600],
+
+          SliverToBoxAdapter(
+            child: RefreshIndicator(
+              onRefresh: _refreshNotifications,
+              child: Consumer<NotificationService>(
+                builder: (context, notificationService, child) {
+                  if (_isLoading && _currentPage == 1) {
+                    return const SizedBox(
+                      height: 300,
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+
+                  if (_errorMessage != null) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
+                          const SizedBox(height: 16),
+                          Text(
+                            _errorMessage!,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.red[300]),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _loadNotifications,
+                            child: Text('retry'.tr(context)),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                    );
+                  }
+
+                  final notifications = notificationService.notifications;
+
+                  if (notifications.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.notifications_off, size: 64, color: Colors.grey[400]),
+                          const SizedBox(height: 16),
+                          Text(
+                            'no_notifications'.tr(context),
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return Column(
+                    children: [
+                      ...notifications.map((notification) => _buildNotificationItem(notification)).toList(),
+                      if (_hasMoreData)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: CircularProgressIndicator(),
+                         ),
+                      ],
+                    );
+                  },
                 ),
-              );
-            }
-            
-            return ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(8.0),
-              itemCount: notifications.length + (_hasMoreData ? 1 : 0),
-              itemBuilder: (context, index) {
-                // Show loading indicator at the bottom for pagination
-                if (_hasMoreData && index == notifications.length) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
-                }
-                
-                final notification = notifications[index];
-                return _buildNotificationItem(notification);
-              },
-            );
-          },
+              ),
+            ),
+          ],
         ),
-      ),
     );
   }
 

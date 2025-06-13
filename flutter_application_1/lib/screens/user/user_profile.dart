@@ -1,8 +1,7 @@
-// lib/screens/user/user_profile.dart - Versión con sistema de seguimiento integrado
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart'; // Para kIsWeb
+import 'package:flutter/foundation.dart';
 import 'package:flutter_application_1/services/http_service.dart';
-import 'package:flutter_application_1/services/follow_service.dart'; // ✅ NUEVO
+import 'package:flutter_application_1/services/follow_service.dart';
 import 'package:flutter_application_1/widgets/custom_drawer.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/config/routes.dart';
@@ -13,11 +12,11 @@ import 'package:flutter_application_1/extensions/string_extensions.dart';
 import 'package:flutter_application_1/services/socket_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart'; // ✅ NUEVO IMPORT CACHE
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'dart:io';
 
 class UserProfileScreen extends StatefulWidget {
-  final String? userId; // ✅ NUEVO: Para permitir ver otros perfiles
+  final String? userId; //Para permitir ver otros perfiles
   
   const UserProfileScreen({Key? key, this.userId}) : super(key: key);
 
@@ -41,7 +40,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   String _successMessage = '';
   User? _user;
 
-  // ✅ NUEVAS VARIABLES PARA SISTEMA DE SEGUIMIENTO
+  // NUEVAS VARIABLES PARA SISTEMA DE SEGUIMIENTO
   bool _isFollowing = false;
   bool _isFollowingLoading = false;
   int _followersCount = 0;
@@ -50,7 +49,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   Key _profileImageKey = UniqueKey();
 
-  // ✅ NUEVAS VARIABLES PARA CONTROL DE CACHE
+  // NUEVAS VARIABLES PARA CONTROL DE CACHE
   bool _imageRefreshMode = false;
   int _imageRefreshCounter = 0;
   String? _lastImageUrl; // Para trackear cambios de URL
@@ -71,7 +70,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     
     // Load user data
     _loadUserData();
-    // ✅ NUEVO: Cargar datos de seguimiento
+    // Cargar datos de seguimiento
     _loadFollowData();
   }
 
@@ -83,7 +82,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     super.dispose();
   }
 
-  // ✅ NUEVO: Getter para determinar si es el perfil propio
+  // Getter para determinar si es el perfil propio
   bool get _isOwnProfile => widget.userId == null || widget.userId == Provider.of<AuthService>(context, listen: false).currentUser?.id;
 
   Future<void> _loadUserData() async {
@@ -109,7 +108,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           print("Usuario obtenido de API con ID: ${user?.id}");
         }
       } else {
-        // ✅ NUEVO: Cargar perfil de otro usuario
+        // Cargar perfil de otro usuario
         user = await _userService.getUserById(widget.userId!);
         print("Usuario externo obtenido de API con ID: ${user?.id}");
       }
@@ -146,7 +145,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
-  // ✅ NUEVO: Cargar datos de seguimiento
+  // Cargar datos de seguimiento
   Future<void> _loadFollowData() async {
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
@@ -193,7 +192,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
-  // ✅ NUEVO: Toggle follow/unfollow
+  // Toggle follow/unfollow
   Future<void> _toggleFollow() async {
     if (widget.userId == null || _isOwnProfile) return;
 
@@ -255,7 +254,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
-  // ✅ NUEVO: Navegar a pantalla de seguidores
+  // Navegar a pantalla de seguidores
   void _navigateToFollowers() {
     if (_user != null) {
       Navigator.pushNamed(
@@ -269,7 +268,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
-  // ✅ NUEVO: Navegar a pantalla de seguidos
+  // Navegar a pantalla de seguidos
   void _navigateToFollowing() {
     if (_user != null) {
       Navigator.pushNamed(
@@ -283,7 +282,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
-  // ✅ NUEVO: Widget para mostrar estadísticas de seguimiento
+  // Widget para mostrar estadísticas de seguimiento
   Widget _buildFollowStats() {
     if (!_followStatsLoaded) {
       return const Card(
@@ -342,7 +341,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
-  // ✅ NUEVO: Widget para un item de estadística
+  // Widget para un item de estadística
   Widget _buildStatItem({
     required String label,
     required String value,
@@ -379,7 +378,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
-  // ✅ NUEVO: Widget para botón de seguir/no seguir
+  // Widget para botón de seguir/no seguir
   Widget _buildFollowButton() {
     if (_isOwnProfile) return const SizedBox.shrink();
 
@@ -411,9 +410,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
-  // ✅ MÉTODOS NUEVOS DE CACHE
+  // MÉTODOS NUEVOS DE CACHE
 
-  /// ✅ MÉTODO MEJORADO: Limpiar cache específico de usuario
+  /// Limpiar cache específico de usuario
   Future<void> _clearUserImageCache() async {
     try {
       print('🧹 Limpiando cache específico del usuario...');
@@ -438,13 +437,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         await _clearUrlVariations(url);
       }
       
-      print('✅ Cache específico del usuario limpiado');
+      print('Cache específico del usuario limpiado');
     } catch (e) {
-      print('❌ Error limpiando cache específico: $e');
+      print('Error limpiando cache específico: $e');
     }
   }
 
-  /// ✅ MÉTODO NUEVO: Limpiar variaciones de una URL
+  /// Limpiar variaciones de una URL
   Future<void> _clearUrlVariations(String baseUrl) async {
     try {
       // URL base
@@ -469,13 +468,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         await DefaultCacheManager().removeFile(url);
       }
       
-      print('🧹 Variaciones de URL limpiadas: $baseUrl');
+      print('Variaciones de URL limpiadas: $baseUrl');
     } catch (e) {
-      print('❌ Error limpiando variaciones de URL: $e');
+      print('Error limpiando variaciones de URL: $e');
     }
   }
 
-  /// ✅ MÉTODO NUEVO: Generar URL con cache-busting
+  /// Generar URL con cache-busting
   String _buildCacheBustingUrl(String originalUrl) {
     if (originalUrl.isEmpty) return originalUrl;
     
@@ -484,7 +483,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     return '$originalUrl${separator}t=$timestamp&refresh=$_imageRefreshCounter';
   }
 
-  /// ✅ MÉTODO NUEVO: Activar modo refresh temporal
+  /// Activar modo refresh temporal
   void _activateRefreshMode() {
     setState(() {
       _imageRefreshMode = true;
@@ -501,7 +500,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     });
   }
 
-  /// ✅ MÉTODO NUEVO: Pre-limpiar cache antes de operaciones
+  /// Pre-limpiar cache antes de operaciones
   Future<void> _preClearCache() async {
     try {
       // Guardar URL actual para limpieza
@@ -515,16 +514,16 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         await CachedNetworkImage.evictFromCache('');
       }
       
-      print('✅ Pre-limpieza de cache completada');
+      print('Pre-limpieza de cache completada');
     } catch (e) {
-      print('❌ Error en pre-limpieza: $e');
+      print('Error en pre-limpieza: $e');
     }
   }
 
-  /// ✅ MÉTODO NUEVO: Post-procesar después de cambios de imagen
+  /// Post-procesar después de cambios de imagen
   Future<void> _postProcessImageChange(String? newImageUrl) async {
     try {
-      print('🔄 Post-procesando cambio de imagen...');
+      print('Post-procesando cambio de imagen...');
       
       // Limpiar cache de la URL anterior
       if (_lastImageUrl != null && _lastImageUrl != newImageUrl) {
@@ -542,13 +541,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       // Actualizar última URL conocida
       _lastImageUrl = newImageUrl;
       
-      print('✅ Post-procesamiento completado');
+      print('Post-procesamiento completado');
     } catch (e) {
-      print('❌ Error en post-procesamiento: $e');
+      print('Error en post-procesamiento: $e');
     }
   }
 
-  /// ✅ MÉTODO NUEVO: Obtener URL de imagen optimizada para cache
+  /// Obtener URL de imagen optimizada para cache
   String? _getOptimizedImageUrl() {
     if (_user?.profilePictureUrl == null) return null;
     
@@ -592,7 +591,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         _successMessage = '';
       });
 
-      // ✅ PRE-LIMPIAR CACHE
+      // PRE-LIMPIAR CACHE
       await _preClearCache();
 
       dynamic imageFile;
@@ -614,7 +613,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         _successMessage = 'profile_picture_updated'.tr(context);
       });
 
-      // ✅ POST-PROCESAR CAMBIO DE IMAGEN
+      // POST-PROCESAR CAMBIO DE IMAGEN
       await _postProcessImageChange(updatedUser.profilePictureUrl);
 
       // Update auth service with new user data
@@ -721,16 +720,16 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
       final oldImageUrl = _user?.profilePictureUrl;
       
-      print('🗑️ Deleting profile picture for user: ${_user!.id}');
-      print('🗑️ Current image URL: $oldImageUrl');
+      print('Deleting profile picture for user: ${_user!.id}');
+      print('Current image URL: $oldImageUrl');
 
-      // ✅ PRE-LIMPIAR CACHE
+      // PRE-LIMPIAR CACHE
       await _preClearCache();
 
       final success = await _userService.deleteProfilePicture(_user!.id);
 
       if (success) {
-        print('✅ Delete API call successful');
+        print('Delete API call successful');
         
         final updatedUser = _user!.copyWith(
           profilePicture: null,
@@ -742,7 +741,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           _successMessage = 'profile_picture_deleted'.tr(context);
         });
 
-        // ✅ POST-PROCESAR CAMBIO DE IMAGEN (eliminación)
+        // POST-PROCESAR CAMBIO DE IMAGEN (eliminación)
         await _postProcessImageChange(null);
 
         final authService = Provider.of<AuthService>(context, listen: false);
@@ -750,7 +749,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
         await _userService.saveUserToCache(updatedUser);
 
-        print('✅ Profile picture deletion completed successfully');
+        print('Profile picture deletion completed successfully');
 
       } else {
         setState(() {
@@ -762,7 +761,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       setState(() {
         _errorMessage = 'profile_picture_delete_error'.tr(context) + ': $e';
       });
-      print('❌ Error deleting profile picture: $e');
+      print('Error deleting profile picture: $e');
     } finally {
       setState(() {
         _isUploadingImage = false;
@@ -772,12 +771,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   Future<void> _clearImageCacheCompletely([String? specificUrl]) async {
     try {
-      print('🧹 Starting complete image cache cleanup...');
+      print('Starting complete image cache cleanup...');
       
       // 1. Limpiar URL específica si se proporciona
       if (specificUrl != null && specificUrl.isNotEmpty) {
         await CachedNetworkImage.evictFromCache(specificUrl);
-        print('🧹 Cleared specific URL: $specificUrl');
+        print('Cleared specific URL: $specificUrl');
         
         // También limpiar posibles variaciones de la URL
         final variations = [
@@ -801,39 +800,39 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         
         for (final url in possibleUrls) {
           await CachedNetworkImage.evictFromCache(url!);
-          print('🧹 Cleared user URL: $url');
+          print('Cleared user URL: $url');
         }
       }
       
       // 3. Limpiar caché general (método agresivo)
       await CachedNetworkImage.evictFromCache('');
       
-      print('✅ Complete image cache cleanup finished');
+      print('Complete image cache cleanup finished');
       
     } catch (e) {
-      print('❌ Error during cache cleanup: $e');
+      print('Error during cache cleanup: $e');
       // No fallar por errores de caché
     }
   }
 
   Future<void> _refreshProfile() async {
-    print('🔄 Starting profile refresh...');
+    print('Starting profile refresh...');
     
     // Limpiar caché del usuario
     _userService.clearCache();
     
-    // ✅ LIMPIAR CACHE MEJORADO
+    // LIMPIAR CACHE MEJORADO
     await _clearUserImageCache();
     
     await _loadUserData();
-    // ✅ NUEVO: También refrescar datos de seguimiento
+    // También refrescar datos de seguimiento
     await _loadFollowData();
     
     setState(() {
       _successMessage = 'Perfil actualizado';
     });
 
-    // ✅ ACTIVAR MODO REFRESH
+    // ACTIVAR MODO REFRESH
     _activateRefreshMode();
     
     // Limpiar mensaje después de 3 segundos
@@ -895,14 +894,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       alignment: Alignment.center,
       children: [
         Container(
-          key: ValueKey('profile_${_user?.id}_${_imageRefreshCounter}'), // ✅ KEY ÚNICO MEJORADA
+          key: ValueKey('profile_${_user?.id}_${_imageRefreshCounter}'),
           child: CircleAvatar(
             radius: 50.0,
             backgroundColor: Colors.grey.shade200,
             child: _user!.hasProfilePicture 
                 ? ClipOval(
                     child: CachedNetworkImage(
-                      imageUrl: _getOptimizedImageUrl() ?? _user!.profilePictureUrl!, // ✅ URL OPTIMIZADA
+                      imageUrl: _getOptimizedImageUrl() ?? _user!.profilePictureUrl!,
                       width: 100,
                       height: 100,
                       fit: BoxFit.cover,
@@ -935,7 +934,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         'Pragma': 'no-cache',
                         'Expires': '0',
                       },
-                      // ✅ CONFIGURACIONES ANTI-CACHE MEJORADAS
+                      // CONFIGURACIONES ANTI-CACHE MEJORADAS
                       useOldImageOnUrlChange: false,
                       fadeInDuration: const Duration(milliseconds: 300),
                       fadeOutDuration: const Duration(milliseconds: 100),
@@ -1029,7 +1028,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               backgroundColor: kIsWeb ? Colors.blue : Colors.green,
               labelStyle: const TextStyle(color: Colors.white, fontSize: 10),
             ),
-          // ✅ BOTÓN DEBUG PARA LIMPIAR CACHE (solo en debug)
+          // BOTÓN DEBUG PARA LIMPIAR CACHE (solo en debug)
           if (kDebugMode)
             IconButton(
               icon: const Icon(Icons.clear_all),
@@ -1128,11 +1127,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           ),
                         ),
                       
-                      // ✅ NUEVO: Estadísticas de seguimiento
+                      // Estadísticas de seguimiento
                       _buildFollowStats(),
                       const SizedBox(height: 16.0),
                       
-                      // ✅ NUEVO: Botón de seguir/no seguir
+                      // Botón de seguir/no seguir
                       _buildFollowButton(),
                       
                       Card(

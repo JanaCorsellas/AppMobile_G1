@@ -671,7 +671,7 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
             ),
             child: ElevatedButton.icon(
               onPressed: () {
-                Navigator.pushNamed(context, AppRoutes.userProfile);
+                Navigator.pushNamed(context, AppRoutes.userHome);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.transparent,
