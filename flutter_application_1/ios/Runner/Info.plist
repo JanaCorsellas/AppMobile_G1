@@ -20,7 +20,12 @@
 	<key>UIBackgroundModes</key>
 	<array>
 	    <string>location</string>
+		<string>remote-notification</string>
+		<string>background-fetch</string>
 	</array>
+
+	<key>NSUserNotificationAlertStyle</key>
+	<string>alert</string>
 	
 	<!-- Configuración existente -->
 	<key>CFBundleDevelopmentRegion</key>

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/services/notification_services.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_application_1/config/api_constants.dart';
@@ -25,6 +26,8 @@ class AuthService with ChangeNotifier {
   String get error => _error;
 
   bool? get isAdmin => _currentUser?.role == 'admin';
+
+  NotificationService? _notificationService;
 
   // Initialize service and check for stored tokens
   Future<void> initialize() async {
@@ -76,6 +79,75 @@ class AuthService with ChangeNotifier {
     _isLoading = false;
     notifyListeners();
   }
+
+  // Nuevo método CORREGIDO para cambiar contraseña
+ Future<bool> changePassword(String currentPassword, String newPassword) async {
+  if (_currentUser == null || _accessToken == null) {
+    _error = 'Usuario no autenticado';
+    return false;
+  }
+
+  _isLoading = true;
+  _error = '';
+  notifyListeners();
+
+  try {
+    final requestBody = {
+      'currentPassword': currentPassword,
+      'password': newPassword,
+    };
+    
+    print("=== CHANGE PASSWORD DEBUG ===");
+    print("User ID: ${_currentUser!.id}");
+    print("Request URL: ${ApiConstants.baseUrl}/api/users/${_currentUser!.id}");
+    print("Request body: $requestBody");
+    print("Access token: ${_accessToken?.substring(0, 20)}...");
+    
+    final response = await http.put(
+      Uri.parse('${ApiConstants.baseUrl}/api/users/${_currentUser!.id}'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $_accessToken',
+      },
+      body: json.encode(requestBody),
+    );
+
+    print("Response status: ${response.statusCode}");
+    print("Response body: ${response.body}");
+    print("=== END DEBUG ===");
+
+    if (response.statusCode == 200) {
+      print("Contraseña cambiada exitosamente");
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } else {
+      try {
+        final errorData = json.decode(response.body);
+        if (response.statusCode == 401) {
+          _error = 'La contraseña actual es incorrecta';
+        } else {
+          _error = errorData['message'] ?? 'Error al cambiar la contraseña';
+        }
+      } catch (e) {
+        if (response.statusCode == 401) {
+          _error = 'La contraseña actual es incorrecta';
+        } else {
+          _error = 'Error al cambiar la contraseña';
+        }
+      }
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  } catch (e) {
+    print('Error changing password: $e');
+    _error = 'Error de conexión. Verifica tu internet e inténtalo de nuevo.';
+    _isLoading = false;
+    notifyListeners();
+    return false;
+  }
+}
   Future<bool> loginWithGoogle() async {
     _isLoading = true;
     _error = '';
@@ -254,6 +326,11 @@ class AuthService with ChangeNotifier {
           socketService.connect(_currentUser, accessToken: _accessToken);
 
           print("Login exitoso para: ${_currentUser!.email}");
+
+          if (_notificationService != null && _currentUser != null) {
+            print("Inicializando NotificationService después del login...");
+            await _notificationService!.initialize(_currentUser!.id);
+          }
 
           _isLoading = false;
           notifyListeners();
@@ -465,6 +542,10 @@ class AuthService with ChangeNotifier {
       print('Error al verificar expiración del token: $e');
       return true;
     }
+  }
+
+  void setNotificationService(NotificationService notificationService) {
+    _notificationService = notificationService;
   }
 
   Map<String, String> getAuthHeaders() {

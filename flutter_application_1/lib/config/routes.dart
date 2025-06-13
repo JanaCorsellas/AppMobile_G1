@@ -6,6 +6,7 @@ import 'package:flutter_application_1/screens/activity/activity_list_screen.dart
 import 'package:flutter_application_1/screens/auth/login_screen.dart';
 import 'package:flutter_application_1/screens/auth/register_screen.dart';
 import 'package:flutter_application_1/screens/auth/oauth_success_screen.dart'; 
+import 'package:flutter_application_1/screens/auth/change_password_screen.dart';
 import 'package:flutter_application_1/screens/user/user_home.dart';
 import 'package:flutter_application_1/screens/user/user_profile.dart';
 import 'package:flutter_application_1/screens/chat/chat_list.dart';
@@ -24,6 +25,7 @@ class AppRoutes {
   static const String oauthSuccess = '/oauth-success'; 
   static const String userHome = '/user-home';
   static const String userProfile = '/user-profile';
+  static const String changePassword = '/change-password';
   static const String admin = '/admin';
   static const String chatList = '/chat-list';
   static const String chatRoom = '/chat-room';
@@ -35,7 +37,7 @@ class AppRoutes {
   static const String settingsRoute = '/settings';
   static const String followers = '/followers';
   static const String following = '/following';
-    static const String followingActivities = '/following-activities';
+  static const String followingActivities = '/following-activities';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     // ===== DEBUG LOGS =====
@@ -63,6 +65,9 @@ class AppRoutes {
         case register:
           print('📱 ROUTE DEBUG: Cargando RegisterScreen');
           return MaterialPageRoute(builder: (_) => const RegisterScreen());
+        case changePassword:
+          print('📱 ROUTE DEBUG: Cargando ChangePasswordScreen');
+          return MaterialPageRoute(builder: (_) => const ChangePasswordScreen());
         case oauthSuccess: 
           print('📱 ROUTE DEBUG: ¡CARGANDO OAUTH SUCCESS SCREEN!');
           try {
