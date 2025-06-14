@@ -56,7 +56,9 @@ class SocketService with ChangeNotifier {
       // IMPORTANTE: La URL debe coincidir exactamente con tu backend
       final Uri apiUri = Uri.parse(ApiConstants.baseUrl);
       // Nota: Socket.IO normalmente se conecta al puerto base, no a /api
-      final String socketUrl = '${apiUri.scheme}://${apiUri.host}:${apiUri.port}';
+      //final String socketUrl = '${apiUri.scheme}://${apiUri.host}:${apiUri.port}';
+      final String wsScheme = apiUri.scheme == 'https' ? 'wss' : 'ws';
+      final String socketUrl = '${apiUri.scheme}://${apiUri.host}';
       
       print('Intentando conectar a Socket.IO en: $socketUrl');
 

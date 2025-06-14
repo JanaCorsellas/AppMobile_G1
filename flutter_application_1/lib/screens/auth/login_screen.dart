@@ -6,7 +6,6 @@ import 'package:flutter_application_1/config/routes.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
 import 'package:flutter_application_1/services/socket_service.dart';
 import 'package:flutter_application_1/extensions/string_extensions.dart';
-import 'dart:html' as html;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math' as math;
 
@@ -132,11 +131,12 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         );
 
         if (user != null) {
-          if (authService.isAdmin == true) {
+          /*if (authService.isAdmin == true) {
             Navigator.pushReplacementNamed(context, AppRoutes.admin);
           } else {
             Navigator.pushReplacementNamed(context, AppRoutes.userHome);
-          }
+          }*/
+          Navigator.pushReplacementNamed(context, AppRoutes.userHome);
         } else {
           setState(() {
             _errorMessage = authService.error.isNotEmpty 

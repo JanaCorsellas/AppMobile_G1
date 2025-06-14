@@ -7,7 +7,9 @@ import 'package:flutter_application_1/config/api_constants.dart';
 import 'package:flutter_application_1/models/user.dart';
 import 'package:flutter_application_1/services/socket_service.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
-import 'dart:html' as html; // AÑADIDO PARA GOOGLE OAUTH
+//import 'dart:html' as html; // AÑADIDO PARA GOOGLE OAUTH
+import 'auth_service_stub.dart'
+    if (dart.library.html) 'auth_service_web.dart';
 
 class AuthService with ChangeNotifier {
   User? _currentUser;
@@ -151,9 +153,9 @@ class AuthService with ChangeNotifier {
     notifyListeners();
 
     try {
+      const String googleAuthUrl = '${ApiConstants.baseUrl}/api/auth/google';
       if (kIsWeb) {
         // Para web: redirección directa (MÁS SIMPLE Y CONFIABLE)
-        const String googleAuthUrl = '${ApiConstants.baseUrl}/api/auth/google';
         
         // Guardar estado para saber que estamos haciendo login con Google
         final prefs = await SharedPreferences.getInstance();
@@ -162,16 +164,54 @@ class AuthService with ChangeNotifier {
         print('Redirigiendo a Google Auth: $googleAuthUrl');
         
         // Redirigir directamente - el backend maneja todo
-        html.window.location.href = googleAuthUrl;
+        //html.window.location.href = googleAuthUrl;
+        redirectToGoogleAuth(googleAuthUrl);
         
         return true; // La redirección maneja el resto
         
+      } else{
+      // Android/iOS: use GoogleSignIn and send token to backend
+      final idToken = await redirectToGoogleAuth();
+      if (idToken != null) {
+        // Send the idToken to your backend for authentication
+        final response = await http.post(
+          Uri.parse('${ApiConstants.baseUrl}/api/auth/google/callback'),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode({'idToken': idToken}),
+        );
+
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          // Save tokens and user info as in your normal login
+          _accessToken = data['token'];
+          _refreshToken = data['refreshToken'];
+          _currentUser = User.fromJson(data['user']);
+          _isLoggedIn = true;
+
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('access_token', _accessToken!);
+          await prefs.setString('refresh_token', _refreshToken!);
+          await prefs.setString('user', json.encode(data['user']));
+
+          _isLoading = false;
+          notifyListeners();
+          return true;
+        } else {
+          final data = json.decode(response.body);
+          _error = data['message'] ?? 'Error autenticando con Google';
+        }
       } else {
+        _error = 'No se pudo obtener el token de Google';
+      }
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    } /*{
         _error = 'Google OAuth solo disponible en web por ahora';
         _isLoading = false;
         notifyListeners();
         return false;
-      }
+      }*/
     } catch (e) {
       _error = 'Error al conectar con Google: $e';
       print('Error en loginWithGoogle: $e');
