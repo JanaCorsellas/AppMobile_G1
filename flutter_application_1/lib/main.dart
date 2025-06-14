@@ -335,7 +335,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver{
             title: 'app_title'.tr(context),
             theme: themeProvider.theme,
             locale: languageProvider.locale,
-            initialRoute:  AppRoutes.splash,
+            initialRoute: AppRoutes.splash,
             onGenerateRoute: AppRoutes.generateRoute,
             localizationsDelegates: const [
               GlobalMaterialLocalizations.delegate,
