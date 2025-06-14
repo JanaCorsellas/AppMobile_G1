@@ -195,16 +195,7 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
     );
   }
 
-  String _formatDuration(int durationMinutes) {
-    final hours = durationMinutes ~/ 60;
-    final minutes = durationMinutes % 60;
-    
-    if (hours > 0) {
-      return '${hours}${'hours'.tr(context)} ${minutes}${'min'.tr(context)}';
-    } else {
-      return '${minutes}${'min'.tr(context)}';
-    }
-  }
+  
 
   String _formatDistance(double distance) {
     if (distance >= 1000) {
@@ -923,7 +914,7 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
                         child: _buildEnhancedStatChip(
                           Icons.timer,
                           'time'.tr(context),
-                          _formatDuration(activity.duration),
+                         activity.formatDuration(),
                           const Color(0xFF764ba2),
                         ),
                       ),
