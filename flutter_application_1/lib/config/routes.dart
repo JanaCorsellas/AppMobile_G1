@@ -18,8 +18,10 @@ import 'package:flutter_application_1/screens/settings/settings_screen.dart';
 import 'package:flutter_application_1/screens/user/followers_screen.dart';
 import 'package:flutter_application_1/screens/user/following_screen.dart';
 import 'package:flutter_application_1/screens/activity/following_activities_screen.dart';
+import 'package:flutter_application_1/screens/splash/splash_screen.dart';
 
 class AppRoutes {
+  static const String splash = '/';
   static const String login = '/login';
   static const String register = '/register';
   static const String oauthSuccess = '/oauth-success'; 
@@ -49,17 +51,9 @@ class AppRoutes {
     
     try {
       switch (settings.name) {
-        case '/':  // ← SOLUCIÓN PARA RUTA RAÍZ
-          print('📱 ROUTE DEBUG: Ruta raíz detectada - verificando URL real...');
-          // Verificar si la URL del navegador contiene oauth-success
-          print('📱 ROUTE DEBUG: URL del navegador: ${Uri.base.toString()}');
-          if (Uri.base.toString().contains('oauth-success')) {
-            print('📱 ROUTE DEBUG: Detectado oauth-success en URL, redirigiendo...');
-            return MaterialPageRoute(builder: (_) => OAuthSuccessScreen());
-          } else {
-            print('📱 ROUTE DEBUG: Ruta raíz normal, redirigiendo a login...');
-            return MaterialPageRoute(builder: (_) => const LoginScreen());
-          }
+        case splash:
+          print('📱 ROUTE DEBUG: Cargando SplashScreen');
+          return MaterialPageRoute(builder: (_) => const SplashScreen());
         case login:
           print('📱 ROUTE DEBUG: Cargando LoginScreen');
           return MaterialPageRoute(builder: (_) => const LoginScreen());
@@ -198,7 +192,7 @@ class AppRoutes {
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pushReplacementNamed(context, login);
+                  Navigator.pushReplacementNamed(context, splash);
                 },
                 child: Text('Ir al Login'),
               ),
