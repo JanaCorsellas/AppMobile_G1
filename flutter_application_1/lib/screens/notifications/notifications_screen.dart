@@ -1,4 +1,3 @@
-// lib/screens/notifications/notifications_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/screens/notifications/notification_detail_screen.dart';
 import 'package:flutter_application_1/screens/chat/chat_room.dart';
@@ -307,6 +306,35 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Widget _buildNotificationItem(NotificationModel notification) {
+    // Personalizar el icono y color según el tipo
+    IconData icon = notification.getIcon();
+    Color color = notification.getColor();
+    
+    // Personalización especial para notificaciones de actividad
+    if (notification.type == 'activity_update') {
+      final activityType = notification.data?['activityType'] as String?;
+      switch (activityType) {
+        case 'running':
+          icon = Icons.directions_run;
+          color = Colors.orange;
+          break;
+        case 'cycling':
+          icon = Icons.directions_bike;
+          color = Colors.green;
+          break;
+        case 'walking':
+          icon = Icons.directions_walk;
+          color = Colors.blue;
+          break;
+        case 'hiking':
+          icon = Icons.terrain;
+          color = Colors.brown;
+          break;
+        default:
+          icon = Icons.fitness_center;
+          color = Colors.purple;
+      }
+    }
     return Dismissible(
       key: Key('notification_${notification.id}'),
       background: Container(
@@ -375,6 +403,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   color: Colors.grey,
                 ),
               ),
+              // Mostrar información adicional para actividades
+              if (notification.type == 'activity_update' && notification.data != null) ...[
+                const SizedBox(width: 8),
+                if (notification.data!['distance'] != null) ...[
+                  const Icon(Icons.straighten, size: 12, color: Colors.grey),
+                  const SizedBox(width: 2),
+                  Text(
+                    '${(double.parse(notification.data!['distance'].toString()) / 1000).toStringAsFixed(1)} km',
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ],
             ],
           ),
           trailing: notification.read
@@ -418,25 +458,50 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         );
         return;
       }
+    } else if (notification.type == 'activity_update' && notification.data != null) {
+      final activityId = notification.data?['activityId'];
+      if (activityId != null) {
+        // Navegar al detalle de la actividad
+        Navigator.pushNamed(
+          context, 
+          AppRoutes.notificationsDetail,
+          arguments: {'notificationId': notification.id},
+        );
+        return;
+      } else {
+        // Si no hay ID específico, ir al feed
+        Navigator.pushNamed(context, '/home');
+        return;
+      }
+    
     } else if (notification.type == 'achievement_unlocked' && notification.data != null) {
       final achievementId = notification.data?['achievementId'];
       if (achievementId != null) {
-        // Navigate to achievement detail
-        // Navigator.pushNamed(context, AppRoutes.achievementDetail, arguments: {'id': achievementId});
+        Navigator.pushNamed(
+          context, 
+          AppRoutes.notificationsDetail, 
+          arguments: {'notificationId': notification.id},
+        );
         return;
       }
     } else if (notification.type == 'challenge_completed' && notification.data != null) {
       final challengeId = notification.data?['challengeId'];
       if (challengeId != null) {
-        // Navigate to challenge detail
-        // Navigator.pushNamed(context, AppRoutes.challengeDetail, arguments: {'id': challengeId});
+        Navigator.pushNamed(
+          context, 
+          AppRoutes.notificationsDetail,
+          arguments: {'notificationId': notification.id},
+        );
         return;
       }
     } else if (notification.type == 'friend_request' && notification.data != null) {
       final userId = notification.data?['userId'];
       if (userId != null) {
-        // Navigate to user profile
-        // Navigator.pushNamed(context, AppRoutes.userProfile, arguments: {'id': userId});
+        Navigator.pushNamed(
+          context, 
+          AppRoutes.notificationsDetail,
+          arguments: {'notificationId': notification.id},
+        );
         return;
       }
     }

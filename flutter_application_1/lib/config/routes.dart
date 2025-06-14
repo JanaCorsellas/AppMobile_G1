@@ -1,4 +1,3 @@
-// lib/config/routes.dart - TU VERSIÓN + DEBUG
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/screens/achievements/achievements_screen.dart';
 import 'package:flutter_application_1/screens/activity/activity_detail_screen.dart';
@@ -14,6 +13,7 @@ import 'package:flutter_application_1/screens/chat/chat_room.dart';
 import 'package:flutter_application_1/screens/tracking/activity_selection_screen.dart';
 import 'package:flutter_application_1/screens/tracking/tracking_screen.dart';
 import 'package:flutter_application_1/screens/notifications/notifications_screen.dart';
+import 'package:flutter_application_1/screens/notifications/notification_detail_screen.dart';
 import 'package:flutter_application_1/screens/settings/settings_screen.dart';
 import 'package:flutter_application_1/screens/user/followers_screen.dart';
 import 'package:flutter_application_1/screens/user/following_screen.dart';
@@ -30,6 +30,7 @@ class AppRoutes {
   static const String chatList = '/chat-list';
   static const String chatRoom = '/chat-room';
   static const String notifications = '/notifications';
+  static const String notificationsDetail = '/notification-detail';
   static const String activitySelection = '/activity-selection';
   static const String tracking = '/tracking';
   static const String achievements = '/achievements';
@@ -130,6 +131,13 @@ class AppRoutes {
         case notifications:
           print('📱 ROUTE DEBUG: Cargando NotificationsScreen');
           return MaterialPageRoute(builder: (_) => const NotificationsScreen());
+        case notificationsDetail:
+          print('📱 ROUTE DEBUG: Cargando NotificationDetailScreen');
+          final args = settings.arguments as Map<String, dynamic>?;
+          final notificationId = args?['notificationId'] as String? ?? '';
+          return MaterialPageRoute(
+            builder: (_) => NotificationDetailScreen(notificationId: notificationId),
+          );
         case activitySelection:
           print('📱 ROUTE DEBUG: Cargando ActivitySelectionScreen');
           return MaterialPageRoute(builder: (_) => const ActivitySelectionScreen());

@@ -146,20 +146,20 @@ class NotificationService with ChangeNotifier {
         channelName = 'Solicitudes de amistad';
         channelDescription = 'Notificaciones de solicitudes de amistad';
         break;
-      case 'friend_activity':
-        channelId = 'friend_activities';
+      case 'activity_update':
+        channelId = 'activity_updates';
         channelName = 'Actividades de amigos';
-        channelDescription = 'Notificaciones de actividades de amigos';
+        channelDescription = 'Notificaciones cuando tus amigos publican nuevas actividades';
         break;
-      case 'activity_comment':
-        channelId = 'activity_interactions';
-        channelName = 'Interacciones de actividad';
-        channelDescription = 'Comentarios y likes en actividades';
+      case 'achievement_unlocked':
+        channelId = 'achievements';
+        channelName = 'Logros desbloqueados';
+        channelDescription = 'Notificaciones de logros desbloqueados';
         break;
-      case 'activity_like':
-        channelId = 'activity_interactions';
-        channelName = 'Interacciones de actividad';
-        channelDescription = 'Comentarios y likes en actividades';
+      case 'challenge_completed':
+        channelId = 'challenges';
+        channelName = 'Retos completados';
+        channelDescription = 'Notificaciones de retos completados';
         break;
       case 'chat_message':
         channelId = 'chat_messages';
