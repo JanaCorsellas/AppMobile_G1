@@ -113,18 +113,23 @@ class ActivityTrackingProvider extends ChangeNotifier {
 }
 
   // Nuevo método para configurar el timer de duración
-  void _setupDurationTimer() {
-    _durationTimer?.cancel();
-    _durationTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_currentTracking != null && !_currentTracking!.isPaused) {
-        final now = DateTime.now();
-        int durationMs = now.difference(_currentTracking!.startTime).inMilliseconds;
-        durationMs -= _currentTracking!.totalPausedTime;
-        _currentTracking!.currentDuration = (durationMs / 1000).round();
-        notifyListeners();
+void _setupDurationTimer() {
+  _durationTimer?.cancel();
+  _durationTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    if (_currentTracking != null && !_currentTracking!.isPaused) {
+      final now = DateTime.now();
+      int durationMs = now.difference(_currentTracking!.startTime).inMilliseconds;
+      durationMs -= _currentTracking!.totalPausedTime;
+      _currentTracking!.currentDuration = (durationMs / 1000).round();
+      notifyListeners();
+      
+      // 🆕 OPCIONAL: Sincronizar con backend cada 30 segundos
+      if (_currentTracking!.currentDuration % 30 == 0) {
+        _sendLocationUpdate(); // Esto también actualiza la duración en el backend
       }
-    });
-  }
+    }
+  });
+}
 
   Future<bool> pauseTracking() async {
     if (_currentTracking == null || !_locationService.isTracking || _locationService.isPaused) {

@@ -379,6 +379,9 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
                       // Indicador de conexión mejorado
                       _buildConnectionIndicator(socketService),
                       const SizedBox(height: 20),
+                        // Búsqueda de usuarios
+                      _buildUserSearch(),
+                      const SizedBox(height: 24),
                       
                       // Estadísticas principales mejoradas
                       _buildEnhancedQuickStats(user),
@@ -395,10 +398,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
                       // Distribución de tipos de actividad
                       _buildActivityTypeDistribution(),
                       const SizedBox(height: 24),
-                      
-                      // Búsqueda de usuarios
-                      _buildUserSearch(),
-                      const SizedBox(height: 24),
+
                       
                       // Logros con mejor diseño
                       _buildAchievementsSection(),
@@ -533,11 +533,11 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
             Expanded(
               child: _buildEnhancedStatCard(
                 title: 'time'.tr(context),
-                value: '${user?.totalTime ?? 0}',
+                value: '${((user?.totalTime ?? 0) / 60).round()}',
                 unit: 'min'.tr(context),
                 icon: Icons.timer,
                 color: Colors.blue,
-                progress: math.min((user?.totalTime ?? 0) / 1000, 1.0),
+                 progress: math.min(((user?.totalTime ?? 0) / 60) / 1000, 1.0), 
                 subtitle: '${'goal'.tr(context)}: 1000${'min'.tr(context)}',
               ),
             ),
@@ -653,82 +653,82 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
   }
   
   Widget _buildWeeklyActivityChart() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 2,
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                'weekly_activity'.tr(context),
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+  return Container(
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.grey.withOpacity(0.1),
+          spreadRadius: 2,
+          blurRadius: 8,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'weekly_activity'.tr(context),
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            height: 120,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: _weeklyActivityCount.entries.map((entry) {
-                final count = entry.value;
-                final maxCount = _weeklyActivityCount.values.isEmpty ? 1 : 
-                    _weeklyActivityCount.values.reduce(math.max);
-                final height = maxCount == 0 ? 0.0 : (count / maxCount) * 80;
-                
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(
-                      count.toString(),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      width: 24,
-                      height: math.max(height, count > 0 ? 8 : 0),
-                      decoration: BoxDecoration(
-                        color: count > 0 ? const Color(0xFF667eea) : Colors.grey[300],
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      entry.key,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                );
-              }).toList(),
             ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        SizedBox(
+          height: 140, // ✅ Aumentado de 120 a 140
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: _weeklyActivityCount.entries.map((entry) {
+              final count = entry.value;
+              final maxCount = _weeklyActivityCount.values.isEmpty ? 1 : 
+                  _weeklyActivityCount.values.reduce(math.max);
+              final height = maxCount == 0 ? 0.0 : (count / maxCount) * 80;
+              
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    count.toString(),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    width: 24,
+                    height: math.max(height, count > 0 ? 8 : 0),
+                    decoration: BoxDecoration(
+                      color: count > 0 ? const Color(0xFF667eea) : Colors.grey[300],
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    entry.key,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              );
+            }).toList(),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
   
   Widget _buildProgressChart() {
     return Container(
@@ -1127,7 +1127,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> with TickerProviderStat
                   ),
                 ),
                 Text(
-                  '${activity.duration ?? 0} ${'min'.tr(context)}',
+                  activity.formatDuration(),
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontSize: 12,

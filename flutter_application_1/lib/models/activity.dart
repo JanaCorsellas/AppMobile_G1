@@ -7,8 +7,8 @@ class Activity {
   final String name;
   final DateTime startTime;
   final DateTime endTime;
-  final int duration; // in minutes
-  final double distance; // in meters
+  final int duration; 
+  final double distance; 
   final double elevationGain;
   final double averageSpeed;
   final double? caloriesBurned;
@@ -151,25 +151,18 @@ class Activity {
     };
   }
 
-  String formatDuration() {
-  // Duración en minutos (como parece estar almacenada)
-  int durationInMinutes = duration;
+String formatDuration() {
+ 
+  int totalSeconds = duration;
   
-  // Convertir a segundos para cálculos
-  int totalSeconds = (durationInMinutes * 60).round();
   int hours = totalSeconds ~/ 3600;
   int minutes = (totalSeconds % 3600) ~/ 60;
   int seconds = totalSeconds % 60;
   
   if (hours > 0) {
-    // Si hay horas: mostrar en formato "h:mm h"
-    return '$hours:${minutes.toString().padLeft(2, '0')} h';
-  } else if (minutes > 0) {
-    // Si hay minutos pero no horas: mostrar en formato "m:ss min"
-    return '$minutes:${seconds.toString().padLeft(2, '0')} min';
+    return '$hours:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   } else {
-    // Si solo hay segundos (menos de 1 minuto): mostrar en formato "s s"
-    return '$seconds s';
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 }
 

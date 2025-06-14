@@ -1,4 +1,3 @@
-// lib/screens/notifications/notifications_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/screens/notifications/notification_detail_screen.dart';
 import 'package:flutter_application_1/screens/chat/chat_room.dart';
@@ -162,111 +161,180 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: const CustomDrawer(currentRoute: AppRoutes.notifications),
-      appBar: AppBar(
-        title: Text('notifications_title'.tr(context)),
-         bottom: _isRefreshing 
-        ? const PreferredSize(
-            preferredSize: Size.fromHeight(2.0),
-            child: LinearProgressIndicator(),
-          )
-        : null,
-        actions: [
-          // Mark all as read button
-          Consumer<NotificationService>(
-            builder: (context, notificationService, child) {
-              if (notificationService.unreadCount > 0) {
-                return IconButton(
-                  icon: const Icon(Icons.done_all),
-                  tooltip: 'mark_all_read'.tr(context),
-                  onPressed: _markAllAsRead,
-                );
-              }
-              return const SizedBox.shrink();
-            },
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 120,
+            floating: false,
+            pinned: true,
+            elevation: 0,
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF667eea),
+                      Color(0xFF764ba2),
+                    ],
+                  ),
+                ),
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 20),
+                        Text(
+                          'Notificaciones'.tr(context),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Tus notificaciones'.tr(context),
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            actions: [
+              Consumer<NotificationService>(
+                builder: (context, notificationService, child) {
+                  if (notificationService.unreadCount > 0) {
+                    return IconButton(
+                      icon: const Icon(Icons.done_all, color: Colors.white),
+                      tooltip: 'mark_all_read'.tr(context),
+                      onPressed: _markAllAsRead,
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+            ],
+            bottom: _isRefreshing 
+                ? const PreferredSize(
+                    preferredSize: Size.fromHeight(2.0),
+                    child: LinearProgressIndicator(),
+                  )
+                : null,
           ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _refreshNotifications,
-        child: Consumer<NotificationService>(
-          builder: (context, notificationService, child) {
-            if (_isLoading && _currentPage == 1) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            
-            if (_errorMessage != null) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
-                    const SizedBox(height: 16),
-                    Text(
-                      _errorMessage!,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.red[300]),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: _loadNotifications,
-                      child: Text('retry'.tr(context)),
-                    ),
-                  ],
-                ),
-              );
-            }
-            
-            final notifications = notificationService.notifications;
-            
-            if (notifications.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.notifications_off,
-                      size: 64,
-                      color: Colors.grey[400],
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'no_notifications'.tr(context),
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.grey[600],
+
+          SliverToBoxAdapter(
+            child: RefreshIndicator(
+              onRefresh: _refreshNotifications,
+              child: Consumer<NotificationService>(
+                builder: (context, notificationService, child) {
+                  if (_isLoading && _currentPage == 1) {
+                    return const SizedBox(
+                      height: 300,
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+
+                  if (_errorMessage != null) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
+                          const SizedBox(height: 16),
+                          Text(
+                            _errorMessage!,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.red[300]),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _loadNotifications,
+                            child: Text('retry'.tr(context)),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                    );
+                  }
+
+                  final notifications = notificationService.notifications;
+
+                  if (notifications.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.notifications_off, size: 64, color: Colors.grey[400]),
+                          const SizedBox(height: 16),
+                          Text(
+                            'no_notifications'.tr(context),
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return Column(
+                    children: [
+                      ...notifications.map((notification) => _buildNotificationItem(notification)).toList(),
+                      if (_hasMoreData)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: CircularProgressIndicator(),
+                         ),
+                      ],
+                    );
+                  },
                 ),
-              );
-            }
-            
-            return ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(8.0),
-              itemCount: notifications.length + (_hasMoreData ? 1 : 0),
-              itemBuilder: (context, index) {
-                // Show loading indicator at the bottom for pagination
-                if (_hasMoreData && index == notifications.length) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
-                }
-                
-                final notification = notifications[index];
-                return _buildNotificationItem(notification);
-              },
-            );
-          },
+              ),
+            ),
+          ],
         ),
-      ),
     );
   }
 
   Widget _buildNotificationItem(NotificationModel notification) {
+    // Personalizar el icono y color según el tipo
+    IconData icon = notification.getIcon();
+    Color color = notification.getColor();
+    
+    // Personalización especial para notificaciones de actividad
+    if (notification.type == 'activity_update') {
+      final activityType = notification.data?['activityType'] as String?;
+      switch (activityType) {
+        case 'running':
+          icon = Icons.directions_run;
+          color = Colors.orange;
+          break;
+        case 'cycling':
+          icon = Icons.directions_bike;
+          color = Colors.green;
+          break;
+        case 'walking':
+          icon = Icons.directions_walk;
+          color = Colors.blue;
+          break;
+        case 'hiking':
+          icon = Icons.terrain;
+          color = Colors.brown;
+          break;
+        default:
+          icon = Icons.fitness_center;
+          color = Colors.purple;
+      }
+    }
     return Dismissible(
       key: Key('notification_${notification.id}'),
       background: Container(
@@ -335,6 +403,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   color: Colors.grey,
                 ),
               ),
+              // Mostrar información adicional para actividades
+              if (notification.type == 'activity_update' && notification.data != null) ...[
+                const SizedBox(width: 8),
+                if (notification.data!['distance'] != null) ...[
+                  const Icon(Icons.straighten, size: 12, color: Colors.grey),
+                  const SizedBox(width: 2),
+                  Text(
+                    '${(double.parse(notification.data!['distance'].toString()) / 1000).toStringAsFixed(1)} km',
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ],
             ],
           ),
           trailing: notification.read
@@ -378,25 +458,50 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         );
         return;
       }
+    } else if (notification.type == 'activity_update' && notification.data != null) {
+      final activityId = notification.data?['activityId'];
+      if (activityId != null) {
+        // Navegar al detalle de la actividad
+        Navigator.pushNamed(
+          context, 
+          AppRoutes.notificationsDetail,
+          arguments: {'notificationId': notification.id},
+        );
+        return;
+      } else {
+        // Si no hay ID específico, ir al feed
+        Navigator.pushNamed(context, '/home');
+        return;
+      }
+    
     } else if (notification.type == 'achievement_unlocked' && notification.data != null) {
       final achievementId = notification.data?['achievementId'];
       if (achievementId != null) {
-        // Navigate to achievement detail
-        // Navigator.pushNamed(context, AppRoutes.achievementDetail, arguments: {'id': achievementId});
+        Navigator.pushNamed(
+          context, 
+          AppRoutes.notificationsDetail, 
+          arguments: {'notificationId': notification.id},
+        );
         return;
       }
     } else if (notification.type == 'challenge_completed' && notification.data != null) {
       final challengeId = notification.data?['challengeId'];
       if (challengeId != null) {
-        // Navigate to challenge detail
-        // Navigator.pushNamed(context, AppRoutes.challengeDetail, arguments: {'id': challengeId});
+        Navigator.pushNamed(
+          context, 
+          AppRoutes.notificationsDetail,
+          arguments: {'notificationId': notification.id},
+        );
         return;
       }
     } else if (notification.type == 'friend_request' && notification.data != null) {
       final userId = notification.data?['userId'];
       if (userId != null) {
-        // Navigate to user profile
-        // Navigator.pushNamed(context, AppRoutes.userProfile, arguments: {'id': userId});
+        Navigator.pushNamed(
+          context, 
+          AppRoutes.notificationsDetail,
+          arguments: {'notificationId': notification.id},
+        );
         return;
       }
     }

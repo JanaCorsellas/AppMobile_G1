@@ -171,13 +171,10 @@ String get formattedDuration {
   final seconds = currentDuration % 60;
   
   if (hours > 0) {
-    // Si hay horas, mostrar en formato "h:mm h"
     return '${hours}:${minutes.toString().padLeft(2, '0')} h';
   } else if (minutes > 0) {
-    // Si hay minutos pero no horas, mostrar en formato "m:ss min"
     return '${minutes}:${seconds.toString().padLeft(2, '0')} min';
   } else {
-    // Si solo hay segundos, mostrar en formato "s s"
     return '$seconds s';
   }
 }

@@ -339,7 +339,7 @@ class TrackingScreenState extends State<TrackingScreen> with WidgetsBindingObser
                 point: LatLng(currentPosition.latitude, currentPosition.longitude),
                 width: 20,
                 height: 20,
-                builder: (context) => Container(
+                child: Container(
                   decoration: BoxDecoration(
                     color: Colors.blue,
                     shape: BoxShape.circle,
