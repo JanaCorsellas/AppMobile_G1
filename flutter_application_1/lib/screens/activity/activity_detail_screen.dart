@@ -253,9 +253,7 @@ class _ActivityDetailScreenState extends State<ActivityDetailScreen> {
                   _buildDetailRow('Desnivel Positivo', '${widget.activity.elevationGain.toStringAsFixed(0)} m'),
                   const Divider(height: 1),
                   
-                  _buildDetailRow('Calorías', widget.activity.caloriesBurned != null 
-                      ? '${widget.activity.caloriesBurned!.toStringAsFixed(0)} kcal' 
-                      : 'No disponible'),
+                
                   
                   const SizedBox(height: 24),
                 ],
