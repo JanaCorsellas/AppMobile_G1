@@ -370,10 +370,11 @@ class NotificationService with ChangeNotifier {
   }
 
   /// Marca una notificación como leída
-  Future<bool> markAsRead(String notificationId) async {
+  Future<bool> markAsRead(String notificationId, {String? userId}) async {
     try {
       final response = await _httpService.put(
-        '${ApiConstants.baseUrl}/api/notifications/$notificationId/read'
+        ApiConstants.markNotificationRead(notificationId),
+        body: userId != null ? {'userId': userId} : null,
       );
       
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -395,8 +396,11 @@ class NotificationService with ChangeNotifier {
           notifyListeners();
         }
         return true;
+      } else {
+        print('Error marcando notificación como leída: ${response.statusCode}');
+        print('Respuesta del servidor: ${response.body}');
+        return false;
       }
-      return false;
     } catch (e) {
       print('Error marcando notificación como leída: $e');
       return false;
@@ -407,7 +411,7 @@ class NotificationService with ChangeNotifier {
   Future<bool> markAllAsRead(String userId) async {
     try {
       final response = await _httpService.put(
-        '${ApiConstants.baseUrl}/api/notifications/$userId/read-all'
+        ApiConstants.markAllNotificationsRead(userId)
       );
       
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -441,7 +445,7 @@ class NotificationService with ChangeNotifier {
   Future<bool> deleteNotification(String notificationId) async {
     try {
       final response = await _httpService.delete(
-        '${ApiConstants.baseUrl}/api/notifications/$notificationId'
+        ApiConstants.deleteNotification(notificationId)
       );
       
       if (response.statusCode >= 200 && response.statusCode < 300) {

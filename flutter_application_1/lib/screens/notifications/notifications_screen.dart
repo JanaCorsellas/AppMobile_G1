@@ -312,27 +312,33 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     
     // Personalización especial para notificaciones de actividad
     if (notification.type == 'activity_update') {
-      final activityType = notification.data?['activityType'] as String?;
-      switch (activityType) {
-        case 'running':
-          icon = Icons.directions_run;
-          color = Colors.orange;
-          break;
-        case 'cycling':
-          icon = Icons.directions_bike;
-          color = Colors.green;
-          break;
-        case 'walking':
-          icon = Icons.directions_walk;
-          color = Colors.blue;
-          break;
-        case 'hiking':
-          icon = Icons.terrain;
-          color = Colors.brown;
-          break;
-        default:
-          icon = Icons.fitness_center;
-          color = Colors.purple;
+      final activityType = notification.data?['activityType']?.toString();
+      if (activityType != null && activityType.isNotEmpty) {
+        switch (activityType.toLowerCase()) {
+          case 'running':
+            icon = Icons.directions_run;
+            color = Colors.orange;
+            break;
+          case 'cycling':
+            icon = Icons.directions_bike;
+            color = Colors.green;
+            break;
+          case 'walking':
+            icon = Icons.directions_walk;
+            color = Colors.blue;
+            break;
+          case 'hiking':
+            icon = Icons.terrain;
+            color = Colors.brown;
+            break;
+          default:
+            icon = Icons.fitness_center;
+            color = Colors.purple;
+        }
+      } else {
+        // Si activityType es null, usar iconos por defecto
+        icon = Icons.fitness_center;
+        color = Colors.purple;
       }
     }
     return Dismissible(
@@ -373,53 +379,76 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       },
       child: Card(
         margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-        child: ListTile(
-          leading: Container(
-            padding: const EdgeInsets.all(8.0),
-            decoration: BoxDecoration(
-              color: notification.getColor().withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              notification.getIcon(),
-              color: notification.getColor(),
+        elevation: notification.read ? 1 : 3,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            color: notification.read ? null : Colors.blue.withOpacity(0.02),
+            border: notification.read ? null : Border.all(
+              color: Colors.blue.withOpacity(0.1),
+              width: 1,
             ),
           ),
-          title: Text(
-            notification.title,
-            style: TextStyle(
-              fontWeight: notification.read ? FontWeight.normal : FontWeight.bold,
-            ),
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(notification.message),
-              const SizedBox(height: 4),
-              Text(
-                timeago.format(notification.createdAt, locale: 'es'),
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
-                ),
+          child: ListTile(
+            leading: Container(
+              padding: const EdgeInsets.all(8.0),
+              decoration: BoxDecoration(
+                color: color.withOpacity(notification.read ? 0.1 : 0.2),
+                shape: BoxShape.circle,
               ),
-              // Mostrar información adicional para actividades
-              if (notification.type == 'activity_update' && notification.data != null) ...[
-                const SizedBox(width: 8),
-                if (notification.data!['distance'] != null) ...[
-                  const Icon(Icons.straighten, size: 12, color: Colors.grey),
-                  const SizedBox(width: 2),
-                  Text(
-                    '${(double.parse(notification.data!['distance'].toString()) / 1000).toStringAsFixed(1)} km',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+              child: Icon(
+                icon,
+                color: color,
+                size: notification.read ? 20 : 22,
+              ),
+            ),
+            title: Text(
+              notification.title ?? 'Sin título',
+              style: TextStyle(
+                fontWeight: notification.read ? FontWeight.normal : FontWeight.bold,
+                color: notification.read ? null : Colors.black87,
+              ),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  notification.message ?? 'Sin mensaje',
+                  style: TextStyle(
+                    color: notification.read ? Colors.grey[600] : Colors.black54,
                   ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Text(
+                      timeago.format(notification.createdAt, locale: 'es'),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    // Mostrar información adicional para actividades
+                    if (notification.type == 'activity_update') ...[
+                      if (notification.data != null && notification.data!['distance'] != null) ...[
+                        const SizedBox(width: 8),
+                        const Icon(Icons.straighten, size: 12, color: Colors.grey),
+                        const SizedBox(width: 2),
+                      Text(
+                        _formatDistanceSafe(notification.data!['distance']),
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
+                  ],
                 ],
-              ],
+              ),
             ],
           ),
-          trailing: notification.read
-              ? null
-              : Container(
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (!notification.read)
+                Container(
                   width: 12,
                   height: 12,
                   decoration: BoxDecoration(
@@ -427,24 +456,71 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     shape: BoxShape.circle,
                   ),
                 ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.chevron_right,
+                color: Colors.grey[400],
+              ),
+            ],
+          ), 
           onTap: () {
-            _markAsRead(notification);
-            _navigateToNotificationDetail(notification);
+            _markAsReadAndNavigate(notification);
           },
         ),
       ),
-    );
+    ),
+  );
+}
+String _formatDistanceSafe(dynamic distance) {
+  try {
+    if (distance == null) return '0.0 km';
+    
+    final distanceNum = double.parse(distance.toString());
+    final kmValue = distanceNum / 1000;
+    
+    return '${kmValue.toStringAsFixed(1)} km';
+  } catch (e) {
+    print('Error formateando distancia: $e');
+    return '0.0 km';
+  }
+}
+
+  // Mètode per marcar com a llegida i navegar al detall
+  Future<void> _markAsReadAndNavigate(NotificationModel notification) async {
+    // Marcar com a llegida si encara no ho està
+    if (!notification.read) {
+      await _markAsRead(notification);
+    }
+    
+    // Després de marcar com a llegida, navegar al detall
+    _navigateToNotificationDetail(notification);
   }
 
   Future<void> _markAsRead(NotificationModel notification) async {
     if (!notification.read) {
       final notificationService = Provider.of<NotificationService>(context, listen: false);
-      await notificationService.markAsRead(notification.id);
+      final authService = Provider.of<AuthService>(context, listen: false);
+
+      final userId = authService.currentUser?.id;
+      if (userId == null) {
+        print('Error: No hay usuario autenticado');
+        return;
+      }
+      final success = await notificationService.markAsRead(notification.id, userId: userId);
+
+      if (!success) {
+        // Mostrar missatge d'error si no s'ha pogut marcar com a llegida
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al marcar notificación como leída'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 
   void _navigateToNotificationDetail(NotificationModel notification) {
-    _markAsRead(notification);
     // Navigate based on notification type and data
     if (notification.type == 'chat_message' && notification.data != null) {
       final roomId = notification.data?['roomId'];
