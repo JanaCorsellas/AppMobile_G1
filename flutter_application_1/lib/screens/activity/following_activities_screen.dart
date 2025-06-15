@@ -483,6 +483,8 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
       return _buildEmptyState();
     }
 
+    final activitiesForDisplay = _activities.reversed.toList();
+
     return Column(
       children: [
         // Header con información de seguidos mejorado
@@ -495,9 +497,9 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-            itemCount: _activities.length + (_isLoadingMore ? 1 : 0),
+            itemCount: activitiesForDisplay.length + (_isLoadingMore ? 1 : 0),
             itemBuilder: (context, index) {
-              if (index == _activities.length) {
+              if (index == activitiesForDisplay.length) {
                 return Container(
                   padding: const EdgeInsets.all(16),
                   child: const Center(
@@ -508,7 +510,7 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
                 );
               }
 
-              final activity = _activities[index];
+              final activity = activitiesForDisplay[index];
               return AnimatedContainer(
                 duration: Duration(milliseconds: 300 + (index * 100)),
                 curve: Curves.easeOutBack,
