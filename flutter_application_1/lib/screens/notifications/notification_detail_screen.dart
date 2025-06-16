@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/extensions/string_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:flutter_application_1/models/notification_models.dart';
@@ -43,7 +44,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
     if (notification != null && !notification.read) {
       final userId = authService.currentUser?.id;
       if (userId == null) {
-        print('Error: No hay usuario autenticado para marcar notificación como leída');
+        print('Error: no_authenticated_user_notification');
         return;
       }
 
@@ -53,7 +54,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
       if (!success) {
         // Si falla, permetre intentar-ho de nou
         _isMarkedAsRead = false;
-        print('Error al marcar automáticamente la notificación como leída');
+        print('mark_as_read_error');
       }
     }
   }
@@ -73,7 +74,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
                 children: [
                   Icon(Icons.error_outline, size: 64, color: Colors.grey),
                   SizedBox(height: 16),
-                  TranslatedText('Notificación no encontrada'),
+                  TranslatedText('notification_not_found'),
                 ],
               )
             ),
@@ -82,7 +83,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
         
         return Scaffold(
           appBar: AppBar(
-            title: const TranslatedText('Detalles de la notificación'),
+            title: const TranslatedText('notification_details'),
             actions: [
               Container(
                 margin: const EdgeInsets.only(right: 8),
@@ -101,7 +102,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      notification.read ? 'Leída' : 'No leída',
+                      notification.read ? 'read'.tr(context) : 'unread'.tr(context),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 12,
@@ -202,7 +203,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
                   
                     // Message
                     _buildSection(
-                    title: 'Mensaje',
+                    title: 'message'.tr(context),
                     icon: Icons.message,
                     child: Container(
                       width: double.infinity,
@@ -305,7 +306,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
           print('DEBUG: Creando fila de senderUsername...');
           final userWidget = _buildInfoRow(
             icon: Icons.person,
-            label: 'Usuario',
+            label: 'user'.tr(context),
             value: data['senderUsername'].toString(),
             color: Colors.blue,
           );
@@ -328,7 +329,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
           
           final typeWidget = _buildInfoRow(
             icon: typeIcon,
-            label: 'Tipo',
+            label: 'type'.tr(context),
             value: typeName,
             color: typeColor,
           );
@@ -349,7 +350,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
           
           final distanceWidget = _buildInfoRow(
             icon: Icons.straighten,
-            label: 'Distancia',
+            label: 'distance'.tr(context),
             value: distanceFormatted,
             color: Colors.green,
           );
@@ -370,7 +371,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
           
           final durationWidget = _buildInfoRow(
             icon: Icons.timer,
-            label: 'Duración',
+            label: 'duration'.tr(context),
             value: durationFormatted,
             color: Colors.orange,
           );
@@ -385,7 +386,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
       print('DEBUG: Construyendo container con ${infoWidgets.length} widgets');
 
       return _buildSection(
-        title: 'Información de la Actividad',
+        title: 'activity_information'.tr(context),
         icon: Icons.fitness_center,
         child: Container(
           padding: const EdgeInsets.all(16.0),
@@ -405,10 +406,10 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
             children: infoWidgets.isNotEmpty 
               ? infoWidgets
               :[
-                const Padding(
+                Padding(
                       padding: EdgeInsets.all(16.0),
                       child: Text(
-                        'No hay información adicional disponible',
+                        'no_additional_info'.tr(context),
                         style: TextStyle(
                           fontStyle: FontStyle.italic,
                           color: Colors.grey,
@@ -434,7 +435,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
             const Icon(Icons.error, color: Colors.red),
             const SizedBox(height: 8),
             Text(
-              'Error construyendo información de actividad: $e',
+              '${'building_activity_info_error'.tr(context)}: $e',
               style: const TextStyle(color: Colors.red),
               textAlign: TextAlign.center,
             ),
@@ -448,7 +449,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
     if (data == null) return const SizedBox.shrink();
     
     return _buildSection(
-      title: 'Información del Chat',
+      title: 'chat_information'.tr(context),
       icon: Icons.chat,
       child: Container(
         padding: const EdgeInsets.all(16.0),
@@ -469,7 +470,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
             if (data['senderUsername'] != null) ...[
               _buildInfoRow(
                 icon: Icons.person,
-                label: 'Remitente',
+                label: 'sender'.tr(context),
                 value: data['senderUsername'],
                 color: Colors.teal,
               ),
@@ -477,7 +478,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
             if (data['roomName'] != null) ...[
               _buildInfoRow(
                 icon: Icons.chat_bubble,
-                label: 'Sala',
+                label: 'room'.tr(context),
                 value: data['roomName'],
                 color: Colors.teal,
               ),
@@ -493,7 +494,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
     if (data == null) return const SizedBox.shrink();
     
     return _buildSection(
-      title: 'Información del Logro',
+      title: 'achievement_information'.tr(context),
       icon: Icons.emoji_events,
       child: Container(
         padding: const EdgeInsets.all(16.0),
@@ -514,7 +515,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
             if (data['achievementName'] != null) ...[
               _buildInfoRow(
                 icon: Icons.emoji_events,
-                label: 'Logro',
+                label: 'achievement'.tr(context),
                 value: data['achievementName'],
                 color: Colors.amber[700]!,
               ),
@@ -522,7 +523,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
             if (data['description'] != null) ...[
               _buildInfoRow(
                 icon: Icons.description,
-                label: 'Descripción',
+                label: 'description'.tr(context),
                 value: data['description'],
                 color: Colors.amber[700]!,
               ),
@@ -530,7 +531,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
             if (data['points'] != null) ...[
               _buildInfoRow(
                 icon: Icons.stars,
-                label: 'Puntos',
+                label: 'points'.tr(context),
                 value: '${data['points']} pts',
                 color: Colors.amber[700]!,
               ),
@@ -549,27 +550,7 @@ Widget _buildInfoRow({
   }) {
     try {
       print('DEBUG _buildInfoRow INICIO: icon=$icon, label=$label, value=$value, color=$color');
-      
-      // Verificar que ningún parámetro sea null
-      if (icon == null) {
-        print('ERROR: icon es null');
-        return const SizedBox.shrink();
-      }
-      if (label == null) {
-        print('ERROR: label es null');
-        return const SizedBox.shrink();
-      }
-      if (value == null) {
-        print('ERROR: value es null');
-        return const SizedBox.shrink();
-      }
-      if (color == null) {
-        print('ERROR: color es null');
-        return const SizedBox.shrink();
-      }
-      
-      print('DEBUG _buildInfoRow: Creando widget...');
-      
+       
       final widget = Padding(
         padding: const EdgeInsets.symmetric(vertical: 6.0),
         child: Row(
@@ -643,18 +624,18 @@ Widget _buildInfoRow({
   
   String _getActivityTypeName(dynamic type) {
     try {
-      if (type == null) return 'Actividad';
+      if (type == null) return 'activity_update'.tr(context);
       final typeStr = type.toString().toLowerCase();
       switch (typeStr) {
-        case 'running': return 'Correr';
-        case 'cycling': return 'Ciclismo';
-        case 'walking': return 'Caminar';
-        case 'hiking': return 'Senderismo';
+        case 'running': return 'running_activity'.tr(context);
+        case 'cycling': return 'cycling_activity'.tr(context);
+        case 'walking': return 'walking_activity'.tr(context);
+        case 'hiking': return 'hiking_activity'.tr(context);
         default: return type.toString();
       }
     } catch (e) {
       print('Error en _getActivityTypeNameSafe: $e');
-      return 'Actividad';
+      return 'activity_update'.tr(context);
     }
   }
   
@@ -736,7 +717,7 @@ Widget _buildInfoRow({
       return Center(
         child: ElevatedButton.icon(
           icon: const Icon(Icons.chat),
-          label: const Text('Ir al chat'),
+          label: Text('go_to_chat'.tr(context)),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.teal,
             foregroundColor: Colors.white,
@@ -769,7 +750,7 @@ Widget _buildInfoRow({
                 minimumSize: const Size(200, 48),
               ),
               onPressed: () => _handleAction(context, notification, true),
-              child: const Text('Aceptar'),
+              child: Text('accept'.tr(context)),
             ),
             const SizedBox(height: 12),
             TextButton(
@@ -778,7 +759,7 @@ Widget _buildInfoRow({
                 minimumSize: const Size(200, 48),
               ),
               onPressed: () => _handleAction(context, notification, false),
-              child: const Text('Rechazar'),
+              child: Text('reject'.tr(context)),
             ),
           ],
         ),
@@ -789,7 +770,7 @@ Widget _buildInfoRow({
     return Center(
       child: ElevatedButton(
         onPressed: () => Navigator.pop(context),
-        child: const Text('Volver'),
+        child: Text('back'.tr(context)),
       ),
     );
   }
@@ -848,8 +829,8 @@ Widget _buildInfoRow({
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(accept 
-          ? 'Solicitud de amistad aceptada' 
-          : 'Solicitud de amistad rechazada'
+          ? 'friend_request_accepted' 
+          : 'friend_request_rejected'.tr(context)
         ),
         backgroundColor: accept ? Colors.green : Colors.red,
       ),
@@ -867,8 +848,8 @@ Widget _buildInfoRow({
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(accept 
-          ? 'Invitación a reto aceptada' 
-          : 'Invitación a reto rechazada'
+          ? 'challenge_invitation_accepted' 
+          : 'challenge_invitation_rejected'.tr(context)
         ),
         backgroundColor: accept ? Colors.green : Colors.red,
       ),
@@ -901,7 +882,7 @@ Widget _buildInfoRow({
         Navigator.pop(context);
       } else if (!success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al eliminar la notificación'))
+          SnackBar(content: Text('delete_notification_failed'.tr(context)))
         );
       }
     } catch (e) {

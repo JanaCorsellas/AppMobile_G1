@@ -1966,6 +1966,219 @@ class LanguageProvider with ChangeNotifier {
       'es': 'resultado',
       'ca': 'resultat',
     },
+
+    // NOTIFICATION DETAIL SCREEN
+    'notification_details': {
+      'en': 'Notification Details',
+      'es': 'Detalles de la notificación',
+      'ca': 'Detalls de la notificació',
+    },
+    'notification_not_found': {
+      'en': 'Notification not found',
+      'es': 'Notificación no encontrada',
+      'ca': 'Notificació no trobada',
+    },
+    'read': {
+      'en': 'Read',
+      'es': 'Leída',
+      'ca': 'Llegida',
+    },
+    'unread': {
+      'en': 'Unread',
+      'es': 'No leída',
+      'ca': 'No llegida',
+    },
+    'message': {
+      'en': 'Message',
+      'es': 'Mensaje',
+      'ca': 'Missatge',
+    },
+    'activity_information': {
+      'en': 'Activity Information',
+      'es': 'Información de la Actividad',
+      'ca': 'Informació de l\'Activitat',
+    },
+    'chat_information': {
+      'en': 'Chat Information',
+      'es': 'Información del Chat',
+      'ca': 'Informació del Xat',
+    },
+    'achievement_information': {
+      'en': 'Achievement Information',
+      'es': 'Información del Logro',
+      'ca': 'Informació de l\'Assoliment',
+    },
+    'sender': {
+      'en': 'Sender',
+      'es': 'Remitente',
+      'ca': 'Remitent',
+    },
+    'room': {
+      'en': 'Room',
+      'es': 'Sala',
+      'ca': 'Sala',
+    },
+    'achievement': {
+      'en': 'Achievement',
+      'es': 'Logro',
+      'ca': 'Assoliment',
+    },
+    'description': {
+      'en': 'Description',
+      'es': 'Descripción',
+      'ca': 'Descripció',
+    },
+    'go_to_chat': {
+      'en': 'Go to chat',
+      'es': 'Ir al chat',
+      'ca': 'Anar al xat',
+    },
+    'back': {
+      'en': 'Back',
+      'es': 'Volver',
+      'ca': 'Tornar',
+    },
+    'accept': {
+      'en': 'Accept',
+      'es': 'Aceptar',
+      'ca': 'Acceptar',
+    },
+    'reject': {
+      'en': 'Reject',
+      'es': 'Rechazar',
+      'ca': 'Rebutjar',
+    },
+    'friend_request_accepted': {
+      'en': 'Friend request accepted',
+      'es': 'Solicitud de amistad aceptada',
+      'ca': 'Sol·licitud d\'amistat acceptada',
+    },
+    'friend_request_rejected': {
+      'en': 'Friend request rejected',
+      'es': 'Solicitud de amistad rechazada',
+      'ca': 'Sol·licitud d\'amistat rebutjada',
+    },
+    'challenge_invitation_accepted': {
+      'en': 'Challenge invitation accepted',
+      'es': 'Invitación a reto aceptada',
+      'ca': 'Invitació a repte acceptada',
+    },
+    'challenge_invitation_rejected': {
+      'en': 'Challenge invitation rejected',
+      'es': 'Invitación a reto rechazada',
+      'ca': 'Invitació a repte rebutjada',
+    },
+    'no_additional_info': {
+      'en': 'No additional information available',
+      'es': 'No hay información adicional disponible',
+      'ca': 'No hi ha informació adicional disponible',
+    },
+    'building_activity_info_error': {
+      'en': 'Error building activity information',
+      'es': 'Error construyendo información de actividad',
+      'ca': 'Error construint informació d\'activitat',
+    },
+
+    // NOTIFICATION TYPES AND ACTIVITY TYPES
+    'activity_update': {
+      'en': 'Activity',
+      'es': 'Actividad',
+      'ca': 'Activitat',
+    },
+    'running_activity': {
+      'en': 'Running',
+      'es': 'Correr',
+      'ca': 'Córrer',
+    },
+    'cycling_activity': {
+      'en': 'Cycling',
+      'es': 'Ciclismo',
+      'ca': 'Ciclisme',
+    },
+    'walking_activity': {
+      'en': 'Walking',
+      'es': 'Caminar',
+      'ca': 'Caminar',
+    },
+    'hiking_activity': {
+      'en': 'Hiking',
+      'es': 'Senderismo',
+      'ca': 'Senderisme',
+    },
+
+    // NOTIFICATION SCREEN SPECIFIC
+    'your_notifications': {
+      'en': 'Your notifications',
+      'es': 'Tus notificaciones',
+      'ca': 'Les teves notificacions',
+    },
+    'no_title': {
+      'en': 'No title',
+      'es': 'Sin título',
+      'ca': 'Sense títol',
+    },
+    'no_message': {
+      'en': 'No message',
+      'es': 'Sin mensaje',
+      'ca': 'Sense missatge',
+    },
+    'mark_as_read_and_delete': {
+      'en': 'Mark as read and delete',
+      'es': 'Marcar como leída y eliminar',
+      'ca': 'Marcar com a llegida i eliminar',
+    },
+    'mark_as_read_error': {
+      'en': 'Error marking notification as read',
+      'es': 'Error al marcar notificación como leída',
+      'ca': 'Error en marcar notificació com a llegida',
+    },
+
+    // NOTIFICATION ACTIONS
+    'no_authenticated_user_notification': {
+      'en': 'No authenticated user',
+      'es': 'No hay usuario autenticado',
+      'ca': 'No hi ha usuari autenticat',
+    },
+    'loading_user_data_error': {
+      'en': 'Error loading user data',
+      'es': 'Error al cargar datos del usuario',
+      'ca': 'Error en carregar dades d\'usuari',
+    },
+
+    // ADDITIONAL NOTIFICATION TYPES
+    'new_follower': {
+      'en': 'New follower',
+      'es': 'Nuevo seguidor',
+      'ca': 'Nou seguidor',
+    },
+    'friend_request': {
+      'en': 'Friend request',
+      'es': 'Solicitud de amistad',
+      'ca': 'Sol·licitud d\'amistat',
+    },
+    'challenge_invitation': {
+      'en': 'Challenge invitation',
+      'es': 'Invitación a reto',
+      'ca': 'Invitació a repte',
+    },
+    'challenge_completed': {
+      'en': 'Challenge completed',
+      'es': 'Reto completado',
+      'ca': 'Repte completat',
+    },
+
+    // ERROR MESSAGES FOR NOTIFICATIONS
+    'notification_action_error': {
+      'en': 'Error performing notification action',
+      'es': 'Error al realizar acción de notificación',
+      'ca': 'Error en realitzar acció de notificació',
+    },
+    'delete_notification_failed': {
+      'en': 'Failed to delete notification',
+      'es': 'Error al eliminar la notificación',
+      'ca': 'Error en eliminar la notificació',
+    },  
+
   };
   
   LanguageProvider() {

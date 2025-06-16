@@ -197,7 +197,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Tus notificaciones'.tr(context),
+                          'your_notifications'.tr(context),
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.9),
                             fontSize: 14,
@@ -403,7 +403,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ),
             ),
             title: Text(
-              notification.title ?? 'Sin título',
+              notification.title ?? 'no_title'.tr(context),
               style: TextStyle(
                 fontWeight: notification.read ? FontWeight.normal : FontWeight.bold,
                 color: notification.read ? null : Colors.black87,
@@ -413,7 +413,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  notification.message ?? 'Sin mensaje',
+                  notification.message ?? 'no_message'.tr(context),
                   style: TextStyle(
                     color: notification.read ? Colors.grey[600] : Colors.black54,
                   ),
@@ -503,7 +503,7 @@ String _formatDistanceSafe(dynamic distance) {
 
       final userId = authService.currentUser?.id;
       if (userId == null) {
-        print('Error: No hay usuario autenticado');
+        print('Error: no_authenticated_user_notification');
         return;
       }
       final success = await notificationService.markAsRead(notification.id, userId: userId);
@@ -512,7 +512,7 @@ String _formatDistanceSafe(dynamic distance) {
         // Mostrar missatge d'error si no s'ha pogut marcar com a llegida
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al marcar notificación como leída'),
+            content: Text('mark_as_read_error'.tr(context)),
             duration: const Duration(seconds: 2),
           ),
         );
