@@ -149,13 +149,11 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen>
     int totalDuration = 0;
     Map<ActivityType, int> typeCount = {};
     
-    for (final activity in _activities) {
-      totalDistance += activity.distance ?? 0;
-      totalDuration += activity.duration is Duration
-          ? (activity.duration as Duration).inMinutes
-          : (activity.duration ?? 0).toInt();
-      typeCount[activity.type] = (typeCount[activity.type] ?? 0) + 1;
-    }
+   for (final activity in _activities) {
+  totalDistance += activity.distance ?? 0;
+  totalDuration += (activity.duration ?? 0).toInt(); // Sumar segundos
+  typeCount[activity.type] = (typeCount[activity.type] ?? 0) + 1;
+}
     
     final mostFrequentType = typeCount.entries
         .reduce((a, b) => a.value > b.value ? a : b)
@@ -424,13 +422,14 @@ class _ActivitiesListScreenState extends State<ActivitiesListScreen>
           Row(
             children: [
               Expanded(
-                child: _buildStatItem(
-                  icon: Icons.timer,
-                  value: '${(_stats['totalDuration'] ?? 0)} ${'min'.tr(context)}',
-                  label: 'total_time_label'.tr(context),
-                  color: Colors.orange,
-                ),
-              ),
+  child: _buildStatItem(
+    icon: Icons.timer,
+    value: '${((_stats['totalDuration'] ?? 0) / 60).round()} ${'min'.tr(context)}',  // ✅ Convertir segundos a minutos
+    label: 'total_time_label'.tr(context),
+    color: Colors.orange,
+  ),
+),
+              
               Expanded(
                 child: _buildStatItem(
                   icon: Icons.trending_up,

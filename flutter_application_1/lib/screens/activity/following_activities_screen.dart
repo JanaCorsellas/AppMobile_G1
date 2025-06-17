@@ -195,16 +195,7 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
     );
   }
 
-  String _formatDuration(int durationMinutes) {
-    final hours = durationMinutes ~/ 60;
-    final minutes = durationMinutes % 60;
-    
-    if (hours > 0) {
-      return '${hours}${'hours'.tr(context)} ${minutes}${'min'.tr(context)}';
-    } else {
-      return '${minutes}${'min'.tr(context)}';
-    }
-  }
+  
 
   String _formatDistance(double distance) {
     if (distance >= 1000) {
@@ -492,6 +483,8 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
       return _buildEmptyState();
     }
 
+    final activitiesForDisplay = _activities.reversed.toList();
+
     return Column(
       children: [
         // Header con información de seguidos mejorado
@@ -504,9 +497,9 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-            itemCount: _activities.length + (_isLoadingMore ? 1 : 0),
+            itemCount: activitiesForDisplay.length + (_isLoadingMore ? 1 : 0),
             itemBuilder: (context, index) {
-              if (index == _activities.length) {
+              if (index == activitiesForDisplay.length) {
                 return Container(
                   padding: const EdgeInsets.all(16),
                   child: const Center(
@@ -517,7 +510,7 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
                 );
               }
 
-              final activity = _activities[index];
+              final activity = activitiesForDisplay[index];
               return AnimatedContainer(
                 duration: Duration(milliseconds: 300 + (index * 100)),
                 curve: Curves.easeOutBack,
@@ -671,7 +664,7 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
             ),
             child: ElevatedButton.icon(
               onPressed: () {
-                Navigator.pushNamed(context, AppRoutes.userProfile);
+                Navigator.pushNamed(context, AppRoutes.userHome);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.transparent,
@@ -923,7 +916,7 @@ class _FollowingActivitiesScreenState extends State<FollowingActivitiesScreen>
                         child: _buildEnhancedStatChip(
                           Icons.timer,
                           'time'.tr(context),
-                          _formatDuration(activity.duration),
+                         activity.formatDuration(),
                           const Color(0xFF764ba2),
                         ),
                       ),

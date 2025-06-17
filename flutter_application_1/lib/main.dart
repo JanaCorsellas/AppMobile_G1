@@ -198,17 +198,24 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver{
       case 'friend_request':
         _navigateToFriendRequests();
         break;
-      case 'friend_activity':
+      case 'activity_update':
         final activityId = data['activityId'] as String?;
         if (activityId != null) {
           _navigateToActivity(activityId);
+        } else {
+          _navigateToActivityFeed();
         }
         break;
-      case 'activity_comment':
-      case 'activity_like':
-        final activityId = data['activityId'] as String?;
-        if (activityId != null) {
-          _navigateToActivity(activityId);
+      case 'achievement_unlocked':
+        final achievementId = data['achievementId'] as String?;
+        if (achievementId != null) {
+          _navigateToAchievement(achievementId);
+        }
+        break;
+      case 'challenge_completed':
+        final challengeId = data['challengeId'] as String?;
+        if (challengeId != null) {
+          _navigateToChallenge(challengeId);
         }
         break;
       case 'chat_message':
@@ -328,7 +335,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver{
             title: 'app_title'.tr(context),
             theme: themeProvider.theme,
             locale: languageProvider.locale,
-            initialRoute: _authService.isLoggedIn ? AppRoutes.userHome : AppRoutes.login,
+            initialRoute: AppRoutes.splash,
             onGenerateRoute: AppRoutes.generateRoute,
             localizationsDelegates: const [
               GlobalMaterialLocalizations.delegate,
@@ -362,6 +369,24 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver{
   void _navigateToChat(String roomId) {
     if (_navigatorKey.currentState != null) {
       _navigatorKey.currentState!.pushNamed('/chat', arguments: roomId);
+    }
+  }
+
+  void _navigateToActivityFeed() {
+    if (_navigatorKey.currentState != null) {
+      _navigatorKey.currentState!.pushNamed('/home'); // O la ruta de tu feed
+    }
+  }
+
+  void _navigateToAchievement(String achievementId) {
+    if (_navigatorKey.currentState != null) {
+      _navigatorKey.currentState!.pushNamed('/achievement_detail', arguments: achievementId);
+    }
+  }
+
+  void _navigateToChallenge(String challengeId) {
+    if (_navigatorKey.currentState != null) {
+      _navigatorKey.currentState!.pushNamed('/challenge_detail', arguments: challengeId);
     }
   }
 

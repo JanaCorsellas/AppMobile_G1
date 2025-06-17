@@ -44,10 +44,10 @@ class ApiConstants {
   static String uploadGroupPicture(String roomId) => '$chatRooms/$roomId/group-picture';
   
   // Notification endpoints
-  static String notifications(String userId) => '$baseUrl/api/notifications/$userId';
-  static String markNotificationRead(String notificationId) => '$baseUrl/api/notifications/$notificationId/read';
-  static String markAllNotificationsRead(String userId) => '$baseUrl/api/notifications/$userId/read-all';
-  static String deleteNotification(String notificationId) => '$baseUrl/api/notifications/$notificationId';
+  static String notifications(String userId) => '$baseUrl$apiPath/notifications/$userId';
+  static String markNotificationRead(String notificationId) => '$baseUrl$apiPath/notifications/$notificationId/read';
+  static String markAllNotificationsRead(String userId) => '$baseUrl$apiPath/notifications/$userId/read-all';
+  static String deleteNotification(String notificationId) => '$baseUrl$apiPath/notifications/$notificationId';
   static const String createNotification = '$baseUrl$apiPath/notifications';
   static const String bulkNotifications = '$baseUrl$apiPath/notifications/bulk';
   

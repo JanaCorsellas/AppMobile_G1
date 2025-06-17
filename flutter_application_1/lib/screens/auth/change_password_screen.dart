@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
 import 'package:flutter_application_1/extensions/string_extensions.dart';
+import 'package:flutter_application_1/widgets/custom_drawer.dart';
+import 'package:flutter_application_1/config/routes.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({Key? key}) : super(key: key);
@@ -90,6 +92,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const CustomDrawer(currentRoute: AppRoutes.changePassword),
       appBar: AppBar(
         title: Text('change_password'.tr(context)),
         backgroundColor: const Color(0xFF6B55D1),
@@ -337,15 +340,18 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         
                         // Botón cancelar
                         TextButton(
-                          onPressed: _isLoading ? null : () => Navigator.pop(context),
-                          child: Text(
-                            'cancel'.tr(context),
-                            style: const TextStyle(
-                              color: Color(0xFF6B55D1),
-                              fontSize: 16,
-                            ),
-                          ),
+                           onPressed: _isLoading ? null : () {
+                           Navigator.pushReplacementNamed(context, '/user-home');
+                          },      
+                        child: Text(
+                         'cancel'.tr(context),
+                         style: const TextStyle(
+                         color: Color(0xFF6B55D1),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                         ),
+                        ),
+            ),
                       ],
                     ),
                   ),

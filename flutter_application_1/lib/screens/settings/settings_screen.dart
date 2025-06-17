@@ -141,74 +141,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   
                   const SizedBox(height: 24.0),
+                
                   
-                  Text(
-                    'notifications'.tr(context),
-                    style: const TextStyle(
-                      fontSize: 20.0,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16.0),
-                  Card(
-                    child: Column(
-                      children: [
-                        SwitchListTile(
-                          title: Text('push_notifications'.tr(context)),
-                          subtitle: Text('receive_notifications'.tr(context)),
-                          value: true, // Replace with your state variable
-                          onChanged: (value) {
-                            // Implement notification toggle
-                          },
-                          secondary: const Icon(Icons.notifications),
-                        ),
-                        SwitchListTile(
-                          title: Text('activity_notifications'.tr(context)),
-                          subtitle: Text('exercise_reminders'.tr(context)),
-                          value: false, // Replace with your state variable
-                          onChanged: (value) {
-                            // Implement activity notifications toggle
-                          },
-                          secondary: const Icon(Icons.fitness_center),
-                        ),
-                      ],
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 24.0),
-                  
-                  Text(
-                    'privacy'.tr(context),
-                    style: const TextStyle(
-                      fontSize: 20.0,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16.0),
-                  Card(
-                    child: Column(
-                      children: [
-                        SwitchListTile(
-                          title: Text('public_profile'.tr(context)),
-                          subtitle: Text('show_profile'.tr(context)),
-                          value: true, // Replace with your state variable
-                          onChanged: (value) {
-                            // Implement privacy toggle
-                          },
-                          secondary: const Icon(Icons.visibility),
-                        ),
-                        SwitchListTile(
-                          title: Text('share_activities'.tr(context)),
-                          subtitle: Text('allow_viewing'.tr(context)),
-                          value: true, // Replace with your state variable
-                          onChanged: (value) {
-                            // Implement activity sharing toggle
-                          },
-                          secondary: const Icon(Icons.share),
-                        ),
-                      ],
-                    ),
-                  ),
                   
                   const SizedBox(height: 24.0),
                   
